@@ -1,0 +1,22 @@
+# Local secrets and OAuth session state
+credentials.json
+token.json
+delete_token.json
+delete_token.revoked
+app_state.json
+
+# Python generated files
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Local exports and scratch files
+exports/
+*.log
+
+# Generated knowledge graph
+graphify-out/

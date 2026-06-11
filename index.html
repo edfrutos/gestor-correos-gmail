@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor de Correos — Servidor</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="hdr">
+  <div class="htop">
+    <img class="hlogo" src="/static/logo.svg" alt="Gestor de Correos">
+    <h1>Gestor de Correos — <span style="color:#4a9eff">Servidor & Servicios</span></h1>
+  </div>
+  <div class="pills">
+    <span class="pill" style="background:#4a9eff22;border:1px solid #4a9eff55;color:#7ec8ff" id="total-pill">— correos</span>
+    <span class="pill" style="background:#ffffff09;border:1px solid var(--bdr);color:var(--mut)">v5 complete · 11/06/2026</span>
+    <span class="pill" id="sel-pill" style="display:none;background:#4a9eff22;border:1px solid #4a9eff55;color:#7ec8ff"></span>
+  </div>
+</header>
+
+<!-- STATUS BAR -->
+<div class="sbar" id="sbar">
+  <div class="sled chk" id="sled"></div>
+  <span id="smsg">Verificando conexión con Gmail…</span>
+</div>
+
+<!-- ① REMITENTES -->
+<div class="panel" id="p-snd">
+  <div class="ph" onclick="togglePanel('p-snd')">
+    <div class="pt">📬 Remitentes activos <span class="ptag" style="background:#4a9eff18;border:1px solid #4a9eff44;color:var(--v)" id="snd-tag">—</span></div>
+    <span class="pc">▾</span>
+  </div>
+  <div class="pb">
+    <div class="cgrid" id="snd-chips"></div>
+    <p class="support-copy" style="margin-bottom:5px;">Quick-add (pool pre-cargado):</p>
+    <div class="kdgrid" id="kd-grid"></div>
+    <div class="arow">
+      <input class="ainp" id="snd-inp" type="text" placeholder="web.dev, paypal.com, cualquier@remitente.com…">
+      <button class="addbtn" id="snd-add">+ Buscar en Gmail</button>
+    </div>
+    <p class="hint" id="search-hint">Escribe cualquier dominio o email y se buscará <b>en tiempo real</b> en tu Gmail a través del servidor local.</p>
+  </div>
+</div>
+
+<!-- ② CATEGORÍAS -->
+<div class="panel" id="p-cat">
+  <div class="ph" onclick="togglePanel('p-cat')">
+    <div class="pt">🔍 Filtrar por categoría semántica</div>
+    <span class="pc">▾</span>
+  </div>
+  <div class="pb">
+    <div class="catgrid" id="cat-grid"></div>
+    <p class="support-copy" style="margin-top:6px;">Detección automática por palabras clave en asunto y cuerpo.</p>
+  </div>
+</div>
+
+<!-- ③ REGLAS PERSONALIZADAS -->
+<div class="panel" id="p-rules">
+  <div class="ph" onclick="togglePanel('p-rules')">
+    <div class="pt">⚙ Reglas personalizadas <span class="ptag" style="background:#e879f918;border:1px solid #e879f944;color:#e879f9" id="rules-tag">0</span></div>
+    <span class="pc">▾</span>
+  </div>
+  <div class="pb">
+    <div class="rule-form">
+      <label class="rule-field"><span>Nombre</span><input id="rule-label" maxlength="80" placeholder="SSL crítico"></label>
+      <label class="rule-field"><span>Proveedor</span><input id="rule-provider" maxlength="253" placeholder="plesk.com"></label>
+      <label class="rule-field wide"><span>Palabras clave</span><input id="rule-keywords" maxlength="500" placeholder="final notice, expires tomorrow"></label>
+      <label class="rule-field"><span>Coincidencia</span><select id="rule-keyword-operator"><option value="any">Alguna palabra</option><option value="all">Todas las palabras</option></select></label>
+      <label class="rule-field"><span>Categoría</span><select id="rule-category"></select></label>
+      <label class="rule-field"><span>Severidad</span><select id="rule-severity"><option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option></select></label>
+      <button class="addbtn" id="rule-add" type="button">+ Añadir regla</button>
+    </div>
+    <p class="support-copy" style="margin-top:7px;">Proveedor y palabras clave son opcionales por separado; si indicas ambos, deben coincidir. Puedes exigir alguna o todas las palabras.</p>
+    <div class="rule-list" id="rule-list"></div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="tb">
+  <div class="sw"><span class="sic">🔍</span><input class="si" id="srch" type="text" placeholder="Buscar en De, Para, Asunto, Cuerpo…"></div>
+  <button class="fbtn src on" data-f="all" style="background:var(--v);border-color:var(--v);color:#fff;">Todos</button>
+  <button class="fbtn src" data-f="v">Vultr</button>
+  <button class="fbtn src" data-f="p">Plesk</button>
+  <button class="fbtn src" data-f="s">Servidor</button>
+  <button class="fbtn src" data-f="cu" id="cu-btn" style="border-color:#fb923c66;color:var(--o);display:none;">+ Añadidos</button>
+  <button class="fbtn" id="sum-open" style="border-color:#a78bfa66;color:var(--p);">▦ Resumen periódico</button>
+  <button class="fbtn" id="tog-sel" style="border-color:#4a9eff66;color:var(--v);">☐ Seleccionar</button>
+</div>
+
+<div class="actbar" id="actbar" style="display:none;">
+  <div class="abl"><span class="sct" id="sel-ct"><b>0</b> sel.</span></div>
+  <div class="abr">
+    <button class="xbtn" id="sel-all">☑ Todos</button>
+    <button class="xbtn" id="desel">☐ Ninguno</button>
+    <button class="xbtn ei" id="exp-open">⬇ Exportar informe</button>
+    <button class="xbtn ds" id="del-sel">🙈 Ocultar</button>
+  </div>
+</div>
+
+<div class="lgnd" id="lgnd"></div>
+<div class="stbar" id="stbar"></div>
+<div class="hbar" id="hidden-bar" hidden>
+  <span id="hidden-msg">0 ocultos locales</span>
+  <button id="manage-hidden" type="button">Gestionar ocultos</button>
+</div>
+<div id="list"></div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal" id="exp-modal">
+  <div class="mbox">
+    <button class="mclose" id="exp-x">✕</button>
+    <div class="mttl" id="exp-ttl">Exportar informe</div>
+    <p class="support-copy" style="margin-bottom:8px;">Elige alcance primero y luego formato.</p>
+    <div class="mtbs" id="exp-scope">
+      <div class="mtb" data-scope="filtered">Vista filtrada</div>
+      <div class="mtb" data-scope="full">Conjunto completo</div>
+    </div>
+    <div class="mtbs" id="exp-format">
+      <div class="mtb" data-tab="json">JSON</div>
+      <div class="mtb" data-tab="md">Markdown</div>
+    </div>
+    <pre id="exp-pre"></pre>
+    <div class="mact">
+      <button class="mab cp" id="exp-copy">📋 Copiar</button>
+      <button class="mab dw" id="exp-dl">⬇ Descargar</button>
+      <button class="mab cn" id="exp-cn">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PERIODIC SUMMARY MODAL -->
+<div class="modal" id="sum-modal">
+  <div class="mbox">
+    <button class="mclose" id="sum-x">✕</button>
+    <div class="mttl" id="sum-ttl">Resumen periódico</div>
+    <p class="support-copy" style="margin-bottom:8px;">Calculado localmente sobre correos cargados y visibles. No se guarda contenido Gmail.</p>
+    <div class="mtbs" id="sum-period">
+      <div class="mtb" data-days="7">Últimos 7 días</div>
+      <div class="mtb" data-days="30">Últimos 30 días</div>
+    </div>
+    <div id="sum-view"></div>
+    <pre id="sum-ai-result" hidden></pre>
+    <div class="mact">
+      <button class="mab cp" id="sum-ai">✦ Resumir con AI</button>
+      <button class="mab cp" id="sum-copy">📋 Copiar Markdown</button>
+      <button class="mab dw" id="sum-dl">⬇ Descargar</button>
+      <button class="mab cn" id="sum-cn">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="del-modal">
+  <div class="dbox">
+    <div class="dttl">🙈 Confirmar ocultado</div>
+    <div class="dmsg" id="del-msg"></div>
+    <div class="dact">
+      <button class="dcx" id="del-cx">Cancelar</button>
+      <button class="dco" id="del-ok">Ocultar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="hidden-modal">
+  <div class="mbox hidden-box">
+    <button class="mclose" id="hidden-x">✕</button>
+    <div class="mttl">Ocultos locales</div>
+    <p class="support-copy">Restaura mensajes, manténlos ocultos, limpia huérfanos locales o borra en Gmail. Usa Shift para seleccionar un rango y Cmd/Ctrl para alternar mensajes individuales. Sólo los huérfanos se pueden limpiar localmente. El borrado en Gmail es inmediato e irreversible.</p>
+    <div class="hidden-tools">
+      <button class="mab cp" id="hidden-all">Seleccionar página</button>
+      <button class="mab cn" id="hidden-none">Ninguno</button>
+      <span id="hidden-selected">0 seleccionados</span>
+      <span id="hidden-limit" class="hidden-limit"></span>
+    </div>
+    <div class="hidden-pager">
+      <button class="mab cp" id="hidden-prev" type="button">Anterior</button>
+      <span id="hidden-page">Página 1 de 1</span>
+      <button class="mab cp" id="hidden-next" type="button">Siguiente</button>
+    </div>
+    <div class="hidden-list" id="hidden-list"></div>
+    <div class="hidden-section local-section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Sólo local</div>
+          <div class="section-title">Recupera, conserva o limpia huérfanos</div>
+        </div>
+        <span class="section-chip soft">No toca Gmail</span>
+      </div>
+      <p class="support-copy">Restaurar visibles deja Gmail intacto. Eliminar huérfanos locales borra sólo la referencia guardada en la app. Mantener ocultos cierra sin cambios.</p>
+      <div class="mact">
+        <button class="mab cp" id="hidden-restore">Restaurar visibles</button>
+        <button class="mab cn" id="hidden-forget">Eliminar huérfanos locales</button>
+        <button class="mab cn" id="hidden-cn">Mantener ocultos y cerrar</button>
+      </div>
+    </div>
+    <div class="hidden-section gmail-section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker danger">Afecta a Gmail</div>
+          <div class="section-title">Eliminación permanente</div>
+        </div>
+        <span class="section-chip danger">Irreversible</span>
+      </div>
+      <p class="support-copy" id="delete-status">Comprobando autorización destructiva…</p>
+      <div class="mact mact-tight">
+        <button class="mab dw" id="delete-authorize" type="button">Autorizar borrado permanente</button>
+        <button class="mab cn" id="delete-revoke" type="button">Revocar autorización</button>
+      </div>
+      <label class="danger-confirm"><span id="delete-confirm-label">Selecciona mensajes para generar la confirmación.</span><input id="delete-confirm" autocomplete="off" placeholder="ELIMINAR PERMANENTEMENTE N"></label>
+      <div class="mact">
+        <button class="mab ds" id="hidden-delete">Eliminar permanentemente de Gmail</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/app.js"></script>
+<script src="/static/summary.js"></script>
+</body>
+</html>
