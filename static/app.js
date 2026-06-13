@@ -101,18 +101,42 @@ async function checkStatus(){
   }
 }
 
-// ── CATEGORÍAS ────────────────────────────────────────────
-const CATS={
-  all:   {label:'🌐 Todos',       color:'var(--v)'},
-  money: {label:'💰 Monetario',   color:'var(--w)',  keys:['invoice','factura','billing','amount','price','€','$','statement','cobro','pago','cargo','receipt','recibo','extracto','importe']},
-  warn:  {label:'⚠ Avisos',       color:'var(--d)',  keys:['expires tomorrow','final notice','urgent','warning','exceeded','failed','could not','expiring','aviso','alerta','urgente','expira','expirado','action required','expirará','run failed']},
-  sub:   {label:'🔄 Suscripción', color:'var(--p)',  keys:['subscription','renew','renewal','suscripci','licencia','license','plan','imunify','amazon music','se renovará','renovación']},
-  ssl:   {label:'🔒 SSL/Certs',   color:'#9ca3af',   keys:["let's encrypt","certificate","ssl","tls","cert","acme","expiration notice"]},
-  sec:   {label:'🛡 Seguridad',   color:'#f43f5e',   keys:['security','vulnerability','cve','malware','security patch','exposed','access key','verification','unauthorized']},
-  maint: {label:'🔧 Mantenimiento',color:'#22d3ee',  keys:['maintenance','scheduled','network upgrade','patch','restart','backup task','package update']},
-  domain:{label:'🌐 Dominio',     color:'#60a5fa',   keys:['domain','dominio','whois','registr','alta del dominio','renovación de dominio','expire','expira','dns']},
-  comm:  {label:'📢 Comunicación',color:'var(--s)',  keys:["what's new","newsletter","update","release","features","novedades","adjustments","announcement","email routing","gpt-","introducing","dev news","updated permissions","copilot"]},
-};
+// ── CONFIGURACIÓN (UNIFICADA) ─────────────────────────────
+let CATS={};
+let SEVERITY_META={};
+let SEVERITY_ORDER={};
+let CATEGORY_SEVERITY={};
+let CATEGORY_SEVERITY_REASON={};
+
+async function loadBaseConfig(){
+  try {
+    const r=await fetch(`${API}/api/config`);
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Error cargando config');
+    const c=d.config;
+    CATS=c.categories;
+    SEVERITY_META=c.severity_meta;
+    SEVERITY_ORDER=c.severity_order.reduce((acc,s,i)=>{acc[s]=i;return acc;},{});
+    CATEGORY_SEVERITY=c.category_severity;
+    CATEGORY_SEVERITY_REASON=c.category_severity_reason;
+
+    // Poblar selector de categorías en el modal de reglas si está vacío
+    const sel=document.getElementById('rule-category');
+    if(sel && !sel.options.length){
+      Object.entries(CATS).filter(([key])=>key!=='all').forEach(([key,value])=>{
+        const option=document.createElement('option');
+        option.value=key;option.textContent=value.label.replace(/^[^\p{L}\p{N}]+\s*/u,'');
+        sel.appendChild(option);
+      });
+    }
+  } catch(e) {
+    toast('Error cargando configuración base: '+e.message,'err');
+    // Fallback mínimo para que la app no rompa
+    CATS={all:{label:'🌐 Todos',color:'var(--v)'}};
+    SEVERITY_META={low:{label:'Baja',color:'var(--s)'}};
+  }
+}
+
 function baseCats(e){
   const h=[e.subject||e.sub,e.body,e.from,e.tag].join(' ').toLowerCase();
   return Object.keys(CATS).filter(k=>k!=='all'&&CATS[k].keys&&CATS[k].keys.some(kw=>h.includes(kw)));
@@ -139,23 +163,7 @@ function cats(e){
   matchingRules(e).forEach(r=>{if(!out.includes(r.category))out.push(r.category);});
   return out;
 }
-const SEVERITY_META={
-  high:{label:'Alta', color:'var(--d)'},
-  medium:{label:'Media', color:'var(--o)'},
-  low:{label:'Baja', color:'var(--s)'},
-};
-const SEVERITY_ORDER={high:0,medium:1,low:2};
-const CATEGORY_SEVERITY={warn:'high',sec:'high',ssl:'high',money:'medium',sub:'medium',domain:'medium',maint:'medium',comm:'low'};
-const CATEGORY_SEVERITY_REASON={
-  warn:'Aviso urgente o fallo detectado',
-  sec:'Seguridad o vulnerabilidad detectada',
-  ssl:'Certificado o TLS pendiente',
-  money:'Factura, cobro o coste detectado',
-  sub:'Renovación o suscripción pendiente',
-  domain:'Dominio o vencimiento detectado',
-  maint:'Mantenimiento o actualización programada',
-  comm:'Comunicación informativa',
-};
+
 function messageCategories(e){return cats(e);}
 function primaryCategory(e){
   const cs=messageCategories(e);
@@ -199,10 +207,12 @@ const deleted=new Set(),selected=new Set(),openMessages=new Set();
 let pendingDel=[],expData=null,expFmt='md',expScope=null;
 let summaryDays=30,summaryData=null;
 let stateReady=false,saveTimer=null,saveInFlight=false,savePending=false,editingRuleId=null;
+let aiSuggestionsEnabled=false, currentAiSuggestions=[];
 let hiddenReviewItems=[],deletionAudit=[];
 const hiddenSelected=new Set();
 let hiddenReviewPage=1,hiddenReviewPages=1,hiddenReviewTotal=0,hiddenReviewPageSize=20,hiddenReviewLoading=false,hiddenRangeAnchorId=null;
 let hiddenOrphanPurgePending=false;
+let hiddenSearchQuery='';
 
 function srcColor(e){
   if(e.src==='v') return 'var(--v)';
@@ -241,7 +251,12 @@ function currentState(){
     custom_sources:customSrcs.map(s=>({dom:s.dom,label:s.label,color:s.color})),
     custom_rules:customRules.map(r=>({...r,keywords:[...r.keywords]})),
     hidden_ids:[...deleted],
-    preferences:{source_filter:cf,category_filter:activeCat,search_query:cq}
+    preferences:{
+      source_filter:cf,
+      category_filter:activeCat,
+      search_query:cq,
+      ai_suggestions_enabled:aiSuggestionsEnabled
+    }
   };
 }
 function applyState(state){
@@ -267,6 +282,9 @@ function applyState(state){
   const p=s.preferences||{};
   cq=String(p.search_query||'');
   activeCat=CATS[p.category_filter]?p.category_filter:'all';
+  aiSuggestionsEnabled=Boolean(p.ai_suggestions_enabled);
+  document.getElementById('ai-sugg-toggle').checked=aiSuggestionsEnabled;
+  updateAiSuggUI();
   document.getElementById('srch').value=cq;
   const savedFilter=['all','v','p','s','cu'].includes(p.source_filter)?p.source_filter:'all';
   setSrcFilter(savedFilter==='cu'&&!customSrcs.length?'all':savedFilter);
@@ -364,7 +382,7 @@ async function hydrateMessageAttachments(email){
 }
 
 // ── BÚSQUEDA REAL EN GMAIL ────────────────────────────────
-async function searchGmail(sender,opts={}){
+async function searchGmail(params={},opts={}){
   const busy=opts.busy!==false,showErr=opts.errors!==false;
   const btn=document.getElementById('snd-add');
   if(busy){
@@ -372,7 +390,14 @@ async function searchGmail(sender,opts={}){
     btn.innerHTML='<span class="spin"></span>Buscando…';
   }
   try{
-    const r=await fetch(`${API}/api/search?sender=${encodeURIComponent(sender)}&max=30`);
+    const qs=new URLSearchParams();
+    if(params.sender) qs.set('sender', params.sender);
+    if(params.q) qs.set('q', params.q);
+    if(params.after) qs.set('after', params.after);
+    if(params.before) qs.set('before', params.before);
+    qs.set('max', '30');
+
+    const r=await fetch(`${API}/api/search?${qs.toString()}`);
     if(!r.ok){
       const err=await r.json().catch(()=>({error:'Error HTTP '+r.status}));
       throw new Error(err.detail||err.error||('Error HTTP '+r.status));
@@ -391,28 +416,36 @@ async function searchGmail(sender,opts={}){
 }
 
 async function addSrc(raw){
-  const val=raw.trim().toLowerCase().replace(/^@/,'');
-  if(!val){toast('Introduce un dominio o email','err');return;}
-  const dom=val.includes('@')?val.split('@')[1]:val;
-  const query=val.includes('@')?val:dom;
-  const validDom=/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
-  const validEmail=/^[a-z0-9._%+-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
-  if(!validDom.test(val)&&!validEmail.test(val)){
-    toast('Usa un dominio o email válido','err');
+  const val=raw?raw.trim().toLowerCase().replace(/^@/,''):'';
+  const literal=document.getElementById('snd-q').value.trim();
+  const after=document.getElementById('snd-after').value;
+  const before=document.getElementById('snd-before').value;
+
+  if(!val && !literal && !after && !before){
+    toast('Indica remitente, texto o fechas','err');
     return;
   }
-
-  // Color
-  const known=KNOWN.find(k=>dom.includes(k.dom)||k.dom.includes(dom));
-  const color=known?known.color:PAL[customSrcs.length%PAL.length];
-  const label=known?known.label:dom;
+  
+  let dom='', label='', query='';
+  if(val){
+    dom=val.includes('@')?val.split('@')[1]:val;
+    query=val.includes('@')?val:dom;
+    const validDom=/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
+    const validEmail=/^[a-z0-9._%+-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
+    if(!validDom.test(val)&&!validEmail.test(val)){
+      toast('Usa un dominio o email válido','err');
+      return;
+    }
+    const known=KNOWN.find(k=>dom.includes(k.dom)||k.dom.includes(dom));
+    label=known?known.label:dom;
+  }
 
   // Buscar en Gmail en tiempo real
-  toast(`Localizando correos de ${query} en Gmail…`,'ok');
-  const emails=await searchGmail(query);
+  toast(`Localizando correos en Gmail…`,'ok');
+  const emails=await searchGmail({sender:val, q:literal, after, before});
   if(emails===null)return;
   if(emails.length===0){
-    toast(`${label}: no se encontraron correos`,'err');
+    toast(`No se encontraron correos con esos filtros`,'err');
     return;
   }
 
@@ -424,17 +457,22 @@ async function addSrc(raw){
   const nuevos=normalized.filter(e=>!existing.has(e.id));
   activeEmails=[...activeEmails,...nuevos];
 
-  if(![...FIXED,...customSrcs].some(s=>s.dom===dom)){
+  if(val && ![...FIXED,...customSrcs].some(s=>s.dom===dom)){
+    const known=KNOWN.find(k=>dom.includes(k.dom)||k.dom.includes(dom));
+    const color=known?known.color:PAL[customSrcs.length%PAL.length];
     customSrcs.push({dom,label,color,fixed:false});
     document.getElementById('cu-btn').style.display='';
+    focusSender(dom);
+    renderSenders();
+  } else if (!val) {
+    setSrcFilter('all');
   }
+
   document.getElementById('snd-inp').value='';
-  focusSender(dom);
-  renderSenders();
   renderCats();
   render();
   queueSaveState();
-  toast(`✓ ${label}: ${emails.length} correo${emails.length!==1?'s':''} localizado${emails.length!==1?'s':''}; ${nuevos.length} incorporado${nuevos.length!==1?'s':''}`,'ok');
+  toast(`✓ Encontrados: ${emails.length} correos; ${nuevos.length} incorporados`,'ok');
 }
 
 // ── RENDER SENDERS ────────────────────────────────────────
@@ -483,7 +521,9 @@ function removeSrc(dom){
 }
 
 document.getElementById('snd-add').addEventListener('click',()=>addSrc(document.getElementById('snd-inp').value));
-document.getElementById('snd-inp').addEventListener('keydown',e=>{if(e.key==='Enter')addSrc(document.getElementById('snd-inp').value);});
+['snd-inp','snd-q','snd-after','snd-before'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')addSrc(document.getElementById('snd-inp').value);});
+});
 
 // ── REGLAS PERSONALIZADAS ────────────────────────────────
 function renderRules(){
@@ -498,7 +538,9 @@ function renderRules(){
     const item=document.createElement('div');
     item.className='rule-item';
     const conditions=[rule.provider?`Proveedor: ${rule.provider}`:'',rule.keywords.length?`Texto (${rule.keyword_operator==='all'?'todas':'alguna'}): ${rule.keywords.join(', ')}`:''].filter(Boolean).join(' · ');
-    item.innerHTML=`<div class="rule-main"><div class="rule-name">${esc(rule.label)} · ${esc(CATS[rule.category].label)} · ${esc(SEVERITY_META[rule.severity].label)}</div><div class="rule-desc">${esc(conditions)}</div></div><div class="rule-actions"><button class="rule-edit" type="button">Editar</button><button class="rule-del" type="button">Eliminar</button></div>`;
+    const labelInfo=rule.gmail_label_id ? ` · 🏷 ${gmailLabels.find(l=>l.id===rule.gmail_label_id)?.name||rule.gmail_label_id}` : '';
+    const autoInfo=(rule.auto_label||rule.auto_archive) ? ` · ⚡${rule.auto_archive?'📦':''}` : '';
+    item.innerHTML=`<div class="rule-main"><div class="rule-name">${esc(rule.label)} · ${esc(CATS[rule.category]?.label||rule.category)} · ${esc(SEVERITY_META[rule.severity]?.label||rule.severity)}${esc(labelInfo)}${esc(autoInfo)}</div><div class="rule-desc">${esc(conditions)}</div></div><div class="rule-actions"><button class="rule-edit" type="button">Editar</button><button class="rule-del" type="button">Eliminar</button></div>`;
     item.querySelector('.rule-edit').addEventListener('click',()=>{
       editingRuleId=rule.id;
       document.getElementById('rule-label').value=rule.label;
@@ -507,6 +549,9 @@ function renderRules(){
       document.getElementById('rule-keyword-operator').value=rule.keyword_operator||'any';
       document.getElementById('rule-category').value=rule.category;
       document.getElementById('rule-severity').value=rule.severity;
+      document.getElementById('rule-gmail-label').value=rule.gmail_label_id||'';
+      document.getElementById('rule-auto-label').checked=rule.auto_label||false;
+      document.getElementById('rule-auto-archive').checked=rule.auto_archive||false;
       document.getElementById('rule-add').textContent='Guardar cambios';
       document.getElementById('rule-label').focus();
     });
@@ -519,10 +564,87 @@ function renderRules(){
     list.appendChild(item);
   });
 }
+
+function updateAiSuggUI(){
+  const box=document.getElementById('ai-sugg-box');
+  const btn=document.getElementById('ai-sugg-btn');
+  btn.style.display=aiSuggestionsEnabled?'block':'none';
+  if(!aiSuggestionsEnabled){
+    box.style.display='none';
+    currentAiSuggestions=[];
+  }
+}
+
+async function suggestAiRules(){
+  const hiddenEmails=activeEmails.filter(e=>deleted.has(e.id)).map(e=>({from:e.from,sub:e.sub}));
+  if(!hiddenEmails.length){toast('Oculta algunos correos primero para que la IA aprenda','err');return;}
+  
+  const btn=document.getElementById('ai-sugg-btn');
+  const box=document.getElementById('ai-sugg-box');
+  const list=document.getElementById('ai-sugg-list');
+  
+  btn.disabled=true;btn.textContent='Analizando patrones…';
+  try {
+    const r=await fetch(`${API}/api/ai-suggest-rules`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(hiddenEmails)
+    });
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||d.error||'Error en la IA');
+    
+    currentAiSuggestions=d.suggestions||[];
+    if(!currentAiSuggestions.length){
+      toast('La IA no ha encontrado patrones claros todavía','err');
+      box.style.display='none';
+    } else {
+      box.style.display='block';
+      list.innerHTML='';
+      currentAiSuggestions.forEach((s,idx)=>{
+        const d=document.createElement('div');
+        d.className='cchip on'; d.style.background='var(--card)'; d.style.borderColor='var(--v)'; d.style.color='var(--txt)';
+        d.innerHTML=`<span style="font-size:11px;"><b>${esc(s.label)}</b> (@${esc(s.provider)})</span><button class="mab cp" style="padding:2px 6px; font-size:10px; margin-left:8px;">Aplicar</button>`;
+        d.querySelector('button').onclick=()=>applyAiSuggestion(idx);
+        list.appendChild(d);
+      });
+      toast(`La IA sugiere ${currentAiSuggestions.length} reglas`,'ok');
+    }
+  } catch(e) {
+    toast('Sugerencias IA: '+e.message,'err');
+  } finally {
+    btn.disabled=false;btn.textContent='Sugerir reglas ahora';
+  }
+}
+
+function applyAiSuggestion(idx){
+  const s=currentAiSuggestions[idx];
+  if(!s)return;
+  document.getElementById('rule-label').value=s.label;
+  document.getElementById('rule-provider').value=s.provider;
+  document.getElementById('rule-keywords').value=(s.keywords||[]).join(', ');
+  document.getElementById('rule-category').value=s.category;
+  document.getElementById('rule-severity').value=s.severity;
+  document.getElementById('rule-auto-label').checked=s.auto_label||false;
+  document.getElementById('rule-auto-archive').checked=s.auto_archive||false;
+  document.getElementById('rule-label').focus();
+  // Scroll al formulario
+  document.querySelector('.rule-form').scrollIntoView({behavior:'smooth'});
+  toast('Sugerencia cargada en el formulario','ok');
+}
+
+document.getElementById('ai-sugg-toggle').addEventListener('change',e=>{
+  aiSuggestionsEnabled=e.target.checked;
+  updateAiSuggUI();
+  queueSaveState();
+});
+document.getElementById('ai-sugg-btn').addEventListener('click',suggestAiRules);
 function resetRuleForm(){
   editingRuleId=null;
   ['rule-label','rule-provider','rule-keywords'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('rule-keyword-operator').value='any';
+  document.getElementById('rule-gmail-label').value='';
+  document.getElementById('rule-auto-label').checked=false;
+  document.getElementById('rule-auto-archive').checked=false;
   document.getElementById('rule-add').textContent='+ Añadir regla';
 }
 function addRule(){
@@ -532,23 +654,27 @@ function addRule(){
   const keyword_operator=document.getElementById('rule-keyword-operator').value==='all'?'all':'any';
   const category=document.getElementById('rule-category').value;
   const severity=document.getElementById('rule-severity').value;
+  const gmail_label_id=document.getElementById('rule-gmail-label').value;
+  const auto_label=document.getElementById('rule-auto-label').checked;
+  const auto_archive=document.getElementById('rule-auto-archive').checked;
   const validDomain=/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
   if(!provider&&!keywords.length){toast('Indica proveedor, palabras clave o ambos','err');return;}
   if(provider&&!validDomain.test(provider)){toast('Usa un dominio de proveedor válido','err');return;}
-  const rule={id:editingRuleId||`rule_${Date.now().toString(36)}`,label,provider,keywords,keyword_operator,category,severity};
+  const rule={
+    id:editingRuleId||`rule_${Date.now().toString(36)}`,
+    label,provider,keywords,keyword_operator,category,severity,
+    gmail_label_id,auto_label,auto_archive
+  };
   if(editingRuleId)customRules=customRules.map(r=>r.id===editingRuleId?rule:r);
   else customRules.push(rule);
   const action=editingRuleId?'actualizada':'añadida';
   resetRuleForm();
   renderRules();renderCats();render();queueSaveState();
   toast(`Regla "${label}" ${action}`,'ok');
-}
-Object.entries(CATS).filter(([key])=>key!=='all').forEach(([key,value])=>{
-  const option=document.createElement('option');
-  option.value=key;option.textContent=value.label.replace(/^[^\p{L}\p{N}]+\s*/u,'');
-  document.getElementById('rule-category').appendChild(option);
-});
-document.getElementById('rule-add').addEventListener('click',addRule);
+  }
+
+  document.getElementById('rule-add').addEventListener('click',addRule);
+
 document.getElementById('rule-keywords').addEventListener('keydown',e=>{if(e.key==='Enter')addRule();});
 
 // ── CAT CHIPS ─────────────────────────────────────────────
@@ -922,7 +1048,8 @@ async function loadHiddenReviewPage(page=1){
   document.getElementById('hidden-list').innerHTML='<div class="empty"><span class="spin"></span>Cargando ocultos…</div>';
   renderHiddenPager();
   try{
-    const r=await fetch(`${API}/api/hidden?page=${hiddenReviewPage}`,{signal:AbortSignal.timeout(30000)});
+    const qParam=hiddenSearchQuery?`&q=${encodeURIComponent(hiddenSearchQuery)}`:'';
+    const r=await fetch(`${API}/api/hidden?page=${hiddenReviewPage}${qParam}`,{signal:AbortSignal.timeout(30000)});
     const d=await r.json();
     if(!r.ok)throw new Error(d.detail||d.error||`Error HTTP ${r.status}`);
     hiddenReviewItems=d.messages||[];
@@ -959,6 +1086,8 @@ async function openHiddenReview(){
   document.getElementById('hidden-modal').classList.add('show');
   hiddenSelected.clear();
   hiddenRangeAnchorId=null;
+  hiddenSearchQuery='';
+  document.getElementById('hidden-search').value='';
   document.getElementById('delete-confirm').value='';
   hiddenReviewPage=1;
   renderDeleteStatus();
@@ -1167,6 +1296,331 @@ document.getElementById('exp-copy').addEventListener('click',()=>{if(!expScope){
 document.getElementById('exp-dl').addEventListener('click',()=>{if(!expScope){toast('Elige alcance primero','err');return;}const blob=new Blob([buildExport(expScope,expFmt)],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const scopePart=expScope==='full'?'completo':'filtrado';a.download=`informe_operativo_${scopePart}_${new Date().toISOString().slice(0,10)}.${expFmt}`;a.click();toast(`Descargado .${expFmt}`,'ok');});
 ['exp-x','exp-cn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>document.getElementById('exp-modal').classList.remove('show')));
 
+async function exportEml(){
+  const ids=[...selected];
+  if(!ids.length){toast('Selecciona correos primero','err');return;}
+  const btn=document.getElementById('exp-eml');
+  const oldText=btn.textContent;
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span>Exportando…';
+  try{
+    const r=await fetch(`${API}/api/messages/export`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message_ids:ids})
+    });
+    const d=await r.json();
+    if(!r.ok){
+      const errBody=await r.json().catch(()=>({error:'Error HTTP '+r.status}));
+      throw new Error(errBody.detail||errBody.error||`Error HTTP ${r.status}`);
+    }
+    
+    toast(`📦 Guardado en /exports: ${d.file}`,'ok');
+    loadLocalExports();
+  }catch(e){
+    toast('Error exportando: '+e.message,'err');
+  }finally{
+    btn.disabled=false;
+    btn.textContent=oldText;
+  }
+}
+document.getElementById('exp-eml').addEventListener('click',exportEml);
+
+async function archiveSelection(){
+  const ids=[...selected];
+  if(!ids.length){toast('Selecciona correos primero','err');return;}
+  const btn=document.getElementById('archive-sel');
+  const oldText=btn.textContent;
+  btn.disabled=true;
+  btn.innerHTML='<span class="spin"></span>Archivando…';
+  try{
+    const r=await fetch(`${API}/api/messages/archive`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message_ids:ids})
+    });
+    const d=await r.json();
+    if(!r.ok){
+      if(r.status===403) throw new Error('Permisos insuficientes. Borra token.json y vuelve a autorizar.');
+      throw new Error(d.detail||d.error||`Error HTTP ${r.status}`);
+    }
+    // Ocultar localmente
+    ids.forEach(id=>{
+      deleted.add(id);
+      selected.delete(id);
+      openMessages.delete(id);
+    });
+    render();
+    toast(`📦 ${ids.length} correo${ids.length>1?'s':''} archivado${ids.length>1?'s':''} y ocultado${ids.length>1?'s':''}`,'ok');
+  }catch(e){
+    toast('Error archivando: '+e.message,'err');
+  }finally{
+    btn.disabled=false;
+    btn.textContent=oldText;
+  }
+}
+document.getElementById('archive-sel').addEventListener('click',archiveSelection);
+
+let gmailLabels=[],selectedLabelId=null,labelFilter='';
+async function loadLabels(){
+  const list=document.getElementById('lbl-list');
+  list.innerHTML='<div class="empty"><span class="spin"></span>Cargando etiquetas…</div>';
+  try{
+    const r=await fetch(`${API}/api/labels`);
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Error cargando etiquetas');
+    gmailLabels=d.labels||[];
+    renderLabels();
+    
+    // Poblar selector en modal de reglas
+    const sel=document.getElementById('rule-gmail-label');
+    if(sel){
+      const current=sel.value;
+      sel.innerHTML='<option value="">(Ninguna)</option>';
+      gmailLabels.forEach(l=>{
+        const opt=document.createElement('option');
+        opt.value=l.id;opt.textContent=l.name;
+        sel.appendChild(opt);
+      });
+      sel.value=current;
+    }
+  }catch(e){
+    list.innerHTML=`<div class="empty err">${e.message}</div>`;
+  }
+}
+function renderLabels(){
+  const list=document.getElementById('lbl-list');list.innerHTML='';
+  const filtered=gmailLabels.filter(l=>l.name.toLowerCase().includes(labelFilter.toLowerCase()));
+  
+  // Opción dinámica para crear nueva etiqueta
+  if(labelFilter.trim()){
+    const exactMatch=gmailLabels.find(l=>l.name.toLowerCase()===labelFilter.toLowerCase().trim());
+    if(!exactMatch){
+      const d=document.createElement('div');
+      d.className='hidden-item sel';
+      d.style.cssText='cursor:pointer; border-color:var(--v); background:rgba(74,158,255,0.05); margin-bottom:8px;';
+      d.innerHTML=`<div class="hidden-main"><div class="hidden-subject" style="color:var(--v)">✨ Crear etiqueta "${labelFilter.trim()}"</div></div>`;
+      d.onclick=()=>createLabelFlow(labelFilter.trim());
+      list.appendChild(d);
+    }
+  }
+
+  if(!filtered.length && !labelFilter.trim()){list.innerHTML='<div class="empty">No hay etiquetas disponibles</div>';return;}
+  if(!filtered.length && labelFilter.trim()){/* Ya se muestra la opción de crear */}
+
+  filtered.forEach(l=>{
+    const d=document.createElement('div');
+    d.className='hidden-item'+(selectedLabelId===l.id?' sel':'');
+    d.style.cursor='pointer';
+    d.innerHTML=`<div class="hidden-main"><div class="hidden-subject">🏷 ${l.name}</div></div>`;
+    d.onclick=()=>{selectedLabelId=l.id;renderLabels();document.getElementById('lbl-ok').disabled=false;};
+    list.appendChild(d);
+  });
+}
+async function openLabelModal(){
+  if(!selected.size){toast('Selecciona correos primero','err');return;}
+  document.getElementById('lbl-modal').classList.add('show');
+  selectedLabelId=null;labelFilter='';
+  document.getElementById('lbl-search').value='';
+  document.getElementById('lbl-ok').disabled=true;
+  await loadLabels();
+}
+async function applySelectedLabel(){
+  const ids=[...selected];
+  const archive=document.getElementById('lbl-archive-too').checked;
+  const btn=document.getElementById('lbl-ok');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Aplicando…';
+  try{
+    const r=await fetch(`${API}/api/messages/label`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message_ids:ids,label_id:selectedLabelId,archive})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||d.error||`Error HTTP ${r.status}`);
+    if(archive) ids.forEach(id=>{deleted.add(id);selected.delete(id);openMessages.delete(id);});
+    document.getElementById('lbl-modal').classList.remove('show');
+    render();
+    const lbl=gmailLabels.find(l=>l.id===selectedLabelId)?.name||'Etiqueta';
+    toast(`✓ ${ids.length} correo${ids.length>1?'s':''} con etiqueta "${lbl}"${archive?' y archivado(s)':''}`,'ok');
+  }catch(e){
+    toast('Error etiquetando: '+e.message,'err');
+    btn.disabled=false;btn.textContent='Aplicar etiqueta';
+  }
+}
+
+async function createLabelFlow(name){
+  const okBtn=document.getElementById('lbl-ok');
+  okBtn.disabled=true;
+  toast(`Creando etiqueta "${name}"…`,'ok');
+  try {
+    const r=await fetch(`${API}/api/labels`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name})
+    });
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||d.error||'Error creando etiqueta');
+    
+    const newLabel=d.label;
+    gmailLabels.push(newLabel);
+    selectedLabelId=newLabel.id;
+    labelFilter=''; // Limpiar filtro para ver la nueva lista
+    document.getElementById('lbl-search').value='';
+    renderLabels();
+    okBtn.disabled=false;
+    toast(`✓ Etiqueta "${name}" creada`,'ok');
+  } catch(e) {
+    toast('No se pudo crear: '+e.message,'err');
+    okBtn.disabled=true;
+  }
+}
+
+document.getElementById('lbl-sel').addEventListener('click',openLabelModal);
+['lbl-x','lbl-cn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>document.getElementById('lbl-modal').classList.remove('show')));
+document.getElementById('lbl-search').addEventListener('input',e=>{labelFilter=e.target.value;renderLabels();});
+document.getElementById('lbl-ok').addEventListener('click',applySelectedLabel);
+
+// ── EXPORTACIONES LOCALES Y LECTOR ──────────────────────
+let localExports=[];
+async function loadLocalExports(){
+  try{
+    const r=await fetch(`${API}/api/exports`);
+    const d=await r.json();
+    localExports=d.files||[];
+    renderLocalExports();
+  }catch(e){console.error('Error cargando exportaciones:', e);}
+}
+function renderLocalExports(){
+  const list=document.getElementById('exp-local-list');
+  const tag=document.getElementById('exp-tag');
+  tag.textContent=localExports.length;
+  if(!localExports.length){
+    list.innerHTML='<div class="empty">No hay archivos exportados todavía.</div>';
+    return;
+  }
+  list.innerHTML='';
+  localExports.forEach(f=>{
+    const d=document.createElement('div');
+    d.className='hidden-item'; d.style.cursor='pointer';
+    const date=new Date(f.mtime*1000).toLocaleString();
+    d.innerHTML=`<div class="hidden-main">
+      <div class="hidden-subject">${f.type==='zip'?'📦':'✉'} ${f.name}</div>
+      <div class="hidden-meta">${(f.size/1024).toFixed(1)} KB · ${date}</div>
+    </div>`;
+    d.onclick=()=>{
+      if(f.type==='eml') openEmlReader(f.name);
+      else toast('Los archivos .zip deben abrirse desde la carpeta /exports','err');
+    };
+    list.appendChild(d);
+  });
+}
+
+async function openEmlReader(filename, externalPath=''){
+  const modal=document.getElementById('reader-modal');
+  const frame=document.getElementById('reader-frame');
+  const txt=document.getElementById('reader-text');
+  const atts=document.getElementById('reader-attachments');
+  
+  modal.classList.add('show');
+  document.getElementById('reader-subject').textContent='Cargando…';
+  atts.innerHTML=''; frame.style.display='none'; txt.style.display='none';
+  
+  try{
+    const qs=new URLSearchParams();
+    if(externalPath) qs.set('path', externalPath);
+    else qs.set('file', filename);
+    
+    const r=await fetch(`${API}/api/read-eml?${qs.toString()}`);
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Error leyendo correo');
+    
+    const m=d.data;
+    document.getElementById('reader-subject').textContent=m.subject;
+    document.getElementById('reader-from').textContent=m.from;
+    document.getElementById('reader-to').textContent=m.to;
+    document.getElementById('reader-date').textContent=m.date;
+    
+    if(m.attachments.length){
+      m.attachments.forEach(a=>{
+        const chip=document.createElement('div');
+        chip.className='cchip on'; chip.style.background='var(--card)';
+        chip.innerHTML=`<span style="font-size:11px;">📎 ${esc(a.filename)} (${(a.size/1024).toFixed(0)} KB)</span>`;
+        atts.appendChild(chip);
+      });
+    }
+    
+    if(m.body_html){
+      frame.style.display='block';
+      frame.srcdoc=m.body_html;
+    } else {
+      txt.style.display='block';
+      txt.textContent=m.body_text;
+    }
+  }catch(e){
+    document.getElementById('reader-subject').textContent='Error';
+    txt.style.display='block'; txt.textContent=e.message;
+  }
+}
+
+document.getElementById('exp-import-btn').addEventListener('click',()=>document.getElementById('exp-import-file').click());
+document.getElementById('exp-import-file').addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  
+  const modal=document.getElementById('reader-modal');
+  const frame=document.getElementById('reader-frame');
+  const txt=document.getElementById('reader-text');
+  const atts=document.getElementById('reader-attachments');
+  
+  modal.classList.add('show');
+  document.getElementById('reader-subject').textContent='Parseando archivo local…';
+  atts.innerHTML=''; frame.style.display='none'; txt.style.display='none';
+
+  try {
+    // Leemos el archivo como ArrayBuffer para enviarlo al servidor
+    const buffer = await file.arrayBuffer();
+    const r=await fetch(`${API}/api/read-eml`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/octet-stream'},
+      body: buffer
+    });
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Error parseando archivo');
+    
+    const m=d.data;
+    document.getElementById('reader-subject').textContent=m.subject;
+    document.getElementById('reader-from').textContent=m.from;
+    document.getElementById('reader-to').textContent=m.to;
+    document.getElementById('reader-date').textContent=m.date;
+    
+    if(m.attachments.length){
+      m.attachments.forEach(a=>{
+        const chip=document.createElement('div');
+        chip.className='cchip on'; chip.style.background='var(--card)';
+        chip.innerHTML=`<span style="font-size:11px;">📎 ${esc(a.filename)} (${(a.size/1024).toFixed(0)} KB)</span>`;
+        atts.appendChild(chip);
+      });
+    }
+    
+    if(m.body_html){
+      frame.style.display='block';
+      frame.srcdoc=m.body_html;
+    } else {
+      txt.style.display='block';
+      txt.textContent=m.body_text;
+    }
+    toast(`Archivo "${file.name}" cargado`,'ok');
+  } catch(e) {
+    document.getElementById('reader-subject').textContent='Error';
+    txt.style.display='block'; txt.textContent=e.message;
+    toast('Error: '+e.message,'err');
+  }
+  e.target.value=''; // Reset input
+});
+
+['reader-x','reader-close'].forEach(id=>document.getElementById(id).addEventListener('click',()=>document.getElementById('reader-modal').classList.remove('show')));
+
 // Resúmenes y tendencias: static/summary.js
 
 // ── DELETE ────────────────────────────────────────────────
@@ -1177,6 +1631,12 @@ document.getElementById('manage-hidden').addEventListener('click',openHiddenRevi
 ['hidden-x','hidden-cn'].forEach(id=>document.getElementById(id).addEventListener('click',closeHiddenReview));
 document.getElementById('hidden-prev').addEventListener('click',()=>{if(hiddenReviewPage>1)loadHiddenReviewPage(hiddenReviewPage-1);});
 document.getElementById('hidden-next').addEventListener('click',()=>{if(hiddenReviewPage<hiddenReviewPages)loadHiddenReviewPage(hiddenReviewPage+1);});
+document.getElementById('hidden-search').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    hiddenSearchQuery=e.target.value.trim();
+    loadHiddenReviewPage(1);
+  }
+});
 document.getElementById('hidden-all').addEventListener('click',hiddenSelectAllCurrentPage);
 document.getElementById('hidden-none').addEventListener('click',hiddenClearSelection);
 document.getElementById('hidden-restore').addEventListener('click',restoreHiddenSelection);
@@ -1200,12 +1660,18 @@ document.getElementById('srch').addEventListener('input',e=>{cq=e.target.value;r
 
 // ── INIT ──────────────────────────────────────────────────
 async function init(){
+  await loadBaseConfig();
   await loadState();
+  await loadLocalExports();
   renderSenders();
   renderRules();
   renderCats();
   render();
   const status=await checkStatus();
   if(status&&status.token)await refreshSourcesFromGmail();
+  
+  // Soporte para abrir archivo externo via URL (?view=/path/to/file.eml)
+  const viewPath=new URLSearchParams(window.location.search).get('view');
+  if(viewPath) openEmlReader('', viewPath);
 }
 init();

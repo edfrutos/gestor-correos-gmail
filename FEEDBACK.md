@@ -1,68 +1,44 @@
 # Feedback Técnico y de Producto
 
-> Revisión viva sincronizada el 2026-06-11. Los milestones v1 a v5 están
-> completados y la suite automatizada contiene 121 pruebas.
+> Revisión viva sincronizada el 2026-06-12. Milestone v7.0 completado.
+> La suite automatizada contiene **129 pruebas** operativas.
 
 ## Sinopsis
+La herramienta ha evolucionado de un panel de lectura local a un gestor de inteligencia operativa bidireccional. Ahora permite organizar la bandeja de entrada real de Gmail mediante archivado, etiquetado y automatización inteligente, manteniendo una seguridad estricta y permitiendo el despliegue remoto seguro vía VPN.
 
-La herramienta funciona como panel local de inteligencia operativa sobre Gmail y cierra el ciclo de ocultos: revisión paginada, restauración, limpieza de huérfanos y borrado permanente bajo una frontera destructiva aislada y revocable.
+## Problemas Resueltos (v1 - v7)
 
-## Problemas Iniciales Resueltos
+### 1. Gestión Integral de Gmail
+- **Resuelto**: La app puede archivar (retirar INBOX) y gestionar etiquetas (listar, aplicar y crear dinámicamente) sin salir de la interfaz.
 
-### 1. CORS abierto en una API con acceso a Gmail
+### 2. Exportación de Contenido Íntegro
+- **Resuelto**: El usuario puede descargar archivos `.eml` (RFC822 crudo) o lotes en `.zip` con el contenido completo, incluyendo adjuntos originales.
 
-Resuelto: no se expone CORS abierto, la UI usa rutas relativas y el servidor rechaza explícitamente cabeceras `Host` no locales y orígenes externos.
+### 3. Deuda de Duplicidad (Reglas)
+- **Resuelto**: Se han unificado las categorías, colores y palabras clave en el backend (`classifier.py`), hidratando el frontend vía `/api/config`.
 
-### 2. Estado OAuth mezclado con estado de salud
+### 4. Despliegue Remoto y VPN
+- **Resuelto**: Configuración completa por variables de entorno, modo headless para servidores SSH y carga automática de `.env`.
 
-Resuelto: `/api/status` usa `gmail_status()` y no inicia OAuth.
+### 5. Búsqueda Avanzada
+- **Resuelto**: Integración de filtros por fechas (`after`/`before`) y texto literal nativo de Gmail, permitiendo búsquedas de contexto general.
 
-### 3. Render HTML vulnerable a entradas no confiables
+## Próximas Mejoras Recomendadas
 
-Mitigado: los datos Gmail y entradas dinámicas pasan por escape; permanecen algunos `innerHTML` estructurales controlados.
+- **Soporte Multi-cuenta**: Gestionar múltiples perfiles de Gmail desde la misma instancia del servidor.
+- **Sincronización AI Automática**: Permitir que las sugerencias de la IA se apliquen como "reglas temporales" para limpiezas masivas puntuales.
+- **Análisis de Adjuntos**: Filtrado avanzado por tipo de archivo, extensión y tamaño real detectado en Gmail.
+- **Histórico de Acciones**: Panel de auditoría detallado para revisar qué reglas automáticas han archivado qué correos recientemente.
 
-### 4. Sin persistencia local
+## Deuda Técnica Actual
 
-Resuelto: `storage.py` persiste fuentes, ocultados y preferencias en `app_state.json` mediante escritura atómica.
+- **Escalabilidad de Lotes**: Verificar el rendimiento del servidor ante archivados masivos de más de 200 correos simultáneos.
+- **Modularización JS**: Aunque está separado por archivos, algunos módulos siguen teniendo dependencias cruzadas mediante variables globales que podrían encapsularse mejor.
 
-### 5. Autorización destructiva persistente sin salida explícita
+## Criterio de Éxito Actualizado
 
-Resuelto: el token destructivo válido o renovable se reutiliza entre sesiones, pero puede revocarse desde la UI o `POST /api/delete-revoke`.
-
-### 6. Huérfanos confundidos con fallos temporales
-
-Resuelto: Gmail `not found` se clasifica como huérfano, se purga de la referencia oculta y de la sesión, y no reaparece tras recargar porque se retiró el pool estático `BASE`.
-
-## Mejoras Funcionales Recomendadas
-
-- Ampliar reglas configurables con reordenación y operadores más avanzados.
-- Histórico de búsquedas y fuentes.
-- Detección de duplicados y agrupación por conversación/asunto.
-- Informes especializados de costes, renovaciones, SSL, backups y seguridad.
-- Fuente de verdad única para eliminar de forma persistente mensajes base que ya no existen en Gmail.
-
-## Deuda Técnica Conocida
-
-- Unificar las reglas base de categorías y severidad duplicadas entre `classifier.py` y `static/app.js`.
-- Mantener Gmail como única fuente de verdad para los mensajes cargados.
-- Mantener bajo revisión los `innerHTML` estructurales del frontend cuando se añadan nuevas entradas dinámicas.
-
-## Arquitectura Actual
-
-Mantener un backend Python local, pero separar responsabilidades:
-
-- `server.py`: arranque HTTP y rutas.
-- `gmail_client.py`: OAuth y Gmail API.
-- `storage.py`: estado local JSON normalizado.
-- `classifier.py`: reglas de categorías, severidad y agrupación.
-- `destructive_gmail.py`: autorización destructiva separada, revocación y borrado permanente por lotes.
-- `index.html`: estructura de UI; estilos y comportamiento viven en activos estáticos separados.
-
-## Criterio de Éxito
-
-La herramienta debe permitir abrirla por la mañana y responder en menos de un minuto:
-
-- qué ha pasado,
-- qué requiere acción,
-- qué puede ignorarse,
-- qué debe documentarse o exportarse.
+La herramienta permite:
+1.  **Analizar**: Entender el estado técnico del buzón en segundos.
+2.  **Organizar**: Archivar y etiquetar masivamente para mantener el Inbox a cero.
+3.  **Automatizar**: Que el sistema aprenda de las acciones locales y proponga reglas de Gmail.
+4.  **Exportar**: Extraer evidencias técnicas (.eml) de forma segura.

@@ -56,6 +56,11 @@ Detectar y priorizar correos técnicos importantes sin exponer datos de Gmail fu
 - [x] Afinar la limpieza local de huérfanos para distinguir mejor entre ocultos disponibles, no localizables y ya desconectados de Gmail.
 - [x] Mejorar el flujo operativo de mantenimiento para que la gestión destructiva y la limpieza local sean más claros y menos angustiantes.
 
+### Pending Product Backlog
+
+- [ ] Exportar uno o varios correos seleccionados incluyendo el cuerpo íntegro de cada mensaje, no sólo cabeceras, resumen, metadatos o extracto.
+- [ ] Desplegar como servicio autónomo monousuario accesible desde cualquier lugar mediante VPN privada sobre Internet, sin exposición pública.
+
 ## Current Milestone: v5.0 Destructive Revocation, Orphan Cleanup, and Operational Clarity
 
 **Status:** Completed.
@@ -100,6 +105,7 @@ El proyecto está modularizado en `server.py`, `gmail_client.py`, `destructive_g
 | Mantener fijo el lote máximo en 100 | Evita ambigüedad operativa y mantiene el contrato destructivo estable | ✓ Decided |
 | Convertir la limpieza de huérfanos en un flujo de mantenimiento más claro | Evita que IDs desconectados se confundan con mensajes aún gestionables | ✓ Decided |
 | Retirar el pool `BASE` incrustado | Evita almacenar contenido Gmail en el código y que mensajes inexistentes reaparezcan tras recargar | ✓ Done |
+| Acceso remoto privado mediante VPN | Permite uso monousuario desde cualquier lugar sin convertir la app en servicio público ni exponer directamente sus tokens Gmail | Decided for next milestone |
 
 ---
 *Last updated: 2026-06-11 after completing phase 18 of v5.0*

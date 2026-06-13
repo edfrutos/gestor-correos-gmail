@@ -116,6 +116,24 @@
 - [x] **ARCH-06**: El frontend no incrusta contenido de correos y carga fuentes fijas y personalizadas desde Gmail.
 - [x] **INT-05**: Las reglas personalizadas permiten exigir alguna o todas las palabras clave.
 
+## Product Backlog
+
+### Full Message Content Export
+
+- [ ] **EXP-01**: El usuario puede exportar uno o varios correos seleccionados incluyendo el cuerpo íntegro de cada mensaje.
+- [ ] **EXP-02**: La exportación completa incluye también las cabeceras y metadatos necesarios para identificar cada correo.
+- [ ] **EXP-03**: La UI distingue claramente entre exportar un informe operativo y exportar el contenido completo de los correos seleccionados.
+- [ ] **EXP-04**: La exportación completa obtiene el mensaje desde Gmail bajo demanda y no persiste cuerpos de correo en `app_state.json`.
+
+### Private VPN Remote Deployment
+
+- [ ] **NET-01**: La aplicación se ejecuta como servicio autónomo monousuario y puede accederse desde cualquier lugar mediante una VPN privada sobre Internet.
+- [ ] **NET-02**: Sólo dispositivos autorizados en la VPN privada pueden alcanzar la aplicación; no existe acceso público directo.
+- [ ] **NET-03**: El servidor restringe el puerto de la aplicación a la interfaz o red VPN y el firewall bloquea accesos desde Internet público.
+- [ ] **NET-04**: Los tokens Gmail, credenciales OAuth y estado privado se almacenan fuera del repositorio con permisos y secretos adecuados para servidor.
+- [ ] **NET-05**: El borrado permanente permanece desactivado por defecto y requiere controles reforzados en cualquier despliegue remoto.
+- [ ] **NET-06**: El servidor deja de depender de `webbrowser.open`, permite configurar interfaz/puerto y valida la IP o nombre VPN autorizado.
+
 ## Out of Scope
 
 | Feature | Reason |
@@ -183,6 +201,16 @@
 | UI-04 | Phase 18 | Done |
 | ARCH-06 | Post-v5 reliability | Done |
 | INT-05 | Post-v5 reliability | Done |
+| EXP-01 | Product backlog | Pending |
+| EXP-02 | Product backlog | Pending |
+| EXP-03 | Product backlog | Pending |
+| EXP-04 | Product backlog | Pending |
+| NET-01 | Product backlog | Pending |
+| NET-02 | Product backlog | Pending |
+| NET-03 | Product backlog | Pending |
+| NET-04 | Product backlog | Pending |
+| NET-05 | Product backlog | Pending |
+| NET-06 | Product backlog | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
@@ -196,7 +224,8 @@
 - v5 mapped to phases: 3
 - Post-v5 requirements: 2 total
 - Post-v5 mapped to follow-up: 2
-- Unmapped: 0
+- Product backlog requirements: 10 total
+- Unmapped active milestone: 0
 
 ---
 *Requirements defined: 2026-05-31*

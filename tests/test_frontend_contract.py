@@ -142,7 +142,7 @@ def test_hidden_review_and_permanent_delete_are_explicit_flows():
     assert 'Afecta a Gmail' in html
     assert 'No toca Gmail' in html
     assert 'Irreversible' in html
-    assert "fetch(`${API}/api/hidden?page=${hiddenReviewPage}`" in js
+    assert "fetch(`${API}/api/hidden?page=${hiddenReviewPage}${qParam}`" in js
     assert 'shiftKey' in js and 'hiddenRangeAnchorId' in js
     assert 'metaKey||ev.ctrlKey' in js
     assert "status==='orphan'" in js

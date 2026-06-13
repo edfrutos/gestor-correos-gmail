@@ -146,11 +146,21 @@ def test_handle_search_rejects_invalid_params_before_gmail(monkeypatch):
 
     monkeypatch.setattr(server, 'gmail', fake_gmail)
 
-    handler.handle_search('sender=&max=abc')
+    handler.handle_search('max=abc')
 
     assert handler.status_sent == 400
-    assert response_json(handler)['error'] == 'Parámetro sender requerido'
+    assert response_json(handler)['error'] == 'Parámetro max inválido'
     assert called is False
+
+
+def test_handle_search_rejects_empty_query(monkeypatch):
+    handler = DummyHandler()
+    monkeypatch.setattr(server, 'gmail', lambda: object())
+
+    handler.handle_search('sender=&q=&after=&before=')
+
+    assert handler.status_sent == 400
+    assert response_json(handler)['error'] == 'Búsqueda vacía'
 
 
 def test_handle_search_returns_success_with_monkeypatched_gmail(monkeypatch):
@@ -160,7 +170,11 @@ def test_handle_search_returns_success_with_monkeypatched_gmail(monkeypatch):
     monkeypatch.setattr(server, 'gmail', lambda: object())
     rules = [{'id': 'rule_1'}]
     monkeypatch.setattr(server, 'load_state', lambda: {'custom_rules': rules})
-    monkeypatch.setattr(server, 'search', lambda sender, max_r, custom_rules: [{'id': '1', 'rules': custom_rules}])
+    
+    def fake_search(**kwargs):
+        return [{'id': '1', 'rules': kwargs.get('custom_rules', [])}]
+    
+    monkeypatch.setattr(server, 'search', fake_search)
 
     handler.handle_search('sender=example.com&max=5')
 
@@ -198,7 +212,7 @@ def test_handle_search_converts_gmail_exception(monkeypatch):
 
     monkeypatch.setattr(server, 'load_state', lambda: {'custom_rules': []})
 
-    def fail(sender, max_r, custom_rules):
+    def fail(**kwargs):
         raise RuntimeError('gmail down')
 
     monkeypatch.setattr(server, 'search', fail)
@@ -529,3 +543,37 @@ def test_handle_delete_revoke_returns_updated_state(monkeypatch):
     assert handler.status_sent == 200
     assert body['permanent_delete']['state'] == 'revoked'
     assert body['permanent_delete']['revoked'] is True
+
+
+def test_handle_messages_export_single_eml(monkeypatch):
+    handler = DummyHandler(request_body({'message_ids': ['m1']}))
+    monkeypatch.setattr(server, 'GMAIL_OK', True)
+    monkeypatch.setattr(server, 'CREDS', ExistingPath())
+    monkeypatch.setattr(server, 'gmail', lambda: object())
+    monkeypatch.setattr(server, 'get_message_raw', lambda mid: b'EML DATA')
+
+    handler.handle_messages_export()
+
+    assert handler.status_sent == 200
+    assert ('Content-Type', 'message/rfc822') in handler.headers_sent
+    assert ('Content-Disposition', 'attachment; filename="m1.eml"') in handler.headers_sent
+    assert handler.wfile.getvalue() == b'EML DATA'
+
+
+def test_handle_messages_export_zip(monkeypatch):
+    handler = DummyHandler(request_body({'message_ids': ['m1', 'm2']}))
+    monkeypatch.setattr(server, 'GMAIL_OK', True)
+    monkeypatch.setattr(server, 'CREDS', ExistingPath())
+    monkeypatch.setattr(server, 'gmail', lambda: object())
+    monkeypatch.setattr(server, 'get_message_raw', lambda mid: f'EML {mid}'.encode())
+
+    handler.handle_messages_export()
+
+    assert handler.status_sent == 200
+    assert ('Content-Type', 'application/zip') in handler.headers_sent
+    
+    import zipfile
+    with zipfile.ZipFile(BytesIO(handler.wfile.getvalue())) as zf:
+        assert zf.namelist() == ['m1.eml', 'm2.eml']
+        assert zf.read('m1.eml') == b'EML m1'
+        assert zf.read('m2.eml') == b'EML m2'

@@ -63,10 +63,9 @@ def test_gmail_reauthorizes_after_revoked_refresh_token(monkeypatch, tmp_path):
             return '{"token": "fresh"}'
 
     class FakeFlow:
-        def run_local_server(self, port):
+        def run_local_server(self, port, open_browser=True):
             assert port == 0
             return FreshCredentials()
-
     token = tmp_path / 'token.json'
     token.write_text('{"token": "revoked"}', encoding='utf-8')
     credentials = tmp_path / 'credentials.json'
@@ -250,6 +249,33 @@ def test_get_message_fetches_full_message(monkeypatch):
     assert 'severity' in msg
 
 
+def test_get_message_raw_fetches_raw_message(monkeypatch):
+    raw_content = b'Subject: test\r\n\r\nbody'
+    encoded = base64.urlsafe_b64encode(raw_content).decode('ascii')
+
+    class MessageGet:
+        def execute(self):
+            return {'id': 'm1', 'raw': encoded}
+
+    class Messages:
+        def get(self, **kwargs):
+            assert kwargs['id'] == 'm1'
+            assert kwargs['format'] == 'raw'
+            return MessageGet()
+
+    class Users:
+        def messages(self):
+            return Messages()
+
+    class Service:
+        def users(self):
+            return Users()
+
+    monkeypatch.setattr('gmail_client.gmail', lambda: Service())
+
+    assert gmail_client.get_message_raw('m1') == raw_content
+
+
 def test_search_limits_total_messages_not_only_threads(monkeypatch):
     messages = [
         {
@@ -285,7 +311,7 @@ def test_search_limits_total_messages_not_only_threads(monkeypatch):
 
     monkeypatch.setattr('gmail_client.gmail', lambda: Service())
 
-    assert [msg['id'] for msg in search('example.com', 3)] == ['m0', 'm1', 'm2']
+    assert [msg['id'] for msg in search('example.com', max_r=3)] == ['m0', 'm1', 'm2']
 
 
 def test_search_excludes_other_senders_from_matching_thread(monkeypatch):
@@ -318,7 +344,7 @@ def test_search_excludes_other_senders_from_matching_thread(monkeypatch):
 
     monkeypatch.setattr('gmail_client.gmail', lambda: Service())
 
-    assert [msg['id'] for msg in search('example.com', 30)] == ['wanted']
+    assert [msg['id'] for msg in search('example.com', max_r=30)] == ['wanted']
 
 
 def test_gmail_operations_are_serialized_for_shared_service(monkeypatch):

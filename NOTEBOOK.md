@@ -45,10 +45,10 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
 - Fuente de verdad Gmail para fuentes fijas y personalizadas, sin pool base incrustado.
 - Reglas editables por usuario con alta, edición, borrado y operador de palabras clave `alguna`/`todas`.
 - Resúmenes por periodo completados para 7/30 días; informes especializados por tipo de riesgo siguen siendo una posible ampliación.
-- Exportación de informes en Markdown/JSON/EML con formato más robusto.
+- Exportación del contenido completo de uno o varios correos seleccionados: cuerpo íntegro del mensaje, cabeceras y metadatos. La exportación operativa actual sólo genera resumen/cabecera y no satisface este pendiente.
 
 ## Próximas Preguntas
 
-- ¿Debe ser una app estrictamente local o una herramienta compartible en red privada?
+- Desplegar como servicio autónomo monousuario accesible desde cualquier lugar por Internet mediante VPN privada; no será una aplicación pública.
 - ¿El objetivo principal es auditoría histórica, alerta diaria o reporting mensual?
 - ¿Quieres que llegue a modificar Gmail, por ejemplo archivar o etiquetar, o debe seguir siendo solo lectura?

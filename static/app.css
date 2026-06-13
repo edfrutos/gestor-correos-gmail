@@ -46,6 +46,17 @@ h1{font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-.02em;min-width
 /* loading spinner inline */
 .spin{display:inline-block;width:10px;height:10px;border:2px solid #4a9eff44;border-top-color:var(--v);border-radius:50%;animation:spin .6s linear infinite;margin-right:5px;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* search form */
+.search-form{display:grid;gap:12px;margin-bottom:8px;}
+.s-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.s-field{display:grid;gap:4px;flex:1;min-width:140px;}
+.s-field span{font-size:var(--text-caption);color:var(--mut);text-transform:uppercase;letter-spacing:.05em;}
+.s-field input{background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:7px 10px;font-family:'DM Mono',monospace;color:var(--txt);outline:none;transition:border-color .15s;}
+.s-field input:focus{border-color:var(--v);}
+.s-field input:disabled{opacity:.4;}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1) saturate(5) hue-rotate(175deg);}
+
 /* cats */
 .catgrid{display:flex;flex-wrap:wrap;gap:5px;}
 .cchip{cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-weight:500;border:1px solid;transition:all .15s;user-select:none;}

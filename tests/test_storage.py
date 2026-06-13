@@ -65,6 +65,7 @@ def test_normalize_state_persists_hidden_ids_and_preferences():
         'source_filter': 'cu',
         'category_filter': 'warn',
         'search_query': 'plesk',
+        'ai_suggestions_enabled': False,
     }
 
 
@@ -88,6 +89,9 @@ def test_normalize_state_accepts_custom_rules():
         'keyword_operator': 'any',
         'category': 'ssl',
         'severity': 'high',
+        'gmail_label_id': '',
+        'auto_label': False,
+        'auto_archive': False,
     }]
 
 

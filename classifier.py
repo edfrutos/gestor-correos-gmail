@@ -2,8 +2,14 @@ from email.utils import parseaddr
 
 
 CATEGORIES = {
+    'all': {
+        'label': '🌐 Todos',
+        'color': 'var(--v)',
+        'keys': [],
+    },
     'money': {
-        'label': 'Monetario',
+        'label': '💰 Monetario',
+        'color': 'var(--w)',
         'keys': [
             'invoice', 'factura', 'billing', 'amount', 'price', '€', '$',
             'statement', 'cobro', 'pago', 'cargo', 'receipt', 'recibo',
@@ -11,7 +17,8 @@ CATEGORIES = {
         ],
     },
     'warn': {
-        'label': 'Avisos',
+        'label': '⚠ Avisos',
+        'color': 'var(--d)',
         'keys': [
             'expires tomorrow', 'final notice', 'urgent', 'warning',
             'exceeded', 'failed', 'could not', 'expiring', 'aviso', 'alerta',
@@ -20,7 +27,8 @@ CATEGORIES = {
         ],
     },
     'sub': {
-        'label': 'Suscripción',
+        'label': '🔄 Suscripción',
+        'color': 'var(--p)',
         'keys': [
             'subscription', 'renew', 'renewal', 'suscripci', 'licencia',
             'license', 'plan', 'imunify', 'amazon music', 'se renovará',
@@ -28,26 +36,31 @@ CATEGORIES = {
         ],
     },
     'ssl': {
-        'label': 'SSL/Certs',
+        'label': '🔒 SSL/Certs',
+        'color': '#9ca3af',
         'keys': ["let's encrypt", 'certificate', 'ssl', 'tls', 'cert', 'acme', 'expiration notice'],
     },
     'sec': {
-        'label': 'Seguridad',
+        'label': '🛡 Seguridad',
+        'color': '#f43f5e',
         'keys': [
             'security', 'vulnerability', 'cve', 'malware', 'security patch',
             'exposed', 'access key', 'verification', 'unauthorized',
         ],
     },
     'maint': {
-        'label': 'Mantenimiento',
+        'label': '🔧 Mantenimiento',
+        'color': '#22d3ee',
         'keys': ['maintenance', 'scheduled', 'network upgrade', 'patch', 'restart', 'backup task', 'package update'],
     },
     'domain': {
-        'label': 'Dominio',
+        'label': '🌐 Dominio',
+        'color': '#60a5fa',
         'keys': ['domain', 'dominio', 'whois', 'registr', 'alta del dominio', 'renovación de dominio', 'expire', 'expira', 'dns'],
     },
     'comm': {
-        'label': 'Comunicación',
+        'label': '📢 Comunicación',
+        'color': 'var(--s)',
         'keys': [
             "what's new", 'newsletter', 'update', 'release', 'features',
             'novedades', 'adjustments', 'announcement', 'email routing',
@@ -79,7 +92,23 @@ CATEGORY_SEVERITY_REASON = {
     'comm': 'Comunicación informativa',
 }
 
+SEVERITY_META = {
+    'high': {'label': 'Alta', 'color': 'var(--d)'},
+    'medium': {'label': 'Media', 'color': 'var(--o)'},
+    'low': {'label': 'Baja', 'color': 'var(--s)'},
+}
+
 SEVERITY_ORDER = ('high', 'medium', 'low')
+
+
+def get_base_config():
+    return {
+        'categories': CATEGORIES,
+        'category_severity': CATEGORY_SEVERITY,
+        'category_severity_reason': CATEGORY_SEVERITY_REASON,
+        'severity_meta': SEVERITY_META,
+        'severity_order': SEVERITY_ORDER,
+    }
 
 
 def _sender_domain(from_header):
@@ -101,7 +130,7 @@ def classify_email(email):
     ]).lower()
     return [
         key for key, category in CATEGORIES.items()
-        if any(term in haystack for term in category['keys'])
+        if key != 'all' and any(term in haystack for term in category['keys'])
     ]
 
 

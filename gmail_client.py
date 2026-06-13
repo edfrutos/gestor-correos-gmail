@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import base64
 import threading
@@ -21,7 +22,7 @@ except ImportError:
     GMAIL_OK = False
 
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 BASE_DIR = Path(__file__).parent
 CREDS = BASE_DIR / 'credentials.json'
 TOKEN = BASE_DIR / 'token.json'
@@ -70,7 +71,8 @@ def gmail():
             if not CREDS.exists():
                 return None
             flow = InstalledAppFlow.from_client_secrets_file(str(CREDS), SCOPES)
-            creds = flow.run_local_server(port=0)
+            headless = os.getenv('HEADLESS') == '1'
+            creds = flow.run_local_server(port=0, open_browser=not headless)
 
         _write_token(creds.to_json())
         _svc = build('gmail', 'v1', credentials=creds)
@@ -255,13 +257,24 @@ def get_message(message_id, custom_rules=None):
     return _message_from_gmail(msg, custom_rules)
 
 
-def search(sender, max_r=30, custom_rules=None):
+def search(sender='', after='', before='', q='', max_r=30, custom_rules=None):
     svc = gmail()
     if not svc:
         return []
+
+    parts = []
+    if sender: parts.append(f'from:{sender}')
+    if after: parts.append(f'after:{after}')
+    if before: parts.append(f'before:{before}')
+    if q: parts.append(f'"{q}"' if ' ' in q else q)
+    
+    query = ' '.join(parts)
+    if not query:
+        return []
+
     out = []
     with _api_lock:
-        resp = svc.users().threads().list(userId='me', q=f'from:{sender}', maxResults=max_r).execute()
+        resp = svc.users().threads().list(userId='me', q=query, maxResults=max_r).execute()
         for thread_ref in resp.get('threads', []):
             thread = svc.users().threads().get(
                 userId='me',
@@ -274,12 +287,74 @@ def search(sender, max_r=30, custom_rules=None):
                     item.get('name', '').lower(): item.get('value', '')
                     for item in msg.get('payload', {}).get('headers', [])
                 }
-                if not _sender_matches(headers.get('from', ''), sender):
+                
+                # Filtrado interno riguroso
+                if sender and not _sender_matches(headers.get('from', ''), sender):
                     continue
+                
+                msg_date = norm_date(headers.get('date', ''))
+                if after and msg_date < after.replace('/', '-'):
+                    continue
+                if before and msg_date > before.replace('/', '-'):
+                    continue
+
                 out.append(_message_from_gmail(msg, custom_rules))
                 if len(out) >= max_r:
                     return out
     return out
+
+
+def archive_messages(message_ids):
+    svc = gmail()
+    if not svc:
+        return None
+    with _api_lock:
+        return svc.users().messages().batchModify(
+            userId='me',
+            body={
+                'ids': message_ids,
+                'removeLabelIds': ['INBOX']
+            }
+        ).execute()
+
+
+def get_labels():
+    svc = gmail()
+    if not svc:
+        return []
+    with _api_lock:
+        resp = svc.users().labels().list(userId='me').execute()
+        labels = resp.get('labels', [])
+        return [
+            {'id': l['id'], 'name': l['name']}
+            for l in labels if l.get('type') == 'user'
+        ]
+
+
+def create_label(name):
+    svc = gmail()
+    if not svc:
+        return None
+    with _api_lock:
+        return svc.users().labels().create(
+            userId='me',
+            body={
+                'name': name,
+                'labelListVisibility': 'labelShow',
+                'messageListVisibility': 'show'
+            }
+        ).execute()
+
+
+def apply_label(message_ids, label_id, archive=False):
+    svc = gmail()
+    if not svc:
+        return None
+    body = {'ids': message_ids, 'addLabelIds': [label_id]}
+    if archive:
+        body['removeLabelIds'] = ['INBOX']
+    with _api_lock:
+        return svc.users().messages().batchModify(userId='me', body=body).execute()
 
 
 def get_attachment(message_id, attachment_id):
@@ -294,3 +369,28 @@ def get_attachment(message_id, attachment_id):
         ).execute().get('data', '')
     padding = '=' * (-len(data) % 4)
     return base64.urlsafe_b64decode((data + padding).encode('ascii'))
+
+
+def search_message_ids_by_query(query, max_r=500):
+    svc = gmail()
+    if not svc:
+        return []
+    with _api_lock:
+        resp = svc.users().messages().list(userId='me', q=query, maxResults=max_r).execute()
+        return [m['id'] for m in resp.get('messages', [])]
+
+
+def get_message_raw(message_id):
+    svc = gmail()
+    if not svc:
+        return None
+    with _api_lock:
+        msg = svc.users().messages().get(
+            userId='me',
+            id=message_id,
+            format='raw',
+        ).execute()
+    data = msg.get('raw', '')
+    if not data:
+        return b''
+    return base64.urlsafe_b64decode(data.encode('ascii'))

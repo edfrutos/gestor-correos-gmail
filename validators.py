@@ -19,10 +19,12 @@ def parse_max(raw):
     return value
 
 
-def validate_sender(raw):
+def validate_sender(raw, required=True):
     sender = (raw or '').strip().lower().lstrip('@')
     if not sender:
-        raise ApiError('Parámetro sender requerido', detail='Indica un dominio o email')
+        if required:
+            raise ApiError('Parámetro sender requerido', detail='Indica un dominio o email')
+        return ''
 
     label = r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?'
     domain_re = rf'{label}(?:\.{label})+'
@@ -35,6 +37,16 @@ def validate_sender(raw):
         'Parámetro sender inválido',
         detail='Usa un dominio o email simple, por ejemplo plesk.com o aviso@example.com'
     )
+
+
+def validate_date(raw, name='fecha'):
+    if not raw:
+        return ''
+    # Soportar YYYY-MM-DD y YYYY/MM/DD
+    m = re.fullmatch(r'(\d{4})[-/](\d{2})[-/](\d{2})', raw.strip())
+    if not m:
+        raise ApiError(f'Parámetro {name} inválido', detail=f'{name} debe tener formato AAAA-MM-DD')
+    return f"{m.group(1)}/{m.group(2)}/{m.group(3)}"
 
 
 def validate_gmail_id(raw, name='id'):

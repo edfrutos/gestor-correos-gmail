@@ -420,3 +420,76 @@ Verification:
 - Logo y favicon locales servidos desde la allowlist de activos.
 - Retirada del pool estático `BASE`; las fuentes fijas y personalizadas se cargan desde Gmail.
 - Reglas personalizadas ampliadas con coincidencia de alguna o todas las palabras clave.
+
+## Product Backlog — Refinements & Future Features
+
+## Milestone 6: Remote Deployment and Full Export
+
+Goal: habilitar la operación remota segura y la extracción de contenidos íntegros sin persistencia local.
+
+### Phase 19 — Full Message Content Export
+
+**Status:** Completed 2026-06-12.
+
+**Outcome:** el usuario puede exportar el contenido completo de los correos en formato .eml o .zip.
+
+Scope:
+- Obtención de cuerpo RFC822 vía Gmail `format=raw`.
+- Descarga individual (.eml) o por lotes (.zip).
+- Sin persistencia de contenidos en el servidor local.
+
+### Phase 20 — Private VPN Remote Deployment
+
+**Status:** Completed 2026-06-12.
+
+**Outcome:** la aplicación puede ejecutarse como servicio remoto seguro a través de una VPN.
+
+Scope:
+- Configuración por variables de entorno (HOST, PORT, HEADLESS).
+- Soporte para orígenes personalizados (CORS) y carga de `.env`.
+- Documentación de despliegue y flujo OAuth sin navegador.
+
+## Milestone 7: Gmail Management and Automation
+
+Goal: transformar la app en una herramienta de gestión bidireccional con Gmail, permitiendo organizar el buzón real mediante reglas e IA.
+
+### Phase 21-23 — Refinamiento de Búsqueda y Reglas
+
+**Status:** Completed 2026-06-12.
+
+**Outcome:** búsqueda avanzada integrada y lógica unificada.
+
+Scope:
+- Buscador integrado en el modal de ocultos.
+- Unificación de categorías y severidades en el backend (`classifier.py`).
+- Búsqueda avanzada por fechas y texto literal nativo de Gmail.
+
+### Phase 24-25 — Gestión de Gmail (Archive & Labels)
+
+**Status:** Completed 2026-06-12.
+
+**Outcome:** el usuario puede organizar su cuenta de Gmail directamente desde la app.
+
+Scope:
+- Elevación de scope a `gmail.modify`.
+- Acción de archivado real (retirar INBOX) con ocultado local automático.
+- Gestión de etiquetas: listar, aplicar y crear etiquetas dinámicamente.
+
+### Phase 26-29 — Automatización, IA e Integración Local
+
+**Status:** Completed 2026-06-12.
+
+**Outcome:** reglas proactivas, sugerencias inteligentes e integración profunda con el SO.
+
+Scope:
+- Auto-etiquetado y Auto-archivado vinculado a reglas personalizadas.
+- Sugerencias AI de reglas basadas en acciones locales (opcional).
+- Directorio de exportación persistente (`/exports`) sin descargas de navegador.
+- Lector EML integrado en la app (sin dependencias externas).
+- Integración con macOS Services ("Acciones rápidas").
+
+## Product Backlog — Future Features
+
+- **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.
+- **Histórico de Auditoría Extendido:** Trazabilidad completa de acciones AI y archivados masivos.
+- **Análisis de Adjuntos:** Búsqueda y filtrado avanzado por tipo/tamaño de archivo adjunto.

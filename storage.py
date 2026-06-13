@@ -167,6 +167,9 @@ def _normalize_custom_rules(raw_rules):
             'keyword_operator': 'all' if item.get('keyword_operator') == 'all' else 'any',
             'category': category,
             'severity': severity,
+            'gmail_label_id': _bounded_text(item.get('gmail_label_id'), 128),
+            'auto_label': bool(item.get('auto_label', False)),
+            'auto_archive': bool(item.get('auto_archive', False)),
         })
     return out
 
@@ -189,6 +192,7 @@ def _normalize_preferences(raw_preferences):
         'source_filter': source_filter,
         'category_filter': category_filter,
         'search_query': _bounded_text(raw_preferences.get('search_query'), 200),
+        'ai_suggestions_enabled': bool(raw_preferences.get('ai_suggestions_enabled', False)),
     }
 
 

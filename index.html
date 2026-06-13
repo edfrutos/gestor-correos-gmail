@@ -29,21 +29,28 @@
   <span id="smsg">Verificando conexión con Gmail…</span>
 </div>
 
-<!-- ① REMITENTES -->
+<!-- ① BÚSQUEDA EN GMAIL -->
 <div class="panel" id="p-snd">
   <div class="ph" onclick="togglePanel('p-snd')">
-    <div class="pt">📬 Remitentes activos <span class="ptag" style="background:#4a9eff18;border:1px solid #4a9eff44;color:var(--v)" id="snd-tag">—</span></div>
+    <div class="pt">🔍 Búsqueda en Gmail <span class="ptag" style="background:#4a9eff18;border:1px solid #4a9eff44;color:var(--v)" id="snd-tag">— fuentes</span></div>
     <span class="pc">▾</span>
   </div>
   <div class="pb">
     <div class="cgrid" id="snd-chips"></div>
-    <p class="support-copy" style="margin-bottom:5px;">Quick-add (pool pre-cargado):</p>
-    <div class="kdgrid" id="kd-grid"></div>
-    <div class="arow">
-      <input class="ainp" id="snd-inp" type="text" placeholder="web.dev, paypal.com, cualquier@remitente.com…">
-      <button class="addbtn" id="snd-add">+ Buscar en Gmail</button>
+    <p class="support-copy" style="margin-bottom:8px;">Filtros de búsqueda (al menos uno):</p>
+    <div class="search-form">
+      <div class="s-row">
+        <label class="s-field"><span>Remitente</span><input id="snd-inp" type="text" placeholder="ej. paypal.com"></label>
+        <label class="s-field"><span>Texto literal</span><input id="snd-q" type="text" placeholder="ej. factura"></label>
+      </div>
+      <div class="s-row">
+        <label class="s-field"><span>Desde</span><input id="snd-after" type="date"></label>
+        <label class="s-field"><span>Hasta</span><input id="snd-before" type="date"></label>
+        <button class="addbtn" id="snd-add" style="margin-top:16px;">+ Buscar en Gmail</button>
+      </div>
     </div>
-    <p class="hint" id="search-hint">Escribe cualquier dominio o email y se buscará <b>en tiempo real</b> en tu Gmail a través del servidor local.</p>
+    <p class="hint" id="search-hint">Usa las fechas para una búsqueda de <b>contexto general</b> o combina filtros para mayor precisión.</p>
+    <div class="kdgrid" id="kd-grid" style="margin-top:12px;"></div>
   </div>
 </div>
 
@@ -59,20 +66,59 @@
   </div>
 </div>
 
-<!-- ③ REGLAS PERSONALIZADAS -->
+<!-- ③ EXPORTACIONES LOCALES -->
+<div class="panel" id="p-exp">
+  <div class="ph" onclick="togglePanel('p-exp')">
+    <div class="pt">📦 Exportaciones locales <span class="ptag" id="exp-tag">0</span></div>
+    <span class="pc">▾</span>
+  </div>
+  <div class="pb">
+    <div class="arow" style="margin-bottom:10px;">
+        <button class="addbtn" id="exp-import-btn" style="background:var(--surf); border-color:var(--v); color:var(--v); font-size:11px;">📂 Abrir archivo .eml externo...</button>
+        <input type="file" id="exp-import-file" accept=".eml" style="display:none;">
+    </div>
+    <div id="exp-local-list" class="hidden-list" style="display:block; max-height:200px;">
+      <div class="empty">No hay archivos exportados todavía.</div>
+    </div>
+    <p class="hint">Los archivos se guardan en la carpeta <code>/exports</code> del proyecto.</p>
+  </div>
+</div>
+
+<!-- ④ REGLAS PERSONALIZADAS -->
 <div class="panel" id="p-rules">
   <div class="ph" onclick="togglePanel('p-rules')">
     <div class="pt">⚙ Reglas personalizadas <span class="ptag" style="background:#e879f918;border:1px solid #e879f944;color:#e879f9" id="rules-tag">0</span></div>
     <span class="pc">▾</span>
   </div>
   <div class="pb">
+    <div class="f-row" style="margin-bottom:15px; border-bottom:1px solid var(--bdr); padding-bottom:10px;">
+      <label class="s-field" style="flex-direction:row; gap:8px; cursor:pointer; align-items:center; height:auto;">
+        <input type="checkbox" id="ai-sugg-toggle" style="width:auto; margin:0">
+        <span style="text-transform:none; letter-spacing:0; font-weight:normal;">💡 Habilitar sugerencias de reglas por IA</span>
+      </label>
+      <button class="mab cp" id="ai-sugg-btn" style="display:none; font-size:var(--text-caption); padding:4px 10px;">Sugerir reglas ahora</button>
+    </div>
+    <div id="ai-sugg-box" style="display:none; margin-bottom:20px; background:rgba(74,158,255,0.03); border:1px dashed var(--v); border-radius:8px; padding:12px;">
+      <div style="font-size:var(--text-caption); color:var(--v); margin-bottom:8px; font-weight:bold; text-transform:uppercase;">IA · Sugerencias basadas en tus acciones</div>
+      <div id="ai-sugg-list" class="catgrid" style="gap:10px;"></div>
+    </div>
     <div class="rule-form">
+
       <label class="rule-field"><span>Nombre</span><input id="rule-label" maxlength="80" placeholder="SSL crítico"></label>
       <label class="rule-field"><span>Proveedor</span><input id="rule-provider" maxlength="253" placeholder="plesk.com"></label>
       <label class="rule-field wide"><span>Palabras clave</span><input id="rule-keywords" maxlength="500" placeholder="final notice, expires tomorrow"></label>
       <label class="rule-field"><span>Coincidencia</span><select id="rule-keyword-operator"><option value="any">Alguna palabra</option><option value="all">Todas las palabras</option></select></label>
       <label class="rule-field"><span>Categoría</span><select id="rule-category"></select></label>
       <label class="rule-field"><span>Severidad</span><select id="rule-severity"><option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option></select></label>
+      <label class="rule-field"><span>Vincular etiqueta de Gmail</span><select id="rule-gmail-label"><option value="">(Ninguna)</option></select></label>
+      <label class="rule-field wide" style="flex-direction:row; gap:8px; cursor:pointer; align-items:center; margin-top:5px; height:auto; padding:5px 0;">
+        <input type="checkbox" id="rule-auto-label" style="width:auto; margin:0">
+        <span style="text-transform:none; letter-spacing:0; font-weight:normal;">Aplicar etiqueta automáticamente al localizar correos</span>
+      </label>
+      <label class="rule-field wide" style="flex-direction:row; gap:8px; cursor:pointer; align-items:center; margin-top:0; height:auto; padding:5px 0;">
+        <input type="checkbox" id="rule-auto-archive" style="width:auto; margin:0">
+        <span style="text-transform:none; letter-spacing:0; font-weight:normal;">Archivar automáticamente (quita de Recibidos y oculta localmente)</span>
+      </label>
       <button class="addbtn" id="rule-add" type="button">+ Añadir regla</button>
     </div>
     <p class="support-copy" style="margin-top:7px;">Proveedor y palabras clave son opcionales por separado; si indicas ambos, deben coincidir. Puedes exigir alguna o todas las palabras.</p>
@@ -98,6 +144,9 @@
     <button class="xbtn" id="sel-all">☑ Todos</button>
     <button class="xbtn" id="desel">☐ Ninguno</button>
     <button class="xbtn ei" id="exp-open">⬇ Exportar informe</button>
+    <button class="xbtn ei" id="exp-eml">✉ Exportar EML</button>
+    <button class="xbtn" id="lbl-sel">🏷 Etiquetar</button>
+    <button class="xbtn" id="archive-sel">📦 Archivar</button>
     <button class="xbtn ds" id="del-sel">🙈 Ocultar</button>
   </div>
 </div>
@@ -172,6 +221,7 @@
     <div class="mttl">Ocultos locales</div>
     <p class="support-copy">Restaura mensajes, manténlos ocultos, limpia huérfanos locales o borra en Gmail. Usa Shift para seleccionar un rango y Cmd/Ctrl para alternar mensajes individuales. Sólo los huérfanos se pueden limpiar localmente. El borrado en Gmail es inmediato e irreversible.</p>
     <div class="hidden-tools">
+      <input type="text" id="hidden-search" placeholder="Buscar por remitente, asunto..." class="ainp" style="max-width:300px;margin-right:auto;">
       <button class="mab cp" id="hidden-all">Seleccionar página</button>
       <button class="mab cn" id="hidden-none">Ninguno</button>
       <span id="hidden-selected">0 seleccionados</span>
@@ -215,6 +265,49 @@
       <div class="mact">
         <button class="mab ds" id="hidden-delete">Eliminar permanentemente de Gmail</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="lbl-modal">
+  <div class="mbox">
+    <button class="mclose" id="lbl-x">✕</button>
+    <div class="mttl">Etiquetar en Gmail</div>
+    <div class="hidden-tools" style="margin-top:0">
+      <input type="text" id="lbl-search" placeholder="Filtrar etiquetas..." class="ainp" style="width:100%">
+    </div>
+    <div id="lbl-list" class="hidden-list" style="max-height:300px; margin:10px 0; display:block;">
+      <div class="empty">Cargando etiquetas…</div>
+    </div>
+    <label class="s-field" style="flex-direction:row; gap:8px; cursor:pointer; align-items:center; margin-bottom:15px;">
+      <input type="checkbox" id="lbl-archive-too" checked style="width:auto">
+      <span>Archivar correos al etiquetar</span>
+    </label>
+    <div class="mbtns">
+      <button class="mab cn" id="lbl-cn">Cancelar</button>
+      <button class="mab cp" id="lbl-ok" disabled>Aplicar etiqueta</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="reader-modal">
+  <div class="mbox" style="max-width:900px; height:90vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+    <button class="mclose" id="reader-x" style="top:15px; right:15px; z-index:10;">✕</button>
+    <div class="reader-head" style="padding:20px; border-bottom:1px solid var(--bdr); background:var(--surf);">
+      <div id="reader-subject" style="font-size:18px; font-weight:bold; margin-bottom:10px; color:var(--v);"></div>
+      <div style="display:grid; grid-template-columns:auto 1fr; gap:5px 15px; font-size:var(--text-caption); color:var(--mut);">
+        <span>De:</span> <b id="reader-from" style="color:var(--txt);"></b>
+        <span>Para:</span> <span id="reader-to"></span>
+        <span>Fecha:</span> <span id="reader-date"></span>
+      </div>
+      <div id="reader-attachments" class="catgrid" style="margin-top:12px; gap:8px;"></div>
+    </div>
+    <div class="reader-body" style="flex:1; overflow:hidden; position:relative; background:#fff;">
+      <iframe id="reader-frame" style="width:100%; height:100%; border:none; background:#fff;"></iframe>
+      <pre id="reader-text" style="width:100%; height:100%; margin:0; padding:20px; white-space:pre-wrap; overflow:auto; display:none; color:#333; font-family:monospace;"></pre>
+    </div>
+    <div class="reader-footer" style="padding:10px 20px; background:var(--surf); border-top:1px solid var(--bdr); display:flex; gap:10px; justify-content:flex-end;">
+      <button class="mab cn" id="reader-close">Cerrar visor</button>
     </div>
   </div>
 </div>
