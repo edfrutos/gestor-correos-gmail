@@ -1591,6 +1591,31 @@ function renderLocalExports(){
   });
 }
 
+// Convierte los adjuntos EML (con data base64) en chips descargables
+function buildEmlAttachmentChips(attachments, container){
+  container.innerHTML='';
+  attachments.forEach(a=>{
+    const chip=document.createElement('a');
+    chip.className='cchip on';
+    chip.style.cssText='background:var(--card);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;';
+    chip.title=`Descargar ${a.filename}`;
+    chip.innerHTML=`<span style="font-size:11px;">📎 ${esc(a.filename)} (${(a.size/1024).toFixed(0)} KB)</span>`;
+    if(a.data){
+      // Crear blob desde base64 y forzar descarga
+      chip.addEventListener('click', ev=>{
+        ev.preventDefault();
+        const bytes=Uint8Array.from(atob(a.data), c=>c.charCodeAt(0));
+        const blob=new Blob([bytes],{type:a.mime_type||'application/octet-stream'});
+        const url=URL.createObjectURL(blob);
+        const dl=document.createElement('a');
+        dl.href=url; dl.download=a.filename;
+        dl.click();
+        setTimeout(()=>URL.revokeObjectURL(url),2000);
+      });
+    }
+    container.appendChild(chip);
+  });
+}
 async function openEmlReader(filename, externalPath=''){
   const modal=document.getElementById('reader-modal');
   const frame=document.getElementById('reader-frame');
@@ -1616,14 +1641,7 @@ async function openEmlReader(filename, externalPath=''){
     document.getElementById('reader-to').textContent=m.to;
     document.getElementById('reader-date').textContent=m.date;
     
-    if(m.attachments.length){
-      m.attachments.forEach(a=>{
-        const chip=document.createElement('div');
-        chip.className='cchip on'; chip.style.background='var(--card)';
-        chip.innerHTML=`<span style="font-size:11px;">📎 ${esc(a.filename)} (${(a.size/1024).toFixed(0)} KB)</span>`;
-        atts.appendChild(chip);
-      });
-    }
+    if(m.attachments.length) buildEmlAttachmentChips(m.attachments, atts);
     
     if(m.body_html){
       frame.style.display='block';
@@ -1669,14 +1687,7 @@ document.getElementById('exp-import-file').addEventListener('change',async e=>{
     document.getElementById('reader-to').textContent=m.to;
     document.getElementById('reader-date').textContent=m.date;
     
-    if(m.attachments.length){
-      m.attachments.forEach(a=>{
-        const chip=document.createElement('div');
-        chip.className='cchip on'; chip.style.background='var(--card)';
-        chip.innerHTML=`<span style="font-size:11px;">📎 ${esc(a.filename)} (${(a.size/1024).toFixed(0)} KB)</span>`;
-        atts.appendChild(chip);
-      });
-    }
+    if(m.attachments.length) buildEmlAttachmentChips(m.attachments, atts);
     
     if(m.body_html){
       frame.style.display='block';

@@ -15,6 +15,7 @@ USO:
 """
 
 import io
+import base64
 import json
 import os
 import threading
@@ -788,10 +789,12 @@ class H(BaseHTTPRequestHandler):
             content_type = part.get_content_type()
             disposition = part.get_content_disposition()
             if disposition == 'attachment':
+                payload = part.get_payload(decode=True) or b''
                 data['attachments'].append({
-                    'filename': part.get_filename(),
-                    'mime_type': content_type,
-                    'size': len(part.get_payload(decode=True) or b'')
+                    'filename': part.get_filename() or 'adjunto',
+                    'mime_type': content_type or 'application/octet-stream',
+                    'size': len(payload),
+                    'data': base64.b64encode(payload).decode('ascii')
                 })
                 continue
             if content_type == 'text/plain':
