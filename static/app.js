@@ -1362,28 +1362,46 @@ async function archiveSelection(){
 document.getElementById('archive-sel').addEventListener('click',archiveSelection);
 
 let gmailLabels=[],selectedLabelId=null,labelFilter='';
-async function loadLabels(){
-  const list=document.getElementById('lbl-list');
-  list.innerHTML='<div class="empty"><span class="spin"></span>Cargando etiquetas…</div>';
+// Poblar el <select> de etiquetas en el formulario de reglas
+function populateRuleGmailLabelSelect(){
+  const sel=document.getElementById('rule-gmail-label');
+  if(!sel)return;
+  const current=sel.value;
+  sel.innerHTML='<option value="">(Ninguna)</option>';
+  gmailLabels.forEach(l=>{
+    const opt=document.createElement('option');
+    opt.value=l.id;opt.textContent=l.name;
+    sel.appendChild(opt);
+  });
+  // Restaurar selección previa si sigue siendo válida
+  sel.value=current;
+}
+// Carga las etiquetas de Gmail y rellena el selector de reglas (sin tocar el modal)
+async function fetchGmailLabels(){
   try{
     const r=await fetch(`${API}/api/labels`);
     const d=await r.json();
     if(!r.ok)throw new Error(d.error||'Error cargando etiquetas');
     gmailLabels=d.labels||[];
-    renderLabels();
-    
-    // Poblar selector en modal de reglas
-    const sel=document.getElementById('rule-gmail-label');
-    if(sel){
-      const current=sel.value;
-      sel.innerHTML='<option value="">(Ninguna)</option>';
-      gmailLabels.forEach(l=>{
-        const opt=document.createElement('option');
-        opt.value=l.id;opt.textContent=l.name;
-        sel.appendChild(opt);
-      });
-      sel.value=current;
+    populateRuleGmailLabelSelect();
+  }catch(e){
+    // Fallo silencioso al arrancar: el selector queda con (Ninguna)
+    console.warn('[Labels] No se pudieron cargar las etiquetas:', e.message);
+  }
+}
+async function loadLabels(){
+  const list=document.getElementById('lbl-list');
+  list.innerHTML='<div class="empty"><span class="spin"></span>Cargando etiquetas…</div>';
+  try{
+    // Reusar cache si ya tenemos etiquetas; si no, recargar
+    if(!gmailLabels.length){
+      const r=await fetch(`${API}/api/labels`);
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.error||'Error cargando etiquetas');
+      gmailLabels=d.labels||[];
+      populateRuleGmailLabelSelect();
     }
+    renderLabels();
   }catch(e){
     list.innerHTML=`<div class="empty err">${e.message}</div>`;
   }
@@ -1468,6 +1486,7 @@ async function createLabelFlow(name){
     labelFilter=''; // Limpiar filtro para ver la nueva lista
     document.getElementById('lbl-search').value='';
     renderLabels();
+    populateRuleGmailLabelSelect(); // Sincronizar selector de reglas
     okBtn.disabled=false;
     toast(`✓ Etiqueta "${name}" creada`,'ok');
   } catch(e) {
@@ -1668,7 +1687,11 @@ async function init(){
   renderCats();
   render();
   const status=await checkStatus();
-  if(status&&status.token)await refreshSourcesFromGmail();
+  if(status&&status.token){
+    await refreshSourcesFromGmail();
+    // Cargar etiquetas de Gmail al arrancar para que el selector de reglas esté listo
+    fetchGmailLabels();
+  }
   
   // Soporte para abrir archivo externo via URL (?view=/path/to/file.eml)
   const viewPath=new URLSearchParams(window.location.search).get('view');
