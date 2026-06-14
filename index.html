@@ -110,7 +110,18 @@
       <label class="rule-field"><span>Coincidencia</span><select id="rule-keyword-operator"><option value="any">Alguna palabra</option><option value="all">Todas las palabras</option></select></label>
       <label class="rule-field"><span>Categoría</span><select id="rule-category"></select></label>
       <label class="rule-field"><span>Severidad</span><select id="rule-severity"><option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option></select></label>
-      <label class="rule-field"><span>Vincular etiqueta de Gmail</span><select id="rule-gmail-label"><option value="">(Ninguna)</option></select></label>
+      <div class="rule-field" id="rule-gmail-label-field">
+        <span>Vincular etiqueta de Gmail</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="rule-gmail-label" style="flex:1;min-height:36px;background:var(--surf);border:1px solid var(--bdr);border-radius:7px;color:var(--txt);padding:7px 8px;font:inherit;min-width:0;"><option value="">(Ninguna)</option></select>
+          <button type="button" id="rule-new-label-btn" title="Crear nueva etiqueta de Gmail" style="flex-shrink:0;height:36px;padding:0 10px;background:transparent;border:1px solid var(--v);border-radius:7px;color:var(--v);font-size:13px;cursor:pointer;white-space:nowrap;">+ Nueva</button>
+        </div>
+        <div id="rule-new-label-row" style="display:none;gap:6px;align-items:center;margin-top:4px;">
+          <input id="rule-new-label-inp" maxlength="80" placeholder="Nombre de la etiqueta…" style="flex:1;min-height:34px;background:var(--surf);border:1px solid var(--v);border-radius:7px;color:var(--txt);padding:6px 8px;font:inherit;min-width:0;">
+          <button type="button" id="rule-new-label-ok" style="flex-shrink:0;height:34px;padding:0 10px;background:var(--v);border:none;border-radius:7px;color:#fff;font-size:13px;cursor:pointer;">✓</button>
+          <button type="button" id="rule-new-label-cancel" style="flex-shrink:0;height:34px;padding:0 10px;background:transparent;border:1px solid var(--bdr);border-radius:7px;color:var(--mut);font-size:13px;cursor:pointer;">✕</button>
+        </div>
+      </div>
       <label class="rule-field wide" style="flex-direction:row; gap:8px; cursor:pointer; align-items:center; margin-top:5px; height:auto; padding:5px 0;">
         <input type="checkbox" id="rule-auto-label" style="width:auto; margin:0">
         <span style="text-transform:none; letter-spacing:0; font-weight:normal;">Aplicar etiqueta automáticamente al localizar correos</span>

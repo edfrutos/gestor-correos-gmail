@@ -1500,6 +1500,62 @@ document.getElementById('lbl-sel').addEventListener('click',openLabelModal);
 document.getElementById('lbl-search').addEventListener('input',e=>{labelFilter=e.target.value;renderLabels();});
 document.getElementById('lbl-ok').addEventListener('click',applySelectedLabel);
 
+// ── CREAR ETIQUETA INLINE DESDE FORMULARIO DE REGLAS ──────
+(function(){
+  const btn   = document.getElementById('rule-new-label-btn');
+  const row   = document.getElementById('rule-new-label-row');
+  const inp   = document.getElementById('rule-new-label-inp');
+  const okBtn = document.getElementById('rule-new-label-ok');
+  const cnBtn = document.getElementById('rule-new-label-cancel');
+
+  function openInline(){
+    row.style.display='flex';
+    inp.value='';
+    inp.focus();
+    btn.style.display='none';
+  }
+  function closeInline(){
+    row.style.display='none';
+    btn.style.display='';
+    inp.value='';
+  }
+  async function createInline(){
+    const name=inp.value.trim();
+    if(!name){inp.focus();return;}
+    okBtn.disabled=true;
+    okBtn.textContent='…';
+    try{
+      const r=await fetch(`${API}/api/labels`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name})
+      });
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.detail||d.error||'Error creando etiqueta');
+      const newLabel=d.label;
+      gmailLabels.push(newLabel);
+      populateRuleGmailLabelSelect();
+      document.getElementById('rule-gmail-label').value=newLabel.id;
+      closeInline();
+      toast(`✓ Etiqueta "${name}" creada y seleccionada`,'ok');
+    }catch(e){
+      toast('No se pudo crear: '+e.message,'err');
+    }finally{
+      okBtn.disabled=false;
+      okBtn.textContent='✓';
+    }
+  }
+
+  btn.addEventListener('click',openInline);
+  cnBtn.addEventListener('click',closeInline);
+  okBtn.addEventListener('click',createInline);
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();createInline();}
+    if(e.key==='Escape'){closeInline();}
+  });
+})();
+
+
 // ── EXPORTACIONES LOCALES Y LECTOR ──────────────────────
 let localExports=[];
 async function loadLocalExports(){
