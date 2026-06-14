@@ -68,6 +68,13 @@ STATIC_FILES = {
     '/static/logo.svg': ('image/svg+xml', BASE_DIR / 'static' / 'logo.svg'),
     '/static/favicon.svg': ('image/svg+xml', BASE_DIR / 'static' / 'favicon.svg'),
 }
+def _header_hostname(value):
+    try:
+        return urlparse(f'//{value}').hostname
+    except ValueError:
+        return None
+
+
 LOCAL_HOSTS = {'localhost', '127.0.0.1', '::1', HOST}
 LOCAL_ORIGINS = {
     f'http://localhost:{PORT}',
@@ -78,7 +85,7 @@ if HOST != 'localhost':
     LOCAL_ORIGINS.add(f'http://{HOST}:{PORT}')
 
 for o in ENV_ORIGINS:
-    o = o.strip()
+    o = o.strip().rstrip('/')   # normalizar: el header Origin nunca lleva barra final
     if not o: continue
     if not o.startswith('http'):
         LOCAL_ORIGINS.add(f'http://{o}')
@@ -87,12 +94,6 @@ for o in ENV_ORIGINS:
         LOCAL_ORIGINS.add(o)
         LOCAL_HOSTS.add(_header_hostname(urlparse(o).netloc) or urlparse(o).hostname)
 
-
-def _header_hostname(value):
-    try:
-        return urlparse(f'//{value}').hostname
-    except ValueError:
-        return None
 
 
 def _parse_page(raw, name='page'):
