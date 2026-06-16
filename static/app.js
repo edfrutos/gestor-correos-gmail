@@ -474,6 +474,9 @@ async function addSrc(raw){
   }
 
   document.getElementById('snd-inp').value='';
+  // Colapsar panel de búsqueda y mostrar resultados
+  document.getElementById('p-snd').classList.add('col');
+  document.getElementById('p-cat').classList.remove('col');
   renderCats();
   render();
   queueSaveState();
@@ -671,6 +674,12 @@ document.getElementById('ai-sugg-toggle').addEventListener('change',e=>{
   queueSaveState();
 });
 document.getElementById('ai-sugg-btn').addEventListener('click',suggestAiRules);
+document.getElementById('ai-sugg-reset').addEventListener('click',()=>{
+  currentAiSuggestions=[];
+  document.getElementById('ai-sugg-box').style.display='none';
+  document.getElementById('ai-sugg-list').innerHTML='';
+  toast('Sugerencias eliminadas','ok');
+});
 function resetRuleForm(){
   editingRuleId=null;
   ['rule-label','rule-provider','rule-keywords'].forEach(id=>document.getElementById(id).value='');
@@ -714,42 +723,76 @@ document.getElementById('rule-search').addEventListener('input',e=>{ruleSearch=e
 // ── CAT CHIPS ─────────────────────────────────────────────
 function renderCats(){
   const grid=document.getElementById('cat-grid');grid.innerHTML='';
+  const base=filteredBySrc();
+
   Object.entries(CATS).forEach(([k,v])=>{
+    const cnt=k==='all'?base.length:base.filter(e=>cats(e).includes(k)).length;
+    if(k!=='all'&&cnt===0)return;
     const chip=document.createElement('div');
     chip.className='cchip'+(activeCat===k?' on':'');
     chip.dataset.cat=k;
     chip.style.cssText=`border-color:${v.color}66;color:${v.color};${activeCat===k?`background:${v.color}30`:``}`;
-    chip.innerHTML=`${v.label} <span class="cn" id="cn-${k}"></span>`;
+    chip.innerHTML=`${v.label} <span class="cn">${cnt}</span>`;
     chip.addEventListener('click',()=>{activeCat=k;renderCats();render();queueSaveState();});
     grid.appendChild(chip);
   });
-  if(customRules.length){
+
+  const activeRules=customRules.filter(rule=>
+    base.filter(e=>matchingRules(e).some(r=>r.id===rule.id)).length>0
+  );
+  if(activeRules.length){
     const sep=document.createElement('div');
     sep.style.cssText='width:100%;flex-basis:100%;border-top:1px solid var(--bdr);margin:4px 0;';
     grid.appendChild(sep);
-    customRules.forEach(rule=>{
+    activeRules.forEach(rule=>{
+      const cnt=base.filter(e=>matchingRules(e).some(r=>r.id===rule.id)).length;
       const rk='__rule__'+rule.id;
       const col=CATS[rule.category]?.color||'var(--v)';
       const chip=document.createElement('div');
       chip.className='cchip'+(activeCat===rk?' on':'');
       chip.dataset.cat=rk;
       chip.style.cssText=`border-color:${col}66;color:${col};${activeCat===rk?`background:${col}30`:''}`;
-      chip.innerHTML=`⚙ ${esc(rule.label)} <span class="cn" id="cn-${rk}"></span>`;
+      chip.innerHTML=`⚙ ${esc(rule.label)} <span class="cn">${cnt}</span>`;
       chip.addEventListener('click',()=>{activeCat=rk;renderCats();render();queueSaveState();});
       grid.appendChild(chip);
     });
   }
+
+  renderCatEmailList();
 }
-function updateCatCounts(){
-  const base=filteredBySrc();
-  Object.keys(CATS).forEach(k=>{
-    const el=document.getElementById('cn-'+k);
-    if(el)el.textContent=k==='all'?base.length:base.filter(e=>cats(e).includes(k)).length;
+
+function renderCatEmailList(){
+  const container=document.getElementById('cat-email-list');
+  if(!container)return;
+  container.innerHTML='';
+  const items=queueItems();
+  if(!items.length){
+    container.innerHTML='<div class="cat-empty">Sin correos en la vista actual.</div>';
+    return;
+  }
+  items.slice(0,60).forEach(e=>{
+    const dt=e._date;
+    const col=srcColor(e);
+    const row=document.createElement('div');
+    row.className='cat-email-row';
+    row.innerHTML=`
+      <span class="cer-dot" style="background:${col}"></span>
+      <span class="cer-from">${esc(providerName(e))}</span>
+      <span class="cer-sub">${esc(e._summary)}</span>
+      <span class="cer-date">${esc(dt.day+' '+dt.mo)}</span>
+    `;
+    row.addEventListener('click',()=>{
+      const orig=activeEmails.find(ae=>ae.id===e.id)||e;
+      openEmailModal(orig);
+    });
+    container.appendChild(row);
   });
-  customRules.forEach(rule=>{
-    const el=document.getElementById('cn-__rule__'+rule.id);
-    if(el)el.textContent=base.filter(e=>matchingRules(e).some(r=>r.id===rule.id)).length;
-  });
+  if(items.length>60){
+    const more=document.createElement('div');
+    more.className='cat-more';
+    more.textContent=`+${items.length-60} más · filtra con los chips de arriba`;
+    container.appendChild(more);
+  }
 }
 
 // ── FILTROS ───────────────────────────────────────────────
@@ -941,7 +984,7 @@ function render(){
     `<span class="sseg" style="color:var(--o)">◆ ${sevCounts.medium}</span>`+
     `<span class="sseg" style="color:var(--s)">● ${sevCounts.low}</span>`;
   document.getElementById('total-pill').textContent=`${tot} correos`;
-  updateSelCount();updateCatCounts();updateHiddenBar();
+  updateSelCount();renderCats();updateHiddenBar();
 }
 
 // ── EMAIL MODAL ───────────────────────────────────────────

@@ -62,7 +62,8 @@
   </div>
   <div class="pb">
     <div class="catgrid" id="cat-grid"></div>
-    <p class="support-copy" style="margin-top:6px;">Detección automática por palabras clave en asunto y cuerpo · Las reglas ⚙ personalizadas aparecen debajo con su conteo en tiempo real.</p>
+    <p class="support-copy" style="margin-top:6px;">Solo se muestran categorías con correos en la búsqueda actual · Las reglas ⚙ personalizadas aparecen cuando tienen coincidencias.</p>
+    <div id="cat-email-list" class="cat-email-list"></div>
   </div>
 </div>
 
@@ -99,7 +100,10 @@
       <button class="mab cp" id="ai-sugg-btn" style="display:none; font-size:var(--text-caption); padding:4px 10px;">Sugerir reglas ahora</button>
     </div>
     <div id="ai-sugg-box" style="display:none; margin-bottom:20px; background:rgba(74,158,255,0.03); border:1px dashed var(--v); border-radius:8px; padding:12px;">
-      <div style="font-size:var(--text-caption); color:var(--v); margin-bottom:8px; font-weight:bold; text-transform:uppercase;">IA · Sugerencias basadas en tus acciones</div>
+      <div style="font-size:var(--text-caption); color:var(--v); margin-bottom:8px; font-weight:bold; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+        <span>IA · Sugerencias basadas en tus acciones</span>
+        <button id="ai-sugg-reset" style="background:transparent;border:1px solid #4a9eff44;border-radius:5px;color:var(--v);font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit;">✕ Limpiar</button>
+      </div>
       <div id="ai-sugg-list" class="catgrid" style="gap:10px;"></div>
     </div>
     <div class="rule-form">
