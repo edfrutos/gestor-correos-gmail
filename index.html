@@ -62,7 +62,7 @@
   </div>
   <div class="pb">
     <div class="catgrid" id="cat-grid"></div>
-    <p class="support-copy" style="margin-top:6px;">Detección automática por palabras clave en asunto y cuerpo.</p>
+    <p class="support-copy" style="margin-top:6px;">Detección automática por palabras clave en asunto y cuerpo · Las reglas ⚙ personalizadas aparecen debajo con su conteo en tiempo real.</p>
   </div>
 </div>
 
@@ -133,7 +133,10 @@
       <button class="addbtn" id="rule-add" type="button">+ Añadir regla</button>
     </div>
     <p class="support-copy" style="margin-top:7px;">Proveedor y palabras clave son opcionales por separado; si indicas ambos, deben coincidir. Puedes exigir alguna o todas las palabras.</p>
-    <div class="rule-list" id="rule-list"></div>
+    <div style="margin-top:10px;margin-bottom:6px;">
+      <input id="rule-search" class="ainp" placeholder="Buscar reglas por nombre, proveedor o palabra clave…" style="width:100%;">
+    </div>
+    <div class="rule-list" id="rule-list" style="max-height:280px;overflow-y:auto;"></div>
   </div>
 </div>
 
@@ -319,6 +322,21 @@
     </div>
     <div class="reader-footer" style="padding:10px 20px; background:var(--surf); border-top:1px solid var(--bdr); display:flex; gap:10px; justify-content:flex-end;">
       <button class="mab cn" id="reader-close">Cerrar visor</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="email-modal">
+  <div class="mbox" style="max-width:780px;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:88vh;min-width:0;">
+    <button class="mclose" id="email-modal-x" style="top:15px;right:15px;z-index:10;">✕</button>
+    <div id="email-modal-head" style="padding:18px 18px 12px;border-bottom:1px solid var(--bdr);background:var(--surf);flex-shrink:0;">
+      <div id="email-modal-sub" style="font-family:'Syne',sans-serif;font-weight:700;font-size:var(--text-subheading);color:var(--txt);margin-bottom:10px;padding-right:28px;overflow-wrap:anywhere;line-height:1.3;"></div>
+      <div id="email-modal-badges" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;min-height:0;">
+      <div class="ef" id="email-modal-ef"></div>
+      <div class="ebody" id="email-modal-body"></div>
+      <div class="ca-row" id="email-modal-actions" style="padding:10px 14px 14px;"></div>
     </div>
   </div>
 </div>

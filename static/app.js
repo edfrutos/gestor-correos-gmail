@@ -207,6 +207,9 @@ const deleted=new Set(),selected=new Set(),openMessages=new Set();
 let pendingDel=[],expData=null,expFmt='md',expScope=null;
 let summaryDays=30,summaryData=null;
 let stateReady=false,saveTimer=null,saveInFlight=false,savePending=false,editingRuleId=null;
+let ruleSearch='';
+let emailModalEmail=null;
+const groupSearches={};
 let aiSuggestionsEnabled=false, currentAiSuggestions=[];
 let hiddenReviewItems=[],deletionAudit=[];
 const hiddenSelected=new Set();
@@ -281,7 +284,8 @@ function applyState(state){
   deletionAudit=Array.isArray(s.deletion_audit)?s.deletion_audit:[];
   const p=s.preferences||{};
   cq=String(p.search_query||'');
-  activeCat=CATS[p.category_filter]?p.category_filter:'all';
+  const savedCat=p.category_filter||'all';
+  activeCat=(savedCat==='all'||CATS[savedCat]||savedCat.startsWith('__rule__'))?savedCat:'all';
   aiSuggestionsEnabled=Boolean(p.ai_suggestions_enabled);
   document.getElementById('ai-sugg-toggle').checked=aiSuggestionsEnabled;
   updateAiSuggUI();
@@ -378,6 +382,7 @@ async function hydrateMessageAttachments(email){
   }finally{
     sources.forEach(item=>{item._attLoading=false;});
     render();
+    if(emailModalEmail&&sources.some(s=>s.id===emailModalEmail.id))renderEmailModal();
   }
 }
 
@@ -480,6 +485,7 @@ function renderSenders(){
   const grid=document.getElementById('snd-chips');grid.innerHTML='';
   [...FIXED,...customSrcs].forEach(s=>{
     const cnt=activeEmails.filter(e=>!deleted.has(e.id)&&e.from&&e.from.includes(s.dom)).length;
+    if(cnt===0)return;
     const chip=document.createElement('div');
     chip.className='schip';
     chip.style.cssText=`border-color:${s.color}88;color:${s.color};background:${s.color}14`;
@@ -530,11 +536,17 @@ function renderRules(){
   const list=document.getElementById('rule-list');
   list.innerHTML='';
   document.getElementById('rules-tag').textContent=customRules.length;
-  if(!customRules.length){
-    list.innerHTML='<div class="empty">Sin reglas personalizadas. Se aplican las reglas base.</div>';
+  const q=ruleSearch.toLowerCase().trim();
+  const toShow=q?customRules.filter(r=>
+    r.label.toLowerCase().includes(q)||
+    r.provider.toLowerCase().includes(q)||
+    r.keywords.some(kw=>kw.includes(q))
+  ):customRules;
+  if(!toShow.length){
+    list.innerHTML=q?'<div class="empty">Sin reglas que coincidan con la búsqueda.</div>':'<div class="empty">Sin reglas personalizadas. Se aplican las reglas base.</div>';
     return;
   }
-  customRules.forEach(rule=>{
+  toShow.forEach(rule=>{
     const item=document.createElement('div');
     item.className='rule-item';
     const conditions=[rule.provider?`Proveedor: ${rule.provider}`:'',rule.keywords.length?`Texto (${rule.keyword_operator==='all'?'todas':'alguna'}): ${rule.keywords.join(', ')}`:''].filter(Boolean).join(' · ');
@@ -576,14 +588,35 @@ function updateAiSuggUI(){
 }
 
 async function suggestAiRules(){
-  const hiddenEmails=activeEmails.filter(e=>deleted.has(e.id)).map(e=>({from:e.from,sub:e.sub}));
+  let hiddenEmails=activeEmails.filter(e=>deleted.has(e.id)).map(e=>({from:e.from,sub:e.sub}));
+
+  // Si no hay ocultos en sesión pero sí en el estado persistido, los cargamos de la API
+  if(!hiddenEmails.length&&deleted.size>0){
+    toast('Cargando correos ocultos para la IA…','ok');
+    try{
+      // Paginamos hasta 3 páginas para obtener hasta ~60 emails para el análisis
+      for(let pg=1;pg<=3&&hiddenEmails.length<60;pg++){
+        const r=await fetch(`${API}/api/hidden?page=${pg}`,{signal:AbortSignal.timeout(15000)});
+        const d=await r.json();
+        if(!r.ok)break;
+        const batch=(d.messages||[])
+          .filter(m=>m.status==='available'&&m.email)
+          .map(m=>({from:m.email.from||'',sub:m.email.subject||m.email.sub||''}));
+        hiddenEmails=[...hiddenEmails,...batch];
+        if((d.page||1)>=(d.pages||1))break;
+      }
+    }catch(err){
+      // si falla la carga, seguimos con lo que tengamos
+    }
+  }
+
   if(!hiddenEmails.length){toast('Oculta algunos correos primero para que la IA aprenda','err');return;}
-  
+
   const btn=document.getElementById('ai-sugg-btn');
   const box=document.getElementById('ai-sugg-box');
   const list=document.getElementById('ai-sugg-list');
-  
-  btn.disabled=true;btn.textContent='Analizando patrones…';
+
+  btn.disabled=true;btn.textContent=`Analizando ${hiddenEmails.length} patrones…`;
   try {
     const r=await fetch(`${API}/api/ai-suggest-rules`, {
       method:'POST',
@@ -676,6 +709,7 @@ function addRule(){
   document.getElementById('rule-add').addEventListener('click',addRule);
 
 document.getElementById('rule-keywords').addEventListener('keydown',e=>{if(e.key==='Enter')addRule();});
+document.getElementById('rule-search').addEventListener('input',e=>{ruleSearch=e.target.value;renderRules();});
 
 // ── CAT CHIPS ─────────────────────────────────────────────
 function renderCats(){
@@ -689,12 +723,32 @@ function renderCats(){
     chip.addEventListener('click',()=>{activeCat=k;renderCats();render();queueSaveState();});
     grid.appendChild(chip);
   });
+  if(customRules.length){
+    const sep=document.createElement('div');
+    sep.style.cssText='width:100%;flex-basis:100%;border-top:1px solid var(--bdr);margin:4px 0;';
+    grid.appendChild(sep);
+    customRules.forEach(rule=>{
+      const rk='__rule__'+rule.id;
+      const col=CATS[rule.category]?.color||'var(--v)';
+      const chip=document.createElement('div');
+      chip.className='cchip'+(activeCat===rk?' on':'');
+      chip.dataset.cat=rk;
+      chip.style.cssText=`border-color:${col}66;color:${col};${activeCat===rk?`background:${col}30`:''}`;
+      chip.innerHTML=`⚙ ${esc(rule.label)} <span class="cn" id="cn-${rk}"></span>`;
+      chip.addEventListener('click',()=>{activeCat=rk;renderCats();render();queueSaveState();});
+      grid.appendChild(chip);
+    });
+  }
 }
 function updateCatCounts(){
   const base=filteredBySrc();
   Object.keys(CATS).forEach(k=>{
     const el=document.getElementById('cn-'+k);
     if(el)el.textContent=k==='all'?base.length:base.filter(e=>cats(e).includes(k)).length;
+  });
+  customRules.forEach(rule=>{
+    const el=document.getElementById('cn-__rule__'+rule.id);
+    if(el)el.textContent=base.filter(e=>matchingRules(e).some(r=>r.id===rule.id)).length;
   });
 }
 
@@ -709,7 +763,15 @@ function filteredBySrc(){
     return ms&&mq;
   });
 }
-function filtered(){const b=filteredBySrc();return activeCat==='all'?b:b.filter(e=>cats(e).includes(activeCat));}
+function filtered(){
+  const b=filteredBySrc();
+  if(activeCat==='all')return b;
+  if(activeCat.startsWith('__rule__')){
+    const ruleId=activeCat.slice(8);
+    return b.filter(e=>matchingRules(e).some(r=>r.id===ruleId));
+  }
+  return b.filter(e=>cats(e).includes(activeCat));
+}
 
 function itemMeta(e){
   const categories=messageCategories(e);
@@ -808,17 +870,30 @@ function render(){
         <span class="sev ${sev}">${esc(SEVERITY_META[sev].label)}</span>
       `;
       sec.appendChild(header);
+
+      const grpSearch=document.createElement('input');
+      grpSearch.className='ainp grp-search-inp';
+      grpSearch.placeholder=`Buscar en ${provider}…`;
+      grpSearch.value=groupSearches[provider]||'';
+      sec.appendChild(grpSearch);
+
+      const cardsWrap=document.createElement('div');
+      cardsWrap.className='grp-cards';
+
+      const gsq=(groupSearches[provider]||'').toLowerCase().trim();
       items.forEach(e=>{
         const sub=e._summary;
         const dt=e._date;
         const atts=Array.isArray(e.attachments)?e.attachments:[];
         const attChecked=e.attachments_checked===true;
-        const col=srcColor(e);
         const cr=e._categories.length>0?'cr-'+e._categories[0]:'';
         const sev=messageSeverity(e);
         const c=document.createElement('div');
-        c.className=`card ${e.src==='cu'?'cu':e.src} ${cr} sev-${sev}${selected.has(e.id)?' sel':''}${selMode?' sm':''}${openMessages.has(e.id)?' open':''}`;
+        const searchStr=[sub,e.body,e.from,e.to,e.cc||'',e.tag].join(' ').toLowerCase();
+        c.className=`card ${e.src==='cu'?'cu':e.src} ${cr} sev-${sev}${selected.has(e.id)?' sel':''}${selMode?' sm':''}`;
         c.dataset.id=e.id;
+        c.dataset.search=searchStr;
+        if(gsq&&!searchStr.includes(gsq))c.style.display='none';
         c.innerHTML=`
 <label class="ck"><input type="checkbox" ${selected.has(e.id)?'checked':''}></label>
 <div class="ch">
@@ -832,41 +907,33 @@ function render(){
   <div class="crt">
     ${providerBadge(e)}
     ${severityBadge(e)}
-    <span class="chv">▾</span>
-  </div>
-</div>
-<div class="cbp">
-  <div class="ef">
-    <div class="efr"><span class="efk">De</span><span class="efv">${esc(e.from||'')}</span></div>
-    <div class="efr"><span class="efk">Para</span><span class="efv">${esc(e.to||'')}</span></div>
-    ${e.cc?`<div class="efr"><span class="efk">CC</span><span class="efv">${esc(e.cc)}</span></div>`:''}
-    <div class="efr"><span class="efk">Asunto</span><span class="efv">${esc(sub)}</span></div>
-    <div class="efr"><span class="efk">Fecha</span><span class="efv">${esc(dt.full)}</span></div>
-    ${e._categories.length?`<div class="efr"><span class="efk">Cats</span><span class="efv">${e._categories.map(k=>CATS[k].label).join(' · ')}</span></div>`:''}
-    ${attachmentDetail(e,atts,attChecked)}
-  </div>
-  <div class="ebody">${lnk(e.body||e.snippet||'')}</div>
-  <div class="ca-row">
-    <a class="ca gm" href="${gurl(e.id)}" target="_blank" rel="noopener">✉ Gmail</a>
-    <button class="ca dl" data-id="${e.id}">🙈 Ocultar</button>
+    <button class="ca dl card-hide" type="button" title="Ocultar">🙈</button>
   </div>
 </div>`;
         c.querySelector('.ch').addEventListener('click',()=>{
           if(selMode){togSel(e.id,c);return;}
-          if(openMessages.has(e.id))openMessages.delete(e.id);else openMessages.add(e.id);
-          c.classList.toggle('open',openMessages.has(e.id));
-          if(openMessages.has(e.id))hydrateMessageAttachments(e);
+          const orig=activeEmails.find(ae=>ae.id===e.id)||e;
+          openEmailModal(orig);
         });
         c.querySelector('input[type=checkbox]').addEventListener('change',()=>togSel(e.id,c));
-        c.querySelector('.dl').addEventListener('click',ev=>{ev.stopPropagation();openDel([e.id]);});
-      c.querySelectorAll('.att-open').forEach(a=>a.addEventListener('click',onAttachmentClick));
-        sec.appendChild(c);
+        c.querySelector('.card-hide').addEventListener('click',ev=>{ev.stopPropagation();openDel([e.id]);});
+        c.querySelectorAll('.att-open').forEach(a=>a.addEventListener('click',onAttachmentClick));
+        cardsWrap.appendChild(c);
       });
+
+      grpSearch.addEventListener('input',ev=>{
+        const q=ev.target.value.toLowerCase().trim();
+        groupSearches[provider]=q;
+        cardsWrap.querySelectorAll('.card').forEach(card=>{
+          card.style.display=(!q||card.dataset.search.includes(q))?'':'none';
+        });
+      });
+
+      sec.appendChild(cardsWrap);
       list.appendChild(sec);
     });
   }
   const tot=activeEmails.filter(e=>!deleted.has(e.id)).length;
-  const base=filteredBySrc().map(itemMeta);
   const sevCounts=fil.reduce((acc,e)=>{acc[messageSeverity(e)]++;return acc;},{high:0,medium:0,low:0});
   document.getElementById('stbar').innerHTML=
     `<span>${fil.length} de ${tot}</span>`+
@@ -876,6 +943,60 @@ function render(){
   document.getElementById('total-pill').textContent=`${tot} correos`;
   updateSelCount();updateCatCounts();updateHiddenBar();
 }
+
+// ── EMAIL MODAL ───────────────────────────────────────────
+function openEmailModal(emailOrig){
+  emailModalEmail=emailOrig;
+  renderEmailModal();
+  document.getElementById('email-modal').classList.add('show');
+  if(!emailOrig.attachments_checked)hydrateMessageAttachments(emailOrig);
+}
+
+function renderEmailModal(){
+  if(!emailModalEmail)return;
+  const e=emailModalEmail;
+  const eM=itemMeta(e);
+  const dt=eM._date;
+  const eCategories=eM._categories;
+  const atts=Array.isArray(e.attachments)?e.attachments:[];
+  const attChecked=e.attachments_checked===true;
+  const sev=messageSeverity(e);
+
+  document.getElementById('email-modal-sub').textContent=normSub(e);
+  document.getElementById('email-modal-badges').innerHTML=
+    severityBadge(eM)+categoryBadges(eM)+providerBadge(eM);
+
+  const ef=document.getElementById('email-modal-ef');
+  ef.innerHTML=`
+    <div class="efr"><span class="efk">De</span><span class="efv">${esc(e.from||'')}</span></div>
+    <div class="efr"><span class="efk">Para</span><span class="efv">${esc(e.to||'')}</span></div>
+    ${e.cc?`<div class="efr"><span class="efk">CC</span><span class="efv">${esc(e.cc)}</span></div>`:''}
+    <div class="efr"><span class="efk">Asunto</span><span class="efv">${esc(normSub(e))}</span></div>
+    <div class="efr"><span class="efk">Fecha</span><span class="efv">${esc(dt.full)}</span></div>
+    ${eCategories.length?`<div class="efr"><span class="efk">Cats</span><span class="efv">${eCategories.map(k=>CATS[k].label).join(' · ')}</span></div>`:''}
+    ${attachmentDetail(e,atts,attChecked)}
+  `;
+  ef.querySelectorAll('.att-open').forEach(a=>a.addEventListener('click',onAttachmentClick));
+
+  document.getElementById('email-modal-body').innerHTML=lnk(e.body||e.snippet||'');
+
+  const actions=document.getElementById('email-modal-actions');
+  actions.innerHTML=`
+    <a class="ca gm" href="${gurl(e.id)}" target="_blank" rel="noopener">✉ Gmail</a>
+    <button class="ca dl" id="email-modal-hide">🙈 Ocultar</button>
+  `;
+  document.getElementById('email-modal-hide').addEventListener('click',()=>{
+    closeEmailModal();
+    openDel([e.id]);
+  });
+}
+
+function closeEmailModal(){
+  document.getElementById('email-modal').classList.remove('show');
+  emailModalEmail=null;
+}
+
+document.getElementById('email-modal-x').addEventListener('click',closeEmailModal);
 
 function updateHiddenBar(){
   const bar=document.getElementById('hidden-bar'),msg=document.getElementById('hidden-msg');
