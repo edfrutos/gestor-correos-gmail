@@ -581,6 +581,44 @@ Requirement: MNT-03. Decisión: ADR-010.
 
 Verification: `.venv/bin/python -m pytest` (135/135) · `py_compile` · `node --check static/app.js`.
 
+## Milestone 9: App macOS nativa
+
+Goal: distribuir la herramienta como una `.app` de macOS con ventana propia, sin
+romper la app web ni la CLI. Rama: `feat/macos-app`.
+Plan: `.planning/phases/34-app-macos/34-PLAN.md`. Decisión: ADR-012.
+
+### Phase 34 — App macOS (Developer ID + notarización)
+
+**Status:** In progress.
+
+**Outcome:** `.app` con WKWebView (`pywebview`) que arranca/detiene `server.py`,
+empaquetada con py2app, firmada (Developer ID Application), Hardened Runtime,
+notarizada y *stapled*, distribuida en DMG. La app web y la CLI no cambian.
+
+Scope:
+- `paths.py`: resuelve carpeta de datos escribible (proyecto desde fuente,
+  `~/Library/Application Support/GestorDeCorreos/` en el `.app`) y carpeta de
+  recursos de solo lectura. `gmail_client`/`destructive_gmail`/`storage`/`server`
+  toman sus rutas de ahí, manteniendo los nombres de constante y los tests.
+- `macos/`: `app_main.py` (entry point pywebview), `setup.py` (py2app),
+  `entitlements.plist`, `build_app.sh` (build + firma + notarización + DMG),
+  `README.md` (guía en el Mac). `requirements-macos.txt` aparte.
+- El entorno de desarrollo actual (Linux) no puede construir/firmar: se entrega
+  el andamiaje + `paths.py` con tests; el build lo ejecuta el usuario en el Mac.
+
+Requisitos: MAC-01 … MAC-05.
+
+Verification: `pytest` (143/143) · `py_compile` (`paths.py`, `macos/*.py`) ·
+`bash -n macos/build_app.sh` · `plistlib` sobre `entitlements.plist`. Build real:
+`macos/README.md`.
+
+### Phase 35 — Mac App Store (futuro)
+
+**Status:** Not started. Rama y milestone aparte.
+
+Shell nativo Swift/SwiftUI + WKWebView, App Sandbox, `server.py` como helper
+bundled o port parcial a Swift, cert *3rd Party Mac Developer*, App Review.
+
 ## Product Backlog — Future Features
 
 - **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.

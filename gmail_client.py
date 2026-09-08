@@ -7,6 +7,7 @@ from email.utils import parseaddr
 from pathlib import Path
 
 from classifier import classify_metadata
+from paths import data_path
 
 try:
     from google.auth.transport.requests import Request
@@ -23,9 +24,10 @@ except ImportError:
 
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
-BASE_DIR = Path(__file__).parent
-CREDS = BASE_DIR / 'credentials.json'
-TOKEN = BASE_DIR / 'token.json'
+# Estado escribible: carpeta del proyecto desde el código fuente,
+# ~/Library/Application Support/GestorDeCorreos/ dentro del .app (ver paths.py).
+CREDS = data_path('credentials.json')
+TOKEN = data_path('token.json')
 
 # Gmail acepta como máximo 1000 IDs por llamada a users.messages.batchModify.
 # Troceamos en lotes menores para acotar el tamaño de cada petición, permitir
