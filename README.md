@@ -2,7 +2,8 @@
 
 Panel local de inteligencia operativa para consultar, organizar y tratar correos técnicos de Gmail. Detecta riesgos (SSL, facturas, seguridad) y automatiza el orden del buzón real sin exponer datos fuera del equipo local o VPN privada.
 
-**Estado actual:** Milestone v7.5 completado · **127 pruebas** superadas · Plan de testeo humano 30/30 ✅
+**Estado actual:** Milestones v1–v7.5 completados · v8 (refinamiento UX y mantenimiento) sustancialmente completo · **136 pruebas verdes** · Plan de testeo humano 30/30 ✅
+Estado detallado y canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## Créditos
 
@@ -144,4 +145,6 @@ Si el servidor ya está en marcha, abre el visor en la instancia activa.
 .venv/bin/python -m pytest
 ```
 
-Suite automatizada: **127 pruebas** (2 fallos pre-existentes en mocks de exportación, no afectan funcionalidad).
+Suite automatizada: **136 pruebas, todas verdes** (Fases 31, 32, 33; 2026-09-08). Historial
+y decisiones de diseño en [`.planning/STATE.md`](.planning/STATE.md) y
+[`.planning/DECISIONS.md`](.planning/DECISIONS.md).

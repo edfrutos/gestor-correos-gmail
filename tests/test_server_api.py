@@ -545,35 +545,101 @@ def test_handle_delete_revoke_returns_updated_state(monkeypatch):
     assert body['permanent_delete']['revoked'] is True
 
 
-def test_handle_messages_export_single_eml(monkeypatch):
+# Desde la Fase 29 (ADR-009) la exportación escribe en EXPORTS_DIR y responde JSON
+# en lugar de transmitir el fichero como descarga del navegador.
+def test_handle_messages_export_single_eml(monkeypatch, tmp_path):
     handler = DummyHandler(request_body({'message_ids': ['m1']}))
     monkeypatch.setattr(server, 'GMAIL_OK', True)
     monkeypatch.setattr(server, 'CREDS', ExistingPath())
     monkeypatch.setattr(server, 'gmail', lambda: object())
     monkeypatch.setattr(server, 'get_message_raw', lambda mid: b'EML DATA')
+    monkeypatch.setattr(server, 'EXPORTS_DIR', tmp_path)
 
     handler.handle_messages_export()
 
     assert handler.status_sent == 200
-    assert ('Content-Type', 'message/rfc822') in handler.headers_sent
-    assert ('Content-Disposition', 'attachment; filename="m1.eml"') in handler.headers_sent
-    assert handler.wfile.getvalue() == b'EML DATA'
+    body = response_json(handler)
+    assert body['status'] == 'ok'
+    assert body['type'] == 'eml'
+    assert body['file'] == 'm1.eml'
+    assert (tmp_path / 'm1.eml').read_bytes() == b'EML DATA'
 
 
-def test_handle_messages_export_zip(monkeypatch):
+def test_handle_messages_export_zip(monkeypatch, tmp_path):
     handler = DummyHandler(request_body({'message_ids': ['m1', 'm2']}))
     monkeypatch.setattr(server, 'GMAIL_OK', True)
     monkeypatch.setattr(server, 'CREDS', ExistingPath())
     monkeypatch.setattr(server, 'gmail', lambda: object())
     monkeypatch.setattr(server, 'get_message_raw', lambda mid: f'EML {mid}'.encode())
+    monkeypatch.setattr(server, 'EXPORTS_DIR', tmp_path)
 
     handler.handle_messages_export()
 
     assert handler.status_sent == 200
-    assert ('Content-Type', 'application/zip') in handler.headers_sent
-    
+    body = response_json(handler)
+    assert body['status'] == 'ok'
+    assert body['type'] == 'zip'
+
     import zipfile
-    with zipfile.ZipFile(BytesIO(handler.wfile.getvalue())) as zf:
+    with zipfile.ZipFile(tmp_path / body['file']) as zf:
         assert zf.namelist() == ['m1.eml', 'm2.eml']
         assert zf.read('m1.eml') == b'EML m1'
         assert zf.read('m2.eml') == b'EML m2'
+
+
+# Fase 33 (MNT-03): archivado/etiquetado troceado internamente y acotado por lote.
+def test_handle_messages_archive_chunks_and_hides(monkeypatch):
+    ids = [f'm{i}' for i in range(150)]
+    handler = DummyHandler(request_body({'message_ids': ids}))
+    monkeypatch.setattr(server, 'GMAIL_OK', True)
+    monkeypatch.setattr(server, 'CREDS', ExistingPath())
+    monkeypatch.setattr(server, 'gmail', lambda: object())
+
+    seen = {}
+
+    def fake_archive(mids):
+        seen['n'] = len(mids)
+        return {'total': len(mids), 'chunks': 2}
+
+    monkeypatch.setattr(server, 'archive_messages', fake_archive)
+    monkeypatch.setattr(server, 'load_state', lambda: {'hidden_ids': [], 'custom_rules': []})
+    monkeypatch.setattr(server, 'save_user_state', lambda state: None)
+
+    handler.handle_messages_archive()
+
+    body = response_json(handler)
+    assert handler.status_sent == 200
+    assert body['archived'] == 150
+    assert body['chunks'] == 2
+    assert body['hidden_added'] == 150
+    assert seen['n'] == 150
+
+
+def test_handle_messages_archive_rejects_oversized_batch(monkeypatch):
+    ids = [f'm{i}' for i in range(server.MAX_BATCH_MODIFY + 1)]
+    handler = DummyHandler(request_body({'message_ids': ids}))
+    monkeypatch.setattr(server, 'GMAIL_OK', True)
+    monkeypatch.setattr(server, 'CREDS', ExistingPath())
+
+    called = []
+    monkeypatch.setattr(server, 'archive_messages', lambda mids: called.append(mids))
+
+    handler.handle_messages_archive()
+
+    assert handler.status_sent == 400
+    assert not called
+
+
+def test_handle_messages_label_rejects_oversized_batch(monkeypatch):
+    ids = [f'm{i}' for i in range(server.MAX_BATCH_MODIFY + 1)]
+    handler = DummyHandler(request_body({'message_ids': ids, 'label_id': 'Label_1'}))
+    monkeypatch.setattr(server, 'GMAIL_OK', True)
+    monkeypatch.setattr(server, 'CREDS', ExistingPath())
+
+    called = []
+    monkeypatch.setattr(server, 'apply_label', lambda *a, **k: called.append(a))
+
+    handler.handle_messages_label()
+
+    assert handler.status_sent == 400
+    assert not called

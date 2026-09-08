@@ -4,7 +4,54 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import gmail_client
-from gmail_client import _decode_snippet, _message_from_gmail, _sender_matches, get_attachment, get_message, gmail_error_detail, gmail_message_lookup_state, norm_date, search, tag
+from gmail_client import BATCH_MODIFY_CHUNK, _decode_snippet, _message_from_gmail, _sender_matches, apply_label, archive_messages, get_attachment, get_message, gmail_error_detail, gmail_message_lookup_state, norm_date, search, tag
+
+
+class _RecordingBatchService:
+    def __init__(self):
+        self.calls = []
+
+    class _Messages:
+        def __init__(self, outer):
+            self._outer = outer
+
+        def batchModify(self, userId, body):
+            self._outer.calls.append(body)
+            return type('E', (), {'execute': lambda self: {}})()
+
+    def users(self):
+        messages = self._Messages(self)
+        return type('U', (), {'messages': lambda self: messages})()
+
+
+def test_archive_messages_chunks_large_batches(monkeypatch):
+    svc = _RecordingBatchService()
+    monkeypatch.setattr(gmail_client, 'gmail', lambda: svc)
+    ids = [f'm{i}' for i in range(BATCH_MODIFY_CHUNK * 2 + 5)]
+
+    summary = archive_messages(ids)
+
+    assert summary == {'total': len(ids), 'chunks': 3}
+    assert [len(c['ids']) for c in svc.calls] == [BATCH_MODIFY_CHUNK, BATCH_MODIFY_CHUNK, 5]
+    assert sum((c['ids'] for c in svc.calls), []) == ids
+    assert all(c['removeLabelIds'] == ['INBOX'] for c in svc.calls)
+
+
+def test_apply_label_chunks_and_optionally_archives(monkeypatch):
+    svc = _RecordingBatchService()
+    monkeypatch.setattr(gmail_client, 'gmail', lambda: svc)
+    ids = [f'm{i}' for i in range(BATCH_MODIFY_CHUNK + 1)]
+
+    summary = apply_label(ids, 'Label_9', archive=True)
+
+    assert summary == {'total': len(ids), 'chunks': 2}
+    assert all(c['addLabelIds'] == ['Label_9'] for c in svc.calls)
+    assert all(c['removeLabelIds'] == ['INBOX'] for c in svc.calls)
+
+
+def test_batch_modify_without_service_returns_none(monkeypatch):
+    monkeypatch.setattr(gmail_client, 'gmail', lambda: None)
+    assert archive_messages(['m1']) is None
 
 
 def test_norm_date_parses_rfc_date():

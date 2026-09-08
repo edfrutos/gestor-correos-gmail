@@ -1,5 +1,9 @@
 # Repository Guidelines
 
+> **Estado del proyecto (canónico):** [`.planning/STATE.md`](.planning/STATE.md).
+> Roadmap: [`.planning/ROADMAP.md`](.planning/ROADMAP.md) · Requisitos: [`.planning/REQUIREMENTS.md`](.planning/REQUIREMENTS.md) · Decisiones: [`.planning/DECISIONS.md`](.planning/DECISIONS.md).
+> No repitas cifras de estado (versión, nº de tests) en otros documentos: remite a `STATE.md`.
+
 ## Project Structure & Module Organization
 
 This repository is a small local Gmail helper app. `server.py` is the Python entry point and serves both the API and a closed allowlist of static frontend assets. Readonly Gmail/OAuth logic lives in `gmail_client.py`, isolated permanent-delete authorization in `destructive_gmail.py`, parameter validation in `validators.py`, backend classification rules in `classifier.py`, local persistence in `storage.py`, and optional AI-provider access in `ai_client.py`. `index.html` contains the browser structure, while `static/app.css`, `static/app.js`, and `static/summary.js` contain styles and client-side behavior. `README.md` documents user setup. Do not add archived UI copies containing real Gmail data; Gmail remains the only source of message content.
@@ -32,6 +36,8 @@ Run tests:
 Keep `server.py` compatible with Python 3 and the standard library `http.server` pattern already used here. Use short, focused helper functions for Gmail access, date normalization, tagging, and request handling. Constants such as `PORT`, `BASE_DIR`, `CREDS`, and `TOKEN` should remain uppercase. Preserve the existing Spanish UI/API messages unless a change requires coordinated copy updates in both Python and HTML.
 
 For frontend changes, keep structure in `index.html`, styles in `static/app.css`, main UI behavior in `static/app.js`, and summaries/trends/AI behavior in `static/summary.js`. Match the current compact class naming style and avoid adding external build tooling unless the project is deliberately restructured.
+
+Load order is `shared.js → app.js → summary.js` (classic scripts). Any state that must cross `app.js` ↔ `summary.js` goes on the `App` namespace defined in `static/shared.js` (`App.api`, `App.state.*`, `App.config.*`), not on a bare global — see ADR-011. No inline event handlers in `index.html`; wire listeners from `app.js`.
 
 ## Testing Guidelines
 

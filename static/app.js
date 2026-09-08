@@ -1,5 +1,17 @@
+// ── SHARED SURFACE (consumida por summary.js) ──────────────
+// Vía el objeto global `App` (definido en static/shared.js):
+//   App.api            ← API           (Fase 32 · Stage B)
+//   App.state.deleted  ← Set de ocultos (Fase 32 · Stage B)
+// Todavía leídas como global desnudo por summary.js (pendiente Stage C):
+//   activeEmails, aiStatus, CATS       (se reasignan en este archivo)
+// Funciones helper compartidas (nivel superior en este archivo):
+//   esc, toast, gurl, itemMeta, messageSeverity, severityRank, severityReason
+// Orden de carga: shared.js → app.js → summary.js
+// ──────────────────────────────────────────────────────────
+
 // ── CONFIG DEL SERVIDOR LOCAL ──────────────────────────────
 const API = '';
+App.api = API;
 let aiStatus={configured:false,remote:false,model:null};
 let deleteStatus={enabled:false,authorized:false,available:false,max_batch:100,state:'disabled',token_present:false,revoked:false};
 
@@ -204,8 +216,15 @@ let activeEmails=[];
 let customSrcs=[];
 let cf='all',cq='',activeCat='all',selMode=false;
 const deleted=new Set(),selected=new Set(),openMessages=new Set();
+App.state.deleted=deleted;
+// Gmail limita batchModify a 1000 IDs; avisamos antes en lotes grandes.
+const MAX_GMAIL_BATCH=1000,BIG_BATCH_WARN=200;
+function guardBatchSize(ids,verb){
+  if(ids.length>MAX_GMAIL_BATCH){toast(`Máximo ${MAX_GMAIL_BATCH} correos por lote. Reduce la selección.`,'err');return false;}
+  if(ids.length>BIG_BATCH_WARN)return confirm(`Vas a ${verb} ${ids.length} correos en Gmail. La operación se trocea internamente y puede tardar unos segundos. ¿Continuar?`);
+  return true;
+}
 let pendingDel=[],expData=null,expFmt='md',expScope=null;
-let summaryDays=30,summaryData=null;
 let stateReady=false,saveTimer=null,saveInFlight=false,savePending=false,editingRuleId=null;
 let ruleSearch='';
 let emailModalEmail=null;
@@ -1493,10 +1512,11 @@ document.getElementById('exp-eml').addEventListener('click',exportEml);
 async function archiveSelection(){
   const ids=[...selected];
   if(!ids.length){toast('Selecciona correos primero','err');return;}
+  if(!guardBatchSize(ids,'archivar'))return;
   const btn=document.getElementById('archive-sel');
   const oldText=btn.textContent;
   btn.disabled=true;
-  btn.innerHTML='<span class="spin"></span>Archivando…';
+  btn.innerHTML=`<span class="spin"></span>Archivando ${ids.length>BIG_BATCH_WARN?ids.length+' correos… ':''}`;
   try{
     const r=await fetch(`${API}/api/messages/archive`,{
       method:'POST',
@@ -1609,9 +1629,10 @@ async function openLabelModal(){
 }
 async function applySelectedLabel(){
   const ids=[...selected];
+  if(!guardBatchSize(ids,'etiquetar'))return;
   const archive=document.getElementById('lbl-archive-too').checked;
   const btn=document.getElementById('lbl-ok');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Aplicando…';
+  btn.disabled=true;btn.innerHTML=`<span class="spin"></span>Aplicando ${ids.length>BIG_BATCH_WARN?'a '+ids.length+' correos… ':''}`;
   try{
     const r=await fetch(`${API}/api/messages/label`,{
       method:'POST',
@@ -1907,6 +1928,8 @@ document.getElementById('del-sel').addEventListener('click',()=>{if(!selected.si
 const FC={all:'var(--v)',v:'var(--v)',p:'var(--p)',s:'var(--s)',cu:'var(--o)'};
 document.querySelectorAll('.src').forEach(b=>{b.addEventListener('click',()=>{setSrcFilter(b.dataset.f);render();queueSaveState();});});
 document.getElementById('srch').addEventListener('input',e=>{cq=e.target.value;render();queueSaveState();});
+// Cabeceras de panel plegables (antes onclick inline en index.html)
+document.querySelectorAll('.ph[data-panel]').forEach(h=>h.addEventListener('click',()=>togglePanel(h.dataset.panel)));
 
 // ── INIT ──────────────────────────────────────────────────
 async function init(){

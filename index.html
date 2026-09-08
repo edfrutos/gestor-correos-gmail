@@ -31,7 +31,7 @@
 
 <!-- ① BÚSQUEDA EN GMAIL -->
 <div class="panel" id="p-snd">
-  <div class="ph" onclick="togglePanel('p-snd')">
+  <div class="ph" data-panel="p-snd">
     <div class="pt">🔍 Búsqueda en Gmail <span class="ptag" style="background:#4a9eff18;border:1px solid #4a9eff44;color:var(--v)" id="snd-tag">— fuentes</span></div>
     <span class="pc">▾</span>
   </div>
@@ -56,7 +56,7 @@
 
 <!-- ② CATEGORÍAS -->
 <div class="panel" id="p-cat">
-  <div class="ph" onclick="togglePanel('p-cat')">
+  <div class="ph" data-panel="p-cat">
     <div class="pt">🔍 Filtrar por categoría semántica</div>
     <span class="pc">▾</span>
   </div>
@@ -69,7 +69,7 @@
 
 <!-- ③ EXPORTACIONES LOCALES -->
 <div class="panel" id="p-exp">
-  <div class="ph" onclick="togglePanel('p-exp')">
+  <div class="ph" data-panel="p-exp">
     <div class="pt">📦 Exportaciones locales <span class="ptag" id="exp-tag">0</span></div>
     <span class="pc">▾</span>
   </div>
@@ -87,7 +87,7 @@
 
 <!-- ④ REGLAS PERSONALIZADAS -->
 <div class="panel" id="p-rules">
-  <div class="ph" onclick="togglePanel('p-rules')">
+  <div class="ph" data-panel="p-rules">
     <div class="pt">⚙ Reglas personalizadas <span class="ptag" style="background:#e879f918;border:1px solid #e879f944;color:#e879f9" id="rules-tag">0</span></div>
     <span class="pc">▾</span>
   </div>
@@ -347,6 +347,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="/static/shared.js"></script>
 <script src="/static/app.js"></script>
 <script src="/static/summary.js"></script>
 </body>

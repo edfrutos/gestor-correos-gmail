@@ -116,23 +116,31 @@
 - [x] **ARCH-06**: El frontend no incrusta contenido de correos y carga fuentes fijas y personalizadas desde Gmail.
 - [x] **INT-05**: Las reglas personalizadas permiten exigir alguna o todas las palabras clave.
 
-## Product Backlog
+## v6 Requirements (completados)
 
-### Full Message Content Export
+### Full Message Content Export — Phase 19 (2026-06-12)
 
-- [ ] **EXP-01**: El usuario puede exportar uno o varios correos seleccionados incluyendo el cuerpo íntegro de cada mensaje.
-- [ ] **EXP-02**: La exportación completa incluye también las cabeceras y metadatos necesarios para identificar cada correo.
-- [ ] **EXP-03**: La UI distingue claramente entre exportar un informe operativo y exportar el contenido completo de los correos seleccionados.
-- [ ] **EXP-04**: La exportación completa obtiene el mensaje desde Gmail bajo demanda y no persiste cuerpos de correo en `app_state.json`.
+- [x] **EXP-01**: El usuario puede exportar uno o varios correos seleccionados incluyendo el cuerpo íntegro de cada mensaje.
+- [x] **EXP-02**: La exportación completa incluye también las cabeceras y metadatos necesarios para identificar cada correo.
+- [x] **EXP-03**: La UI distingue claramente entre exportar un informe operativo y exportar el contenido completo de los correos seleccionados.
+- [x] **EXP-04**: La exportación completa obtiene el mensaje desde Gmail bajo demanda (`format=raw`) y no persiste cuerpos de correo en `app_state.json`.
 
-### Private VPN Remote Deployment
+### Private VPN Remote Deployment — Phase 20 (2026-06-12)
 
-- [ ] **NET-01**: La aplicación se ejecuta como servicio autónomo monousuario y puede accederse desde cualquier lugar mediante una VPN privada sobre Internet.
-- [ ] **NET-02**: Sólo dispositivos autorizados en la VPN privada pueden alcanzar la aplicación; no existe acceso público directo.
-- [ ] **NET-03**: El servidor restringe el puerto de la aplicación a la interfaz o red VPN y el firewall bloquea accesos desde Internet público.
-- [ ] **NET-04**: Los tokens Gmail, credenciales OAuth y estado privado se almacenan fuera del repositorio con permisos y secretos adecuados para servidor.
-- [ ] **NET-05**: El borrado permanente permanece desactivado por defecto y requiere controles reforzados en cualquier despliegue remoto.
-- [ ] **NET-06**: El servidor deja de depender de `webbrowser.open`, permite configurar interfaz/puerto y valida la IP o nombre VPN autorizado.
+- [x] **NET-01**: La aplicación se ejecuta como servicio autónomo monousuario y puede accederse desde cualquier lugar mediante una VPN privada sobre Internet.
+- [x] **NET-02**: Sólo dispositivos autorizados en la VPN privada pueden alcanzar la aplicación; no existe acceso público directo.
+- [x] **NET-03**: El servidor restringe el puerto de la aplicación a la interfaz o red VPN y el firewall bloquea accesos desde Internet público (documentado en `docs/VPN_DEPLOYMENT.md`).
+- [x] **NET-04**: Los tokens Gmail, credenciales OAuth y estado privado se almacenan fuera del repositorio con permisos y secretos adecuados para servidor.
+- [x] **NET-05**: El borrado permanente permanece desactivado por defecto (`ENABLE_PERMANENT_DELETE=0`) y requiere controles reforzados en cualquier despliegue remoto.
+- [x] **NET-06**: El servidor permite configurar interfaz/puerto (`HOST`/`PORT`) y modo headless (`HEADLESS=1`) en lugar de depender de `webbrowser.open`.
+
+## v8 — Refinamiento UX y Mantenimiento (en curso)
+
+- [x] **UX-01**: La vista de un correo se abre en un modal dedicado (subventana) con hidratación de adjuntos bajo demanda. — Phase 30
+- [x] **UX-02**: Las categorías del panel lateral son reactivas y el estado de IA es reseteable. — Phase 30
+- [x] **MNT-01**: La suite automatizada está 100 % verde (129/129; saneo de los 3 tests obsoletos). — Phase 31 (2026-09-08)
+- [x] **MNT-02**: `static/*.js` reduce las dependencias cruzadas por variable global sin build tooling — espacio de nombres `App` (`static/shared.js`); `API` y `deleted` compartidos vía `App.*`; `summaryDays`/`summaryData` reubicados; sin `onclick` inline. — Phase 32 Stage A+B (2026-09-08). Seguimiento opcional: Stage C (`activeEmails`/`aiStatus`/`CATS`).
+- [x] **MNT-03**: Archivado/etiquetado de lotes grandes troceado (`BATCH_MODIFY_CHUNK=100`) y acotado (`MAX_BATCH_MODIFY=1000`); aviso en UI >200. — Phase 33 (2026-09-08)
 
 ## Out of Scope
 
@@ -201,32 +209,29 @@
 | UI-04 | Phase 18 | Done |
 | ARCH-06 | Post-v5 reliability | Done |
 | INT-05 | Post-v5 reliability | Done |
-| EXP-01 | Product backlog | Pending |
-| EXP-02 | Product backlog | Pending |
-| EXP-03 | Product backlog | Pending |
-| EXP-04 | Product backlog | Pending |
-| NET-01 | Product backlog | Pending |
-| NET-02 | Product backlog | Pending |
-| NET-03 | Product backlog | Pending |
-| NET-04 | Product backlog | Pending |
-| NET-05 | Product backlog | Pending |
-| NET-06 | Product backlog | Pending |
+| EXP-01 | Phase 19 | Done |
+| EXP-02 | Phase 19 | Done |
+| EXP-03 | Phase 19 | Done |
+| EXP-04 | Phase 19 | Done |
+| NET-01 | Phase 20 | Done |
+| NET-02 | Phase 20 | Done |
+| NET-03 | Phase 20 | Done |
+| NET-04 | Phase 20 | Done |
+| NET-05 | Phase 20 | Done |
+| NET-06 | Phase 20 | Done |
+| UX-01 | Phase 30 | Done |
+| UX-02 | Phase 30 | Done |
+| MNT-01 | Phase 31 | Done |
+| MNT-02 | Phase 32 (Stage A+B) | Done · Stage C opcional |
+| MNT-03 | Phase 33 | Done |
 
 **Coverage:**
-- v1 requirements: 18 total
-- v2 completed requirements: 6 total
-- Completed requirements mapped to phases/hardening: 24
-- v3 requirements: 13 total
-- v3 mapped to phases: 13
-- v4 requirements: 6 total
-- v4 mapped to phases: 6
-- v5 requirements: 7 total
-- v5 mapped to phases: 3
-- Post-v5 requirements: 2 total
-- Post-v5 mapped to follow-up: 2
-- Product backlog requirements: 10 total
-- Unmapped active milestone: 0
+- v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.
+- v6 (EXP-*, NET-*): 10 requisitos, Done (Fases 19–20).
+- v8 (UX-*, MNT-*): 5 requisitos — 5 Done (Fases 30–33). MNT-02 con seguimiento
+  opcional (Fase 32 Stage C).
+- Unmapped: 0.
 
 ---
 *Requirements defined: 2026-05-31*
-*Last updated: 2026-06-11 after completing phase 18 of v5.0*
+*Last updated: 2026-09-08 — trazabilidad v6 (Fases 19–20) y apertura de v8. Estado canónico: `.planning/STATE.md`.*

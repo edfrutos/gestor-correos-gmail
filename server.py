@@ -32,7 +32,7 @@ from urllib.parse import parse_qs, urlparse
 from ai_client import ai_status, suggest_rules, summarize
 from classifier import get_base_config
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
-from gmail_client import CREDS, GMAIL_OK, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
+from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
 from storage import load_state, record_delete_results, save_user_state
 from validators import ApiError, parse_max, validate_attachment_id, validate_date, validate_delete_request, validate_filename, validate_gmail_id, validate_mime_type, validate_sender
 
@@ -64,6 +64,7 @@ EXPORTS_DIR.mkdir(exist_ok=True)
 HIDDEN_PAGE_SIZE = 20
 STATIC_FILES = {
     '/static/app.css': ('text/css; charset=utf-8', BASE_DIR / 'static' / 'app.css'),
+    '/static/shared.js': ('text/javascript; charset=utf-8', BASE_DIR / 'static' / 'shared.js'),
     '/static/app.js': ('text/javascript; charset=utf-8', BASE_DIR / 'static' / 'app.js'),
     '/static/summary.js': ('text/javascript; charset=utf-8', BASE_DIR / 'static' / 'summary.js'),
     '/static/logo.svg': ('image/svg+xml', BASE_DIR / 'static' / 'logo.svg'),
@@ -597,6 +598,8 @@ class H(BaseHTTPRequestHandler):
             message_ids = [validate_gmail_id(mid) for mid in payload['message_ids']]
             if not message_ids:
                 raise ApiError('Lista de IDs vacía')
+            if len(message_ids) > MAX_BATCH_MODIFY:
+                raise ApiError('Demasiados mensajes', detail=f'El límite por lote es de {MAX_BATCH_MODIFY} correos')
         except ApiError as e:
             return self.err(e.status, str(e), e.detail)
 
@@ -604,9 +607,9 @@ class H(BaseHTTPRequestHandler):
             return
 
         try:
-            # 1. Archivar en Gmail
-            archive_messages(message_ids)
-            
+            # 1. Archivar en Gmail (troceado internamente en tandas)
+            summary = archive_messages(message_ids)
+
             # 2. Ocultar localmente
             state = load_state()
             hidden_ids = state.get('hidden_ids', [])
@@ -624,6 +627,7 @@ class H(BaseHTTPRequestHandler):
             return self.j({
                 'status': 'ok',
                 'archived': len(message_ids),
+                'chunks': (summary or {}).get('chunks', 0),
                 'hidden_added': added,
                 'state': state
             })
@@ -672,9 +676,11 @@ class H(BaseHTTPRequestHandler):
             message_ids = [validate_gmail_id(mid) for mid in payload.get('message_ids', [])]
             label_id = validate_gmail_id(payload.get('label_id', ''), 'label_id')
             archive = bool(payload.get('archive', False))
-            
+
             if not message_ids:
                 raise ApiError('Lista de IDs vacía')
+            if len(message_ids) > MAX_BATCH_MODIFY:
+                raise ApiError('Demasiados mensajes', detail=f'El límite por lote es de {MAX_BATCH_MODIFY} correos')
         except ApiError as e:
             return self.err(e.status, str(e), e.detail)
 
@@ -682,9 +688,9 @@ class H(BaseHTTPRequestHandler):
             return
 
         try:
-            # 1. Aplicar etiqueta (y opcionalmente archivar)
-            apply_label(message_ids, label_id, archive=archive)
-            
+            # 1. Aplicar etiqueta (y opcionalmente archivar), troceado internamente
+            summary = apply_label(message_ids, label_id, archive=archive)
+
             # 2. Si se archivó, ocultar localmente
             added = 0
             state = None
@@ -703,6 +709,7 @@ class H(BaseHTTPRequestHandler):
             return self.j({
                 'status': 'ok',
                 'labeled': len(message_ids),
+                'chunks': (summary or {}).get('chunks', 0),
                 'archived': archive,
                 'hidden_added': added,
                 'state': state

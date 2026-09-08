@@ -488,8 +488,102 @@ Scope:
 - Lector EML integrado en la app (sin dependencias externas).
 - Integración con macOS Services ("Acciones rápidas").
 
+## Milestone 8: Refinamiento UX y Mantenimiento
+
+Goal: pulir la experiencia de uso y saldar deuda técnica sin ampliar la
+superficie funcional ni la de escritura en Gmail. Estado canónico en
+`.planning/STATE.md`.
+
+### Phase 30 — Refactor UX v8
+
+**Status:** Completed 2026-06-16 (`e504f4c`, `b6679f3`).
+
+**Outcome:** la vista de un correo se abre en un modal dedicado (subventana),
+las categorías del panel lateral son reactivas y el estado de IA es reseteable.
+
+Scope:
+- Sustituir la tarjeta expandible inline por un modal con hidratación de
+  adjuntos bajo demanda (`openEmailModal`).
+- Categorías reactivas al aplicar/editar reglas y filtros.
+- Reset del estado de IA y mejoras de filtros, scroll y modal.
+
+Requirements: UX-01, UX-02.
+
+### Phase 31 — Suite Verde
+
+**Status:** Completed 2026-09-08.
+
+**Outcome:** `pytest` 129/129 verde. Los 3 tests obsoletos se reescribieron al
+contrato vigente (exportación a `EXPORTS_DIR` + JSON; modal de correo con
+re-render tras hidratar adjuntos). Sin cambios de comportamiento en `server.py`
+ni `static/app.js`.
+
+Scope:
+- Actualizar `test_handle_messages_export_single_eml` y `..._zip` al contrato
+  actual (escritura en `/exports`, respuesta JSON).
+- Actualizar `test_open_message_state_survives_attachment_hydration_render` al
+  modelo de modal, o sustituirlo por una aserción del contrato vigente.
+- Sin cambios de comportamiento en `server.py` ni `static/app.js`.
+
+Requirement: MNT-01.
+
+Verification: `.venv/bin/python -m pytest` sin fallos.
+
+### Phase 32 — Encapsulación JS
+
+**Status:** Stage A + B completados 2026-09-08. Stage C opcional, pendiente.
+Plan: `.planning/phases/32-encapsulacion-js/32-PLAN.md` (contexto: `32-CONTEXT.md`).
+
+**Outcome:** la superficie compartida `app.js → summary.js` empieza a pasar por
+un espacio de nombres `App` explícito (`static/shared.js`), sin build tooling.
+
+Entregado (Stage A + B):
+- `summaryDays`/`summaryData` reubicados en `summary.js` (estado que solo usa él).
+- Cabecera SHARED SURFACE en `app.js` y `summary.js`.
+- `index.html` sin `onclick` inline: paneles plegables cableados por JS.
+- `static/shared.js` (nuevo, registrado en `STATIC_FILES`, cargado primero)
+  define `window.App`. `app.js` publica `App.api` y `App.state.deleted`;
+  `summary.js` los consume vía `App.*` (0 globales desnudas de esos dos).
+- `test_frontend_contract.py`: 3 aserciones actualizadas al acceso vía `App`
+  (intención preservada) + `test_shared_namespace_is_declared_and_documented`.
+
+Pendiente (Stage C, opcional): `activeEmails`, `aiStatus`, `CATS` — se reasignan
+en `app.js` (~36 sitios); requiere smoke manual del plan humano §2–§6.
+
+Requirement: MNT-02. Decisión: ADR-011.
+
+Verification: `pytest` (136/136) · `node --check` (shared.js, app.js, summary.js) ·
+smoke de servido estático y orden de `<script>`.
+
+### Phase 33 — Rendimiento de Lotes
+
+**Status:** Completed 2026-09-08.
+
+**Outcome:** archivado y etiquetado de lotes grandes troceados internamente y
+acotados; la UI avisa antes de lotes grandes.
+
+Hallazgo: el borrado permanente ya troceaba (`DELETE_EXECUTION_CHUNK = 20`),
+pero `archive_messages` y `apply_label` enviaban **todos** los IDs en una sola
+llamada a `batchModify` (límite duro de Gmail: 1000 IDs/petición), sin cota ni
+troceado.
+
+Scope entregado:
+- `gmail_client._batch_modify_chunked`: tandas de `BATCH_MODIFY_CHUNK = 100` bajo
+  `_api_lock`, devuelve `{'total','chunks'}`. `archive_messages` y `apply_label`
+  pasan a usarlo.
+- Handlers `/api/messages/archive` y `/api/messages/label`: rechazan lotes
+  > `MAX_BATCH_MODIFY = 1000` y devuelven `chunks` en la respuesta.
+- `static/app.js`: `guardBatchSize()` — corta en >1000 y pide confirmación en
+  >200; el texto del botón indica el volumen.
+- +6 tests (troceado, cota de lote, ocultado local).
+
+Requirement: MNT-03. Decisión: ADR-010.
+
+Verification: `.venv/bin/python -m pytest` (135/135) · `py_compile` · `node --check static/app.js`.
+
 ## Product Backlog — Future Features
 
 - **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.
 - **Histórico de Auditoría Extendido:** Trazabilidad completa de acciones AI y archivados masivos.
 - **Análisis de Adjuntos:** Búsqueda y filtrado avanzado por tipo/tamaño de archivo adjunto.
+- **Sincronización AI automática:** aplicar sugerencias de IA como "reglas temporales" para limpiezas puntuales.
