@@ -1,4 +1,5 @@
 # Local secrets and OAuth session state
+.env
 credentials.json
 token.json
 delete_token.json
