@@ -1,15 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v8
-milestone_name: Refinamiento UX y Mantenimiento
+milestone: v9
+milestone_name: App macOS nativa
 status: in_progress
-last_updated: "2026-09-08T00:00:00.000Z"
+last_updated: "2026-09-09T00:00:00.000Z"
+branch: feat/macos-app
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 4
-  completed_plans: 4
-  percent: 95
+  total_phases: 2
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 90
 ---
 
 # State — Fuente única de estado
@@ -25,22 +26,36 @@ See: `.planning/PROJECT.md` · `.planning/ROADMAP.md` · `.planning/REQUIREMENTS
 **Core value:** Detectar y priorizar correos técnicos importantes sin exponer
 datos de Gmail fuera del equipo local o de una VPN privada.
 
-**Current focus:** Milestone v8 — refinamiento de UX (modal de correo, categorías
-reactivas, filtros) y mantenimiento (suite verde, encapsulación JS, rendimiento
-de lotes grandes). Sin ampliar la superficie de escritura en Gmail.
+**Current focus:** Milestone v9 — `.app` de macOS (ventana WKWebView, Developer ID
++ notarización) **sin romper la app web ni la CLI**. Rama `feat/macos-app`,
+lista para merge a `main`. Milestone v8 cerrado en `main`
+(`ac46a72`/`d2fb240`/`b34c42d`).
 
 ## Current Status
 
-- **Funcionalidad:** madura. Milestones v1 → v7.5 completados (Fases 1–29).
-  v8 en curso (refinamiento, no funcionalidad nueva).
+- **Funcionalidad:** madura. Milestones v1 → v7.5 completados (Fases 1–29);
+  v8 (refinamiento) completado en `main`.
+- **v9 — Fase 34 completada (rama `feat/macos-app`):** `paths.py` + relocalización
+  del estado escribible a `~/Library/Application Support/GestorDeCorreos/` (con
+  tests); `macos/` (pywebview, py2app, entitlements, `build_app.sh` con firma
+  inside-out + notarización). **DMG firmado y notarizado generado y verificado en
+  el Mac del usuario** (2026-09-09): Hardened Runtime, Developer ID
+  `V29BTBRY6G`, timestamp; ventana y login Gmail OK.
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `136 tests` · **136 verdes**. Fase 31 saneó 3 obsoletos;
-  Fase 33 añadió 6 (troceado de lotes); Fase 32 añadió 1 (namespace `App`).
+- **Suite automatizada:** `143 tests` · **143 verdes** (v9 añadió `test_paths.py`,
+  +7; el rewiring de rutas no cambió ningún test existente).
 - **Testeo humano:** `TESTING_HUMANO.md` 30/30 ✅ (v7.5).
 
-## Milestone v8 — Fases
+## Milestone v9 — Fases (rama `feat/macos-app`)
+
+| Fase | Descripción | Estado |
+|------|-------------|--------|
+| 34 — App macOS (Developer ID) | `paths.py` + relocalización de estado; `macos/` (pywebview, py2app, entitlements, `build_app.sh`), docs | ✅ Done (2026-09-09). DMG firmado + notarizado + stapled, verificado en el Mac |
+| 35 — Mac App Store | Shell nativo Swift + WKWebView, App Sandbox, App Review | ⬜ Futuro, rama aparte |
+
+## Milestone v8 — Fases (cerrado en `main`)
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
@@ -74,6 +89,20 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-09-09 — Fase 34 completada. Build en el Mac del usuario: framework Python
+  de python.org (el de Homebrew no vale), `google` forzado fuera del zip
+  (`__init__.py` + `packages`), firma **inside-out** de ~150 binarios `.so`
+  (`codesign --deep` los dejaba sin firmar/timestamp → notarización Invalid).
+  DMG firmado + notarizado + stapled OK. `spctl`/`codesign` verificados
+  (Hardened Runtime, Developer ID `V29BTBRY6G`, timestamp). Ventana + login
+  Gmail funcionando. Rama lista para merge a `main`.
+- 2026-09-08 — v9 arrancado en `feat/macos-app`: `paths.py` (carpeta de datos
+  escribible vs. recursos de solo lectura) + rewiring de `gmail_client`,
+  `destructive_gmail`, `storage`, `server` sin cambiar tests; andamiaje `macos/`
+  (`app_main.py` pywebview, `setup.py` py2app, `entitlements.plist`,
+  `build_app.sh`, `README.md`), `requirements-macos.txt`. Suite 143/143.
+- 2026-09-08 — Milestone v8 cerrado en `main` (`ac46a72`/`d2fb240`/`b34c42d`):
+  consolidación de docs + Fases 31–33 + Fase 32 A/B; `.env` fuera de git.
 - 2026-09-08 — Fase 32 (Stage A+B): `static/shared.js` define `window.App`;
   `API` y `deleted` se comparten vía `App.*`; `summaryDays`/`summaryData`
   reubicados en `summary.js`; `onclick` inline retirados de `index.html`.
@@ -94,12 +123,14 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**Milestone v8 sustancialmente completo** (Fases 30–33; Fase 32 con Stage A+B).
-Opciones:
-- **Cerrar v8** y hacer commit del conjunto (consolidación docs + Fases 31–33 +
-  Fase 32 A/B). Recomendado.
-- **Fase 32 Stage C** (opcional, riesgo medio): llevar `activeEmails`, `aiStatus`
-  y `CATS` a `App.*` (~36 sitios en `app.js`); requiere smoke manual del plan
-  humano §2–§6. Plan y técnicas en `32-PLAN.md` (tarea 32-C1..C4).
-- Abordar backlog de producto (multi-cuenta, histórico de auditoría, análisis de
-  adjuntos) — nuevo milestone.
+**Merge de `feat/macos-app` a `main`** (Fase 34 completada y verificada). Después:
+
+- Fijar `.env`-style: `~/Library/Application Support/GestorDeCorreos/` como
+  ubicación oficial de `credentials.json` (ya documentado en `macos/README.md`).
+- Pendientes menores de la app macOS:
+  - AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta** (v1 solo
+    cubre argv en el primer lanzamiento).
+  - Icono propio (`.icns`) — ahora usa el genérico de py2app.
+  - Considerar CI en el Mac para regenerar el DMG por versión.
+- Fase 32 Stage C (`activeEmails`/`aiStatus`/`CATS` → `App.*`), opcional.
+- Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).

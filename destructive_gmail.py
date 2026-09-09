@@ -3,6 +3,7 @@ import os
 import threading
 from pathlib import Path
 
+from paths import data_path
 from validators import ApiError
 
 try:
@@ -17,10 +18,10 @@ except ImportError:
     GMAIL_DELETE_OK = False
 
 
-BASE_DIR = Path(__file__).parent
-CREDS = BASE_DIR / 'credentials.json'
-DELETE_TOKEN = BASE_DIR / 'delete_token.json'
-DELETE_REVOKED = BASE_DIR / 'delete_token.revoked'
+# Estado escribible: ver paths.py (proyecto desde fuente, Application Support en .app).
+CREDS = data_path('credentials.json')
+DELETE_TOKEN = data_path('delete_token.json')
+DELETE_REVOKED = data_path('delete_token.revoked')
 DELETE_SCOPES = ['https://mail.google.com/']
 MAX_DELETE_BATCH = 100
 DELETE_EXECUTION_CHUNK = 20

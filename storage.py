@@ -4,11 +4,12 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
+from paths import data_path
 from validators import ApiError, validate_sender
 
 
-BASE_DIR = Path(__file__).parent
-STATE_FILE = BASE_DIR / 'app_state.json'
+# Estado escribible: ver paths.py (proyecto desde fuente, Application Support en .app).
+STATE_FILE = data_path('app_state.json')
 STATE_VERSION = 2
 _state_lock = threading.Lock()
 

@@ -581,6 +581,52 @@ Requirement: MNT-03. Decisión: ADR-010.
 
 Verification: `.venv/bin/python -m pytest` (135/135) · `py_compile` · `node --check static/app.js`.
 
+## Milestone 9: App macOS nativa
+
+Goal: distribuir la herramienta como una `.app` de macOS con ventana propia, sin
+romper la app web ni la CLI. Rama: `feat/macos-app`.
+Plan: `.planning/phases/34-app-macos/34-PLAN.md`. Decisión: ADR-012.
+
+### Phase 34 — App macOS (Developer ID + notarización)
+
+**Status:** Completed 2026-09-09.
+
+**Outcome:** `.app` con WKWebView (`pywebview`) que arranca/detiene `server.py`,
+empaquetada con py2app, firmada (Developer ID Application), Hardened Runtime,
+notarizada y *stapled*, distribuida en DMG (`dist/GestorDeCorreos.dmg`). La app
+web y la CLI no cambian. Verificado en el Mac del usuario: ventana + login Gmail
+OK; `codesign -dv` → `flags=runtime`, Developer ID `V29BTBRY6G`, timestamp.
+
+Scope entregado:
+- `paths.py`: carpeta de datos escribible (proyecto desde fuente,
+  `~/Library/Application Support/GestorDeCorreos/` en el `.app`) y carpeta de
+  recursos de solo lectura. `gmail_client`/`destructive_gmail`/`storage`/`server`
+  toman sus rutas de ahí, manteniendo nombres de constante y tests. +7 tests.
+- `macos/`: `app_main.py` (pywebview, puerto libre efímero), `setup.py` (py2app),
+  `entitlements.plist`, `build_app.sh`, `README.md`. `requirements-macos.txt`.
+
+Hallazgos del build real (fijados en `build_app.sh` y `setup.py`):
+- Homebrew Python no vale para py2app: hace falta **framework build** (python.org)
+  → `PYTHON=/usr/local/bin/python3.12`.
+- `google` es namespace package: crea `__init__.py` en el build-venv y va en
+  `packages` para no acabar dentro de `python3XX.zip` (un `.so` en un zip no se
+  puede firmar).
+- `codesign --deep` no firma los binarios anidados → notarización *Invalid*.
+  Firma **inside-out**: cada `.so`/`.dylib`/framework con `--options runtime
+  --timestamp`, el bundle al final con entitlements.
+
+Requisitos: MAC-01 … MAC-05 (todos Done).
+
+Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
+`spctl` accepted en el Mac.
+
+### Phase 35 — Mac App Store (futuro)
+
+**Status:** Not started. Rama y milestone aparte.
+
+Shell nativo Swift/SwiftUI + WKWebView, App Sandbox, `server.py` como helper
+bundled o port parcial a Swift, cert *3rd Party Mac Developer*, App Review.
+
 ## Product Backlog — Future Features
 
 - **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.

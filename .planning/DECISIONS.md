@@ -167,3 +167,39 @@ acceso vía `App` (intención preservada: excluye ocultos, endpoint correcto, av
 antes de envío remoto). Nuevo `test_shared_namespace_is_declared_and_documented`.
 Regla para el front (recogida en `AGENTS.md`): estado nuevo que cruce
 `app.js`↔`summary.js` va en `App`, no en el global.
+
+## ADR-012 — App macOS: Developer ID + notarización, estado en Application Support
+
+**Date:** 2026-09-08
+**Status:** Accepted · Fase 34 completada 2026-09-09 (DMG firmado + notarizado
+verificado en el Mac). App Store diferido a Fase 35.
+
+La herramienta se empaqueta como `.app` de macOS con ventana propia (WKWebView
+vía `pywebview`) que arranca y detiene `server.py` por dentro. Se distribuye
+**firmada con Developer ID Application, con Hardened Runtime, notarizada y
+*stapled*, en un DMG** — fuera de la Mac App Store. La app web y la CLI siguen
+igual: la `.app` es un artefacto adicional sobre el mismo backend.
+
+**Rationale:** el usuario quiere distribuir con su cuenta Apple Developer. La Mac
+App Store obliga a App Sandbox, revisión de App Review y encaja mal con una app
+Python empaquetada con py2app que levanta un servidor local (patrón "wrapper de
+web" + CPython sandboxed son focos de rechazo). Developer ID + notarización logra
+distribución firmada y sin avisos de Gatekeeper reutilizando `server.py` sin
+tocar la lógica.
+
+**Consecuencias:**
+- Nuevo `paths.py`: `data_dir()` (estado escribible) devuelve la carpeta del
+  proyecto desde el código fuente y `~/Library/Application Support/GestorDeCorreos/`
+  dentro del `.app` (`sys.frozen`); `resource_dir()` sirve `index.html`/`static`
+  desde `Contents/Resources`. Override: `GESTOR_DATA_DIR`.
+- `gmail_client`, `destructive_gmail`, `storage`, `server` toman sus rutas de
+  `paths.py` conservando los nombres de constante (`CREDS`, `TOKEN`, `STATE_FILE`,
+  `DELETE_TOKEN`, `EXPORTS_DIR`), así que los tests existentes no cambian.
+- `credentials.json` y el resto de secretos del `.app` viven en Application
+  Support, nunca en el bundle firmado.
+- Dependencias de la app (`pywebview`, `pyobjc`, `py2app`) van en
+  `requirements-macos.txt` aparte; `requirements.txt` (web/CLI) no crece.
+- El build/firma/notarización se ejecutan en el Mac (`macos/build_app.sh`); el
+  entorno de desarrollo Linux solo valida sintaxis y `paths.py` con tests.
+- Fase 35 (Mac App Store) queda como milestone y rama aparte con shell nativo
+  Swift + WKWebView.

@@ -80,6 +80,21 @@ La primera búsqueda abre el flujo OAuth de Google. El token se guarda en `token
 ```
 Si el servidor ya está en marcha, abre el visor en la instancia activa.
 
+### App de escritorio para macOS
+
+Además de la app web, hay una `.app` de macOS con ventana propia (WKWebView) que
+arranca el servidor por dentro. Reutiliza el mismo backend; **la app web y la CLI
+no cambian**. Prueba sin empaquetar:
+
+```bash
+.venv/bin/python -m pip install -r requirements-macos.txt
+.venv/bin/python macos/app_main.py
+```
+
+Build firmado + notarizado (DMG, distribución Developer ID): ver
+[`macos/README.md`](macos/README.md). En la `.app` instalada, el estado vive en
+`~/Library/Application Support/GestorDeCorreos/` (ahí va `credentials.json`).
+
 ### Flujo habitual
 1. **Buscar** — remitente, texto libre o rango de fechas.
 2. **Revisar** — clasificación automática por categoría y severidad.
