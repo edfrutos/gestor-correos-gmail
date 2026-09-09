@@ -33,9 +33,19 @@ PROJECT_MODULES = [
 
 OPTIONS = {
     "argv_emulation": False,  # incompatible con algunas versiones de macOS/pyobjc
-    "includes": PROJECT_MODULES + ["webview"],
+    # OJO: "google" es un namespace package (sin __init__.py). py2app revienta si
+    # lo metes en "packages" (get_bootstrap -> imp_find_module('google')).
+    # Los subpaquetes google.* van en "includes" y modulegraph los sigue.
+    "includes": PROJECT_MODULES + [
+        "webview",
+        "google.auth", "google.auth.transport.requests",
+        "google.oauth2", "google.oauth2.credentials",
+        "google_auth_oauthlib.flow", "google_auth_httplib2",
+        "googleapiclient.discovery", "googleapiclient.errors",
+        "googleapiclient.discovery_cache",
+    ],
     "packages": [
-        "google", "googleapiclient", "google_auth_httplib2",
+        "googleapiclient", "google_auth_httplib2",
         "google_auth_oauthlib", "httplib2", "webview",
     ],
     "excludes": ["tkinter", "pytest", "setuptools", "pip"],

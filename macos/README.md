@@ -149,7 +149,8 @@ cualquier modo (ver `paths.py`).
 | `py2app` termina pero el `.app` no arranca / falta `Python` | El `python3` del build no es *framework build*. Relanza con `PYTHON=/ruta/al/python.org/python3 bash macos/build_app.sh`. |
 | `notarytool`: *"could not find keychain profile"* | El `AC_PROFILE` que exportaste no coincide con el nombre que diste en `store-credentials`, o nunca lo creaste. Lista lo que hay: `security find-generic-password -s 'com.apple.gke.notary.tool'` o repite `xcrun notarytool store-credentials "<nombre>"`. |
 | `codesign`: *"no identity found"* | `DEV_ID_APP` mal escrito o falta el certificado. `security find-identity -v -p codesigning` y copia la línea exacta entre comillas. |
-| `py2app` no encuentra `googleapiclient` / `google` | Ya están en `packages` de `macos/setup.py`; si aparece otro módulo, añádelo a `includes`. |
+| `py2app` → `ImportError: No module named 'google'` en `collect_packagedirs` | `google` es namespace package: **nunca** en `packages`. Los `google.*` van en `includes` (ya está así en `setup.py`). |
+| `py2app` no encuentra otro módulo | Añádelo a `includes` en `macos/setup.py`. Si tiene data files (JSON, plantillas), a `packages`. |
 | "app is damaged and can't be opened" | Falta staple o la notarización no terminó. Revisa `xcrun notarytool log <id> --keychain-profile "$AC_PROFILE"`. |
 | Gatekeeper bloquea al abrir | `spctl` arriba debe decir `accepted`. Si no, la firma o el staple fallaron. |
 | La ventana abre en blanco | El servidor no respondió a `/api/status` en 15 s; ejecuta `python3 macos/app_main.py` desde Terminal para ver el error. |
