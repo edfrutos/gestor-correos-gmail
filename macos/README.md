@@ -159,6 +159,17 @@ cualquier modo (ver `paths.py`).
 | OAuth no vuelve | El `redirect_uri` de bucle local (`http://localhost`) debe seguir registrado en el cliente OAuth de Google Cloud. No cambia respecto a la app web. |
 | Doble instancia / puerto | La app elige un puerto libre efímero; no choca con `server.py` en 8765. |
 
+## Icono
+
+`macos/AppIcon.icns` (usado por `setup.py`) se genera de `macos/appicon-source.png`:
+
+```bash
+python3 macos/make_icon.py     # recorta un cuadrado centrado en el logo -> icns + iconset
+```
+
+`build_app.sh` lo regenera con `iconutil` (mejor calidad) si el `.iconset` está
+presente. Para cambiar el icono, reemplaza `appicon-source.png` y relanza el script.
+
 ## Limitaciones conocidas (v1)
 
 - Abrir un `.eml` desde el Finder funciona en el **primer** lanzamiento (argv).

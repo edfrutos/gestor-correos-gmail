@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 APP = [str(ROOT / "macos" / "app_main.py")]
+ICON = ROOT / "macos" / "AppIcon.icns"  # generado por macos/make_icon.py
 
 DATA_FILES = [
     ("", [str(ROOT / "index.html")]),
@@ -33,6 +34,7 @@ PROJECT_MODULES = [
 
 OPTIONS = {
     "argv_emulation": False,  # incompatible con algunas versiones de macOS/pyobjc
+    "iconfile": str(ICON),
     "includes": PROJECT_MODULES + [
         "webview",
         "google.auth.transport.requests", "google.oauth2.credentials",
@@ -69,6 +71,9 @@ OPTIONS = {
         ],
     },
 }
+
+if not ICON.exists():
+    OPTIONS.pop("iconfile", None)  # sin icono si aún no se ha generado
 
 setup(
     app=APP,

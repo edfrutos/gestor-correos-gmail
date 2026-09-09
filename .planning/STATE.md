@@ -123,14 +123,14 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**Merge de `feat/macos-app` a `main`** (Fase 34 completada y verificada). Después:
+`feat/macos-app` mergeada a `main` (`afad3a9`). Icono propio añadido
+(`macos/AppIcon.icns` desde `appicon-source.png` vía `make_icon.py`; `setup.py`
+lo usa). **Rebuild del DMG en el Mac** para incorporar el icono:
+`PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`.
 
-- Fijar `.env`-style: `~/Library/Application Support/GestorDeCorreos/` como
-  ubicación oficial de `credentials.json` (ya documentado en `macos/README.md`).
-- Pendientes menores de la app macOS:
-  - AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta** (v1 solo
-    cubre argv en el primer lanzamiento).
-  - Icono propio (`.icns`) — ahora usa el genérico de py2app.
-  - Considerar CI en el Mac para regenerar el DMG por versión.
+Pendientes menores:
+- AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta** (v1 solo
+  cubre argv en el primer lanzamiento).
+- CI en el Mac para regenerar el DMG por versión (opcional).
 - Fase 32 Stage C (`activeEmails`/`aiStatus`/`CATS` → `App.*`), opcional.
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).

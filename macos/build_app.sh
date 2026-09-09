@@ -43,6 +43,13 @@ find build-venv -type d -path '*/site-packages/google' -print0 2>/dev/null \
       [ -f "$d/__init__.py" ] || : > "$d/__init__.py"
     done
 
+# Icono: regenera AppIcon.icns con iconutil (mejor que el fallback de Pillow) si
+# está el iconset. Si no, se usa el macos/AppIcon.icns ya versionado.
+if [ -d macos/AppIcon.iconset ] && command -v iconutil >/dev/null 2>&1; then
+  iconutil -c icns macos/AppIcon.iconset -o macos/AppIcon.icns
+  echo "    icono regenerado con iconutil"
+fi
+
 echo "==> 3/9  py2app"
 rm -rf build dist
 build-venv/bin/python macos/setup.py py2app
