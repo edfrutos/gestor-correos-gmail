@@ -26,7 +26,12 @@ VERSION="$(cat VERSION)"
 GH_REPO="${GH_REPO:-edfrutos/gestor-correos-gmail}"   # para las URLs de latest.json
 UPDATE_ZIP="dist/GestorDeCorreos-${VERSION}.zip"
 
-require() { [ -n "${!1:-}" ] || { echo "Falta la variable de entorno: $1" >&2; exit 1; }; }
+# Credenciales: variables de entorno, o un macos/build.env local (gitignoreado)
+#   DEV_ID_APP="Developer ID Application: Nombre (TEAMID)"
+#   AC_PROFILE="gestor-notary"
+[ -f macos/build.env ] && . macos/build.env
+
+require() { [ -n "${!1:-}" ] || { echo "Falta la variable: $1 (exporta o ponla en macos/build.env)" >&2; exit 1; }; }
 require DEV_ID_APP
 require AC_PROFILE
 

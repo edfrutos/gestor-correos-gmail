@@ -32,3 +32,6 @@ exports/
 
 # Generated knowledge graph
 graphify-out/
+
+# credenciales locales de firma/notarización
+macos/build.env
