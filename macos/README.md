@@ -149,8 +149,10 @@ cualquier modo (ver `paths.py`).
 | `py2app` termina pero el `.app` no arranca / falta `Python` | El `python3` del build no es *framework build*. Relanza con `PYTHON=/ruta/al/python.org/python3 bash macos/build_app.sh`. |
 | `notarytool`: *"could not find keychain profile"* | El `AC_PROFILE` que exportaste no coincide con el nombre que diste en `store-credentials`, o nunca lo creaste. Lista lo que hay: `security find-generic-password -s 'com.apple.gke.notary.tool'` o repite `xcrun notarytool store-credentials "<nombre>"`. |
 | `codesign`: *"no identity found"* | `DEV_ID_APP` mal escrito o falta el certificado. `security find-identity -v -p codesigning` y copia la línea exacta entre comillas. |
-| `py2app` → `ImportError: No module named 'google'` en `collect_packagedirs` | `google` es namespace package: **nunca** en `packages`. Los `google.*` van en `includes` (ya está así en `setup.py`). |
-| `py2app` no encuentra otro módulo | Añádelo a `includes` en `macos/setup.py`. Si tiene data files (JSON, plantillas), a `packages`. |
+| Notarización `Invalid`: *"binary is not signed" / "no secure timestamp"* en muchos `.so` | `codesign --deep` no firma los binarios anidados. `build_app.sh` los firma uno a uno (inside-out) antes que el bundle. Si añades dependencias con binarios nuevos, no hay que tocar nada: el `find` los cubre. |
+| Notarización `Invalid` en `google/_upb/_message.abi3.so` dentro de `python3XX.zip` | Un `.so` dentro del zip no se puede firmar. `build_app.sh` crea `google/__init__.py` en el build-venv y `setup.py` mete `google` en `packages` para copiarlo suelto. |
+| `py2app` → `ImportError: No module named 'google'` en `collect_packagedirs` | El paso 2/9 de `build_app.sh` (crear `google/__init__.py`) no se ejecutó o el build-venv es viejo. Borra `build-venv/` y relanza. |
+| `py2app` no encuentra otro módulo | Añádelo a `includes` en `macos/setup.py`. Si tiene data files (JSON, plantillas) o binarios, a `packages`. |
 | "app is damaged and can't be opened" | Falta staple o la notarización no terminó. Revisa `xcrun notarytool log <id> --keychain-profile "$AC_PROFILE"`. |
 | Gatekeeper bloquea al abrir | `spctl` arriba debe decir `accepted`. Si no, la firma o el staple fallaron. |
 | La ventana abre en blanco | El servidor no respondió a `/api/status` en 15 s; ejecuta `python3 macos/app_main.py` desde Terminal para ver el error. |
