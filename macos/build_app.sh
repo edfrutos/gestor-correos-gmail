@@ -6,10 +6,16 @@
 #   export AC_PROFILE="gestor-notary"      # perfil guardado con notarytool store-credentials
 #   bash macos/build_app.sh
 #
-# Requisitos: Xcode Command Line Tools, Python 3.11+, cuenta Apple Developer,
-# certificado Developer ID Application en el llavero, y un perfil de notarytool:
+# Requisitos: Xcode Command Line Tools, cuenta Apple Developer, certificado
+# Developer ID Application en el llavero, y un perfil de notarytool:
 #   xcrun notarytool store-credentials "gestor-notary" \
 #       --apple-id "TU_APPLE_ID" --team-id "TEAMID" --password "APP-SPECIFIC-PASSWORD"
+#
+# PYTHON: py2app necesita un "framework build" de Python. El de Homebrew NO lo es
+# y suele producir un .app que no arranca. Usa el instalador oficial de
+# python.org (/usr/local/bin/python3 o /Library/Frameworks/Python.framework/...)
+# o pyenv con `PYTHON_CONFIGURE_OPTS="--enable-framework"`, y pásalo aquí:
+#   PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh
 
 set -euo pipefail
 
@@ -17,13 +23,16 @@ APP_NAME="Gestor de Correos"
 BUNDLE="dist/${APP_NAME}.app"
 DMG="dist/GestorDeCorreos.dmg"
 ENTITLEMENTS="macos/entitlements.plist"
+PYTHON="${PYTHON:-python3}"
 
 require() { [ -n "${!1:-}" ] || { echo "Falta la variable de entorno: $1" >&2; exit 1; }; }
 require DEV_ID_APP
 require AC_PROFILE
 
-echo "==> 1/8  Entorno de build"
-python3 -m venv build-venv
+echo "==> 1/8  Entorno de build  (PYTHON=${PYTHON})"
+"${PYTHON}" -c 'import sysconfig,sys; sys.exit(0 if sysconfig.get_config_var("PYTHONFRAMEWORK") else 1)' \
+    || echo "AVISO: ${PYTHON} no parece un framework build; py2app puede fallar. Ver cabecera." >&2
+"${PYTHON}" -m venv build-venv
 build-venv/bin/python -m pip install --upgrade pip wheel
 build-venv/bin/python -m pip install -r requirements.txt -r requirements-macos.txt
 

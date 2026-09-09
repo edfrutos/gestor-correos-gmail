@@ -13,12 +13,19 @@ Swift.
 
 ## Prueba rápida sin empaquetar
 
+macOS bloquea `pip` sobre el Python de Homebrew (`externally-managed-environment`,
+PEP 668). **Siempre en un venv** — no uses `--break-system-packages`:
+
 ```bash
 python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt -r requirements-macos.txt
 .venv/bin/python macos/app_main.py            # abre la ventana
 .venv/bin/python macos/app_main.py correo.eml # abre un .eml en el visor
 ```
+
+Si `app_main.py` dice *"Falta pywebview"*, es que lo lanzaste con el `python3`
+del sistema en vez de `.venv/bin/python`.
 
 Datos escribibles en este modo (ejecutado desde el código fuente): la **carpeta
 del proyecto**, como siempre. Coloca ahí `credentials.json`.
@@ -30,7 +37,12 @@ del proyecto**, como siempre. Coloca ahí `credentials.json`.
 ### Requisitos en el Mac
 
 - **Xcode Command Line Tools**: `xcode-select --install`
-- **Python 3.11+** (el del sistema o Homebrew).
+- **Python 3.11+ con *framework build*** para py2app. El de **Homebrew no sirve**
+  (produce un `.app` que no arranca). Usa el instalador de
+  [python.org](https://www.python.org/downloads/macos/) o pyenv con
+  `PYTHON_CONFIGURE_OPTS="--enable-framework"`, y pásalo al script:
+  `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`.
+  El de Homebrew sí vale para la *prueba rápida sin empaquetar* de arriba.
 - **Cuenta Apple Developer** de pago (99 €/año). La cuenta gratuita no da
   certificados Developer ID ni notarización.
 - **Certificado *Developer ID Application*** instalado en el llavero.
@@ -133,6 +145,8 @@ cualquier modo (ver `paths.py`).
 
 | Síntoma | Causa / arreglo |
 |---|---|
+| `error: externally-managed-environment` al hacer `pip install` | Estás usando el Python de Homebrew sin venv. Crea `.venv` (ver *Prueba rápida*). Nunca `--break-system-packages`. |
+| `py2app` termina pero el `.app` no arranca / falta `Python` | El `python3` del build no es *framework build*. Relanza con `PYTHON=/ruta/al/python.org/python3 bash macos/build_app.sh`. |
 | `notarytool`: *"could not find keychain profile"* | El `AC_PROFILE` que exportaste no coincide con el nombre que diste en `store-credentials`, o nunca lo creaste. Lista lo que hay: `security find-generic-password -s 'com.apple.gke.notary.tool'` o repite `xcrun notarytool store-credentials "<nombre>"`. |
 | `codesign`: *"no identity found"* | `DEV_ID_APP` mal escrito o falta el certificado. `security find-identity -v -p codesigning` y copia la línea exacta entre comillas. |
 | `py2app` no encuentra `googleapiclient` / `google` | Ya están en `packages` de `macos/setup.py`; si aparece otro módulo, añádelo a `includes`. |
