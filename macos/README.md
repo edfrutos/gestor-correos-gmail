@@ -31,15 +31,52 @@ del proyecto**, como siempre. Coloca ahí `credentials.json`.
 
 - **Xcode Command Line Tools**: `xcode-select --install`
 - **Python 3.11+** (el del sistema o Homebrew).
-- **Cuenta Apple Developer** y certificado **Developer ID Application** instalado
-  en el llavero. Compruébalo: `security find-identity -v -p codesigning`
-- **Perfil de notarytool** guardado una sola vez:
+- **Cuenta Apple Developer** de pago (99 €/año). La cuenta gratuita no da
+  certificados Developer ID ni notarización.
+- **Certificado *Developer ID Application*** instalado en el llavero.
+- **Perfil de notarytool** guardado una vez (ver abajo).
 
-  ```bash
-  xcrun notarytool store-credentials "gestor-notary" \
-      --apple-id "TU_APPLE_ID" --team-id "TEAMID" \
-      --password "APP-SPECIFIC-PASSWORD"   # contraseña de app en appleid.apple.com
-  ```
+Las dos variables de entorno que consume `macos/build_app.sh`:
+
+| Variable | Qué es | De dónde sale |
+|---|---|---|
+| `DEV_ID_APP` | Nombre completo del certificado de firma | `security find-identity -v -p codesigning` → copia la línea `"Developer ID Application: Tu Nombre (TEAMID)"` **entre comillas**. Si no aparece: developer.apple.com → *Certificates* → **+** → *Developer ID Application* → descarga el `.cer` y doble clic para instalarlo en el llavero. |
+| `AC_PROFILE` | **Nombre que eliges tú** para la entrada de credenciales de notarización guardada en el llavero | No se "obtiene": lo creas con `xcrun notarytool store-credentials "<nombre>"` (abajo). Puede ser `gestor-notary`, `mi-perfil`, lo que quieras; solo debe coincidir con lo que exportas. |
+
+#### Crear el perfil de notarytool (una sola vez)
+
+`store-credentials` guarda en el llavero un paquete con tu Apple ID + Team ID +
+secreto, bajo el nombre que le des. Dos formas de autenticar:
+
+**Opción A — contraseña específica de app** (la más simple):
+
+```bash
+xcrun notarytool store-credentials "gestor-notary" \
+    --apple-id "TU_APPLE_ID@ejemplo.com" \
+    --team-id "TEAMID10CH" \
+    --password "xxxx-xxxx-xxxx-xxxx"
+```
+
+| Dato | De dónde sale |
+|---|---|
+| `--apple-id` | El email de tu cuenta Apple Developer. |
+| `--team-id` | [developer.apple.com/account](https://developer.apple.com/account) → **Membership details** → *Team ID* (10 caracteres). También va entre paréntesis en la salida de `security find-identity`. |
+| `--password` | **Contraseña específica de app**, NO tu contraseña de Apple. [account.apple.com](https://account.apple.com) → *Iniciar sesión y seguridad* → **Contraseñas específicas de app** → **+** → nómbrala (p. ej. "notarytool") → copia el `xxxx-xxxx-xxxx-xxxx`. |
+
+**Opción B — clave de API de App Store Connect** (sin contraseña de app):
+
+```bash
+xcrun notarytool store-credentials "gestor-notary" \
+    --key "/ruta/AuthKey_XXXXXXXXXX.p8" \
+    --key-id "XXXXXXXXXX" \
+    --issuer "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+```
+
+`.p8`, *Key ID* e *Issuer ID* se generan en
+[App Store Connect → Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api).
+El `.p8` **solo se descarga una vez**: guárdalo bien.
+
+Comprueba que quedó bien: `xcrun notarytool history --keychain-profile "gestor-notary"`
 
 ### Ejecutar
 
@@ -47,7 +84,7 @@ Desde la raíz del repositorio:
 
 ```bash
 export DEV_ID_APP="Developer ID Application: Nombre Apellidos (TEAMID)"
-export AC_PROFILE="gestor-notary"
+export AC_PROFILE="gestor-notary"   # el mismo nombre que usaste en store-credentials
 bash macos/build_app.sh
 ```
 
@@ -96,6 +133,8 @@ cualquier modo (ver `paths.py`).
 
 | Síntoma | Causa / arreglo |
 |---|---|
+| `notarytool`: *"could not find keychain profile"* | El `AC_PROFILE` que exportaste no coincide con el nombre que diste en `store-credentials`, o nunca lo creaste. Lista lo que hay: `security find-generic-password -s 'com.apple.gke.notary.tool'` o repite `xcrun notarytool store-credentials "<nombre>"`. |
+| `codesign`: *"no identity found"* | `DEV_ID_APP` mal escrito o falta el certificado. `security find-identity -v -p codesigning` y copia la línea exacta entre comillas. |
 | `py2app` no encuentra `googleapiclient` / `google` | Ya están en `packages` de `macos/setup.py`; si aparece otro módulo, añádelo a `includes`. |
 | "app is damaged and can't be opened" | Falta staple o la notarización no terminó. Revisa `xcrun notarytool log <id> --keychain-profile "$AC_PROFILE"`. |
 | Gatekeeper bloquea al abrir | `spctl` arriba debe decir `accepted`. Si no, la firma o el staple fallaron. |
