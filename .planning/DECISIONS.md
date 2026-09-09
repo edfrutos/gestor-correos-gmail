@@ -171,7 +171,8 @@ Regla para el front (recogida en `AGENTS.md`): estado nuevo que cruce
 ## ADR-012 — App macOS: Developer ID + notarización, estado en Application Support
 
 **Date:** 2026-09-08
-**Status:** Accepted (Fase 34, rama `feat/macos-app`; App Store diferido a Fase 35)
+**Status:** Accepted · Fase 34 completada 2026-09-09 (DMG firmado + notarizado
+verificado en el Mac). App Store diferido a Fase 35.
 
 La herramienta se empaqueta como `.app` de macOS con ventana propia (WKWebView
 vía `pywebview`) que arranca y detiene `server.py` por dentro. Se distribuye

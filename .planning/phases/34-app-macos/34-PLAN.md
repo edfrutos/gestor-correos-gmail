@@ -27,6 +27,13 @@ autonomous: false   # build/firma/notarización se ejecutan en el Mac del usuari
 
 # Phase 34 Plan: App macOS nativa
 
+> **Estado: COMPLETADA 2026-09-09.** DMG firmado + notarizado + stapled
+> (`dist/GestorDeCorreos.dmg`), verificado en el Mac (Hardened Runtime,
+> Developer ID `V29BTBRY6G`, timestamp; ventana + login Gmail OK).
+> Ajustes reales incorporados a `macos/build_app.sh` y `macos/setup.py`:
+> framework Python obligatorio, `google` fuera del zip, firma inside-out.
+> Ver `.planning/ROADMAP.md` (Phase 34) y ADR-012.
+
 ## Objetivo
 
 Empaquetar la herramienta como una app `.app` de macOS con ventana propia

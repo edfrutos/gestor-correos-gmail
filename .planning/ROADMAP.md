@@ -589,28 +589,36 @@ Plan: `.planning/phases/34-app-macos/34-PLAN.md`. Decisión: ADR-012.
 
 ### Phase 34 — App macOS (Developer ID + notarización)
 
-**Status:** In progress.
+**Status:** Completed 2026-09-09.
 
 **Outcome:** `.app` con WKWebView (`pywebview`) que arranca/detiene `server.py`,
 empaquetada con py2app, firmada (Developer ID Application), Hardened Runtime,
-notarizada y *stapled*, distribuida en DMG. La app web y la CLI no cambian.
+notarizada y *stapled*, distribuida en DMG (`dist/GestorDeCorreos.dmg`). La app
+web y la CLI no cambian. Verificado en el Mac del usuario: ventana + login Gmail
+OK; `codesign -dv` → `flags=runtime`, Developer ID `V29BTBRY6G`, timestamp.
 
-Scope:
-- `paths.py`: resuelve carpeta de datos escribible (proyecto desde fuente,
+Scope entregado:
+- `paths.py`: carpeta de datos escribible (proyecto desde fuente,
   `~/Library/Application Support/GestorDeCorreos/` en el `.app`) y carpeta de
   recursos de solo lectura. `gmail_client`/`destructive_gmail`/`storage`/`server`
-  toman sus rutas de ahí, manteniendo los nombres de constante y los tests.
-- `macos/`: `app_main.py` (entry point pywebview), `setup.py` (py2app),
-  `entitlements.plist`, `build_app.sh` (build + firma + notarización + DMG),
-  `README.md` (guía en el Mac). `requirements-macos.txt` aparte.
-- El entorno de desarrollo actual (Linux) no puede construir/firmar: se entrega
-  el andamiaje + `paths.py` con tests; el build lo ejecuta el usuario en el Mac.
+  toman sus rutas de ahí, manteniendo nombres de constante y tests. +7 tests.
+- `macos/`: `app_main.py` (pywebview, puerto libre efímero), `setup.py` (py2app),
+  `entitlements.plist`, `build_app.sh`, `README.md`. `requirements-macos.txt`.
 
-Requisitos: MAC-01 … MAC-05.
+Hallazgos del build real (fijados en `build_app.sh` y `setup.py`):
+- Homebrew Python no vale para py2app: hace falta **framework build** (python.org)
+  → `PYTHON=/usr/local/bin/python3.12`.
+- `google` es namespace package: crea `__init__.py` en el build-venv y va en
+  `packages` para no acabar dentro de `python3XX.zip` (un `.so` en un zip no se
+  puede firmar).
+- `codesign --deep` no firma los binarios anidados → notarización *Invalid*.
+  Firma **inside-out**: cada `.so`/`.dylib`/framework con `--options runtime
+  --timestamp`, el bundle al final con entitlements.
 
-Verification: `pytest` (143/143) · `py_compile` (`paths.py`, `macos/*.py`) ·
-`bash -n macos/build_app.sh` · `plistlib` sobre `entitlements.plist`. Build real:
-`macos/README.md`.
+Requisitos: MAC-01 … MAC-05 (todos Done).
+
+Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
+`spctl` accepted en el Mac.
 
 ### Phase 35 — Mac App Store (futuro)
 

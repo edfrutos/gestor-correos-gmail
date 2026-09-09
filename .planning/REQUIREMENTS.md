@@ -144,11 +144,11 @@
 
 ## v9 — App macOS nativa (rama `feat/macos-app`, en curso)
 
-- [~] **MAC-01**: Existe una `.app` de macOS con ventana propia (WKWebView) que muestra la UI local y arranca/detiene `server.py`, sin romper la app web ni la CLI. — Phase 34 (andamiaje `macos/app_main.py` hecho; build pendiente en el Mac)
+- [x] **MAC-01**: Existe una `.app` de macOS con ventana propia (WKWebView) que muestra la UI local y arranca/detiene `server.py`, sin romper la app web ni la CLI. — Phase 34 (2026-09-09; ventana verificada en el Mac)
 - [x] **MAC-02**: Todo el estado escribible del `.app` vive en `~/Library/Application Support/GestorDeCorreos/`, nunca dentro del bundle; desde el código fuente sigue siendo la carpeta del proyecto. — Phase 34 (`paths.py` + rewiring, con tests)
-- [~] **MAC-03**: El `.app` se firma con Developer ID Application, Hardened Runtime y entitlements mínimos, y se notariza y *staplea*. — Phase 34 (`entitlements.plist` + `build_app.sh`; ejecución en el Mac)
-- [~] **MAC-04**: Build reproducible con `macos/build_app.sh` + variables de entorno documentadas; produce un DMG firmado y notarizado. — Phase 34 (script escrito; sin ejecutar aún)
-- [ ] **MAC-05**: `credentials.json` y el flujo OAuth de Gmail funcionan desde la app (usuario coloca `credentials.json` en Application Support). — Phase 34 (verificación en el Mac)
+- [x] **MAC-03**: El `.app` se firma con Developer ID Application, Hardened Runtime y entitlements mínimos, y se notariza y *staplea*. — Phase 34 (firma inside-out; `codesign -dv` → `flags=runtime`, Developer ID `V29BTBRY6G`, timestamp)
+- [x] **MAC-04**: Build reproducible con `macos/build_app.sh` + variables de entorno documentadas; produce un DMG firmado y notarizado. — Phase 34 (`dist/GestorDeCorreos.dmg` notarizado + stapled, 2026-09-09)
+- [x] **MAC-05**: `credentials.json` y el flujo OAuth de Gmail funcionan desde la app (usuario coloca `credentials.json` en Application Support). — Phase 34 (login Gmail verificado en el Mac)
 
 ## Out of Scope
 
@@ -232,18 +232,18 @@
 | MNT-01 | Phase 31 | Done |
 | MNT-02 | Phase 32 (Stage A+B) | Done · Stage C opcional |
 | MNT-03 | Phase 33 | Done |
-| MAC-01 | Phase 34 | In progress |
+| MAC-01 | Phase 34 | Done |
 | MAC-02 | Phase 34 | Done |
-| MAC-03 | Phase 34 | In progress |
-| MAC-04 | Phase 34 | In progress |
-| MAC-05 | Phase 34 | Pending (verificación en Mac) |
+| MAC-03 | Phase 34 | Done |
+| MAC-04 | Phase 34 | Done |
+| MAC-05 | Phase 34 | Done |
 
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.
 - v6 (EXP-*, NET-*): 10 requisitos, Done (Fases 19–20).
 - v8 (UX-*, MNT-*): 5 requisitos — 5 Done (Fases 30–33). MNT-02 con seguimiento
   opcional (Fase 32 Stage C).
-- v9 (MAC-*): 5 requisitos — 1 Done, 3 en curso, 1 pendiente (Fase 34; build en Mac).
+- v9 (MAC-*): 5 requisitos — 5 Done (Fase 34; DMG firmado + notarizado verificado 2026-09-09).
 - Unmapped: 0.
 
 ---
