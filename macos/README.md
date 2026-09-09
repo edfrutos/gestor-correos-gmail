@@ -159,6 +159,32 @@ cualquier modo (ver `paths.py`).
 | OAuth no vuelve | El `redirect_uri` de bucle local (`http://localhost`) debe seguir registrado en el cliente OAuth de Google Cloud. No cambia respecto a la app web. |
 | Doble instancia / puerto | La app elige un puerto libre efímero; no choca con `server.py` en 8765. |
 
+## Publicar una actualización (auto-updater)
+
+La app trae **Buscar actualizaciones** (menú nativo + botón en la UI). Consulta
+`latest.json` en el último GitHub Release, y si hay versión nueva descarga el
+`.zip`, verifica **sha256 + `codesign`/`spctl` + TeamIdentifier `V29BTBRY6G`**,
+pide permiso y se auto-reinstala.
+
+Para sacar una versión nueva:
+
+1. Sube la versión en el archivo `VERSION` de la raíz (p. ej. `1.1.0`) y commitea.
+2. `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`
+   — genera `dist/GestorDeCorreos-<VERSION>.zip`, `dist/latest.json` (con el
+   sha256) y el `dist/GestorDeCorreos.dmg`.
+3. Publica el Release con el tag **`v<VERSION>`** y esos 3 assets:
+   ```bash
+   gh release create v1.1.0 \
+       "dist/GestorDeCorreos-1.1.0.zip" dist/latest.json dist/GestorDeCorreos.dmg \
+       --title v1.1.0 --notes "Cambios…"
+   ```
+   El nombre del `.zip` y el tag deben coincidir con lo que `latest.json` apunta
+   (lo genera el script, no lo edites a mano).
+
+Las instancias con una versión anterior verán la actualización al pulsar
+**Buscar actualizaciones**. Desde el código fuente la comprobación informa pero
+la instalación automática está desactivada.
+
 ## Icono
 
 `macos/AppIcon.icns` (usado por `setup.py`) se genera de `macos/appicon-source.png`:

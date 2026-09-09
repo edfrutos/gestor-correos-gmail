@@ -76,6 +76,21 @@ def test_frontend_assets_are_externalized_without_build_tooling():
     assert SUMMARY_JS.exists()
 
 
+def test_check_for_updates_ui_and_contract():
+    # Fase 36: botón "Buscar actualizaciones" en la cabecera; el servidor
+    # re-verifica el manifiesto en /api/update/install (no se le pasa URL).
+    html = INDEX.read_text(encoding='utf-8')
+    js = APP_JS.read_text(encoding='utf-8')
+
+    assert 'id="upd-check"' in html
+    assert 'id="ver-pill"' in html
+    assert 'function checkForUpdates()' in js
+    assert "fetch(`${API}/api/update/check`" in js
+    assert "fetch(`${API}/api/update/install`" in js
+    assert 'd.can_auto_install' in js          # instalación auto solo en la .app
+    assert 'if(!confirm(msg))return;' in js    # permiso explícito antes de instalar
+
+
 def test_shared_namespace_is_declared_and_documented():
     # Fase 32: `App` es el espacio de nombres compartido; lo define shared.js,
     # app.js publica en él y summary.js lo consume sin globales desnudas.

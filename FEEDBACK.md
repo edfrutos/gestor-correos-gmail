@@ -1,7 +1,7 @@
 # Feedback Técnico y de Producto
 
 > Revisión viva sincronizada el 2026-09-08. Milestones v1 → v7.5 completados;
-> v8 (refinamiento UX) en curso. Suite: **136 pruebas, todas verdes** (Fases 31–33).
+> v8–v10 completados/en curso. Suite: **156 pruebas, todas verdes**.
 > Estado canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## Sinopsis

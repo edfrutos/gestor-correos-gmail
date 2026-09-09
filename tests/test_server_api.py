@@ -643,3 +643,47 @@ def test_handle_messages_label_rejects_oversized_batch(monkeypatch):
 
     assert handler.status_sent == 400
     assert not called
+
+
+# --- Actualizaciones (Fase 36) ---
+def test_status_includes_app_version_and_bundled(monkeypatch):
+    handler = DummyHandler()
+    monkeypatch.setattr(server, 'gmail_status', lambda: {'token': False})
+    monkeypatch.setattr(server, 'ai_status', lambda: {'configured': False})
+    monkeypatch.setattr(server, 'delete_status', lambda: {'enabled': False})
+    monkeypatch.setattr(server.updater, 'current_version', lambda: '9.9.9')
+    monkeypatch.setattr(server, 'is_bundled', lambda: False)
+
+    handler.path = '/api/status'
+    handler.request_is_local = lambda: True
+    server.H.do_GET(handler)
+
+    body = response_json(handler)
+    assert body['app_version'] == '9.9.9'
+    assert body['bundled'] is False
+
+
+def test_handle_update_install_refused_when_not_bundled(monkeypatch):
+    handler = DummyHandler(request_body({}))
+    monkeypatch.setattr(server, 'is_bundled', lambda: False)
+
+    called = []
+    monkeypatch.setattr(server.updater, 'download_and_stage', lambda *a, **k: called.append(a))
+
+    handler.handle_update_install()
+
+    assert handler.status_sent == 400
+    assert not called
+
+
+def test_handle_update_install_noop_when_up_to_date(monkeypatch):
+    handler = DummyHandler(request_body({}))
+    monkeypatch.setattr(server, 'is_bundled', lambda: True)
+    monkeypatch.setattr(server.updater, 'check_for_update',
+                        lambda: {'current': '2.0.0', 'update_available': False})
+
+    handler.handle_update_install()
+
+    body = response_json(handler)
+    assert handler.status_sent == 200
+    assert body['updated'] is False

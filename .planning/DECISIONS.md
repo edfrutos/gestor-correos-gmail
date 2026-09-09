@@ -203,3 +203,39 @@ tocar la lógica.
   entorno de desarrollo Linux solo valida sintaxis y `paths.py` con tests.
 - Fase 35 (Mac App Store) queda como milestone y rama aparte con shell nativo
   Swift + WKWebView.
+
+## ADR-013 — Auto-actualización vía GitHub Releases (updater en Python)
+
+**Date:** 2026-09-09
+**Status:** Accepted (Fase 36, rama `feat/auto-update`)
+
+La app comprueba/descarga/instala actualizaciones con un **updater propio en
+Python** (`updater.py` + endpoints `/api/update/*` + menú `pywebview`), no con
+Sparkle. El feed es `latest.json` publicado como asset del último **GitHub
+Release** (`edfrutos/gestor-correos-gmail`), que apunta a un `.zip` del `.app`
+firmado+notarizado con el tag `vX.Y.Z`.
+
+**Rationale:** Sparkle es el estándar pero exige embeber `Sparkle.framework` en
+el bundle py2app, generar par de claves EdDSA y firmarlo/notarizarlo aparte —
+mucha integración para una app Python con servidor local + pywebview. El updater
+en Python reutiliza la arquitectura existente y se apoya en la firma Developer
+ID + notarización de Apple para la autenticidad.
+
+**Modelo de confianza** (cualquier fallo aborta la instalación):
+1. `latest.json` por HTTPS (confianza TLS en GitHub).
+2. `.zip` verificado por **sha256** contra el manifiesto (integridad).
+3. `.app` verificado con `codesign --verify --strict`, `spctl -a` (notarizada) y
+   `TeamIdentifier == V29BTBRY6G` (autenticidad). Un atacante no puede producir
+   un build firmado por ese team y notarizado por Apple.
+
+**Consecuencias:**
+- `/api/update/install` **re-consulta el manifiesto en el servidor** y usa su
+  `url`/`sha256`; nunca instala una URL provista por el cliente.
+- Instalación: permiso explícito → `ditto` de la `.app` nueva sobre la instalada
+  vía helper *detached* que espera a que el proceso salga → relaunch; `osascript`
+  con admin si el destino lo requiere.
+- Desde el código fuente la comprobación informa pero la instalación automática
+  está desactivada (`paths.is_bundled()`).
+- `VERSION` (raíz) es la fuente única de versión: la leen `macos/setup.py`
+  (`CFBundle*Version`) y `updater.py` (fallback fuera del bundle).
+- Migrar a Sparkle (appcast + deltas) queda como opción futura.

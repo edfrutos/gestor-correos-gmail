@@ -627,6 +627,39 @@ Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
 Shell nativo Swift/SwiftUI + WKWebView, App Sandbox, `server.py` como helper
 bundled o port parcial a Swift, cert *3rd Party Mac Developer*, App Review.
 
+## Milestone 10: Auto-actualización
+
+Goal: la app comprueba, descarga (con permiso) y se auto-instala una versión
+nueva. Rama `feat/auto-update`. Decisión: ADR-013.
+
+### Phase 36 — Buscar actualizaciones (updater en Python)
+
+**Status:** In progress.
+
+**Outcome:** menú nativo **Buscar actualizaciones…** + botón en la UI web.
+Consulta `latest.json` en el último GitHub Release; si hay versión mayor,
+descarga el `.zip`, verifica **sha256 + `codesign`/`spctl` + TeamIdentifier**,
+pide permiso explícito y se reinstala (`ditto` sobre la `.app` + relaunch vía
+helper detached; `osascript` con admin si el destino lo exige).
+
+Scope:
+- `updater.py`: `current_version` (del `Info.plist` en la `.app`, del archivo
+  `VERSION` desde fuente), `check_for_update`, `download_and_stage` (verifica),
+  `install_and_relaunch`.
+- `server.py`: `GET /api/update/check`, `POST /api/update/install` (re-verifica
+  el manifiesto en el servidor; **nunca** instala una URL del cliente); `/api/status`
+  añade `app_version` y `bundled`.
+- `static/`: pill de versión + botón `#upd-check` → `checkForUpdates()`.
+- `macos/app_main.py`: menú `webview.menu` con la acción.
+- `VERSION` como fuente única de versión (lo lee `setup.py` y `updater.py`).
+- `build_app.sh`: genera `GestorDeCorreos-<v>.zip` + `latest.json` (con sha256).
+- Sparkle queda como opción futura si se quiere appcast con deltas.
+
+Requisitos: UPD-01 … UPD-05.
+
+Verification: `pytest` (156/156) · `node --check` · flujo real en el Mac
+(publicar un Release de prueba y actualizar desde una versión anterior).
+
 ## Product Backlog — Future Features
 
 - **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.

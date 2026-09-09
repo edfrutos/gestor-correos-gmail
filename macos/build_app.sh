@@ -22,6 +22,9 @@ BUNDLE="dist/${APP_NAME}.app"
 DMG="dist/GestorDeCorreos.dmg"
 ENTITLEMENTS="macos/entitlements.plist"
 PYTHON="${PYTHON:-python3}"
+VERSION="$(cat VERSION)"
+GH_REPO="${GH_REPO:-edfrutos/gestor-correos-gmail}"   # para las URLs de latest.json
+UPDATE_ZIP="dist/GestorDeCorreos-${VERSION}.zip"
 
 require() { [ -n "${!1:-}" ] || { echo "Falta la variable de entorno: $1" >&2; exit 1; }; }
 require DEV_ID_APP
@@ -88,14 +91,34 @@ echo "==> 8/9  Staple del .app"
 xcrun stapler staple "${BUNDLE}"
 xcrun stapler validate "${BUNDLE}"
 
-echo "==> 9/9  DMG (firmado, notarizado y stapled)"
+echo "==> 9/9  DMG + artefactos de actualización (v${VERSION})"
 rm -f "${DMG}"
 hdiutil create -volname "${APP_NAME}" -srcfolder "${BUNDLE}" -ov -format UDZO "${DMG}"
 codesign --force --sign "${DEV_ID_APP}" --timestamp "${DMG}"
 xcrun notarytool submit "${DMG}" --keychain-profile "${AC_PROFILE}" --wait
 xcrun stapler staple "${DMG}"
 
+# ZIP versionado del .app YA stapleado (lo que descarga el auto-updater) + latest.json
+rm -f "${UPDATE_ZIP}"
+ditto -c -k --keepParent "${BUNDLE}" "${UPDATE_ZIP}"
+SHA="$(shasum -a 256 "${UPDATE_ZIP}" | awk '{print $1}')"
+cat > dist/latest.json <<JSON
+{
+  "version": "${VERSION}",
+  "url": "https://github.com/${GH_REPO}/releases/download/v${VERSION}/GestorDeCorreos-${VERSION}.zip",
+  "sha256": "${SHA}",
+  "notes_url": "https://github.com/${GH_REPO}/releases/tag/v${VERSION}"
+}
+JSON
+
 echo
-echo "Listo: ${DMG}"
+echo "Listo:"
+echo "  ${DMG}            (distribución manual)"
+echo "  ${UPDATE_ZIP}     (asset del Release para el auto-updater)"
+echo "  dist/latest.json  (asset del Release; el updater lo consulta)"
+echo
+echo "Publicar la actualización:"
+echo "  gh release create v${VERSION} \"${UPDATE_ZIP}\" dist/latest.json \"${DMG}\" --title v${VERSION} --notes '...'"
+echo
 echo "Verifica en otro Mac:  spctl -a -vvv -t install \"${DMG}\""
 echo "                       spctl -a -vvv \"${BUNDLE}\""

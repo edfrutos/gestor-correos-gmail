@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v9
-milestone_name: App macOS nativa
+milestone: v10
+milestone_name: Auto-actualización
 status: in_progress
 last_updated: "2026-09-09T00:00:00.000Z"
-branch: feat/macos-app
+branch: feat/auto-update
 progress:
-  total_phases: 2
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 90
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 85
 ---
 
 # State — Fuente única de estado
@@ -26,33 +26,40 @@ See: `.planning/PROJECT.md` · `.planning/ROADMAP.md` · `.planning/REQUIREMENTS
 **Core value:** Detectar y priorizar correos técnicos importantes sin exponer
 datos de Gmail fuera del equipo local o de una VPN privada.
 
-**Current focus:** Milestone v9 — `.app` de macOS (ventana WKWebView, Developer ID
-+ notarización) **sin romper la app web ni la CLI**. Rama `feat/macos-app`,
-lista para merge a `main`. Milestone v8 cerrado en `main`
-(`ac46a72`/`d2fb240`/`b34c42d`).
+**Current focus:** Milestone v10 — **auto-actualización** de la app macOS (menú
+nativo + botón UI, verificación de firma, permiso explícito, auto-reinstalación).
+Rama `feat/auto-update`. Milestone v9 (app macOS) mergeada a `main`
+(`afad3a9`), con icono propio (`1c275b7`).
 
 ## Current Status
 
-- **Funcionalidad:** madura. Milestones v1 → v7.5 completados (Fases 1–29);
-  v8 (refinamiento) completado en `main`.
-- **v9 — Fase 34 completada (rama `feat/macos-app`):** `paths.py` + relocalización
-  del estado escribible a `~/Library/Application Support/GestorDeCorreos/` (con
-  tests); `macos/` (pywebview, py2app, entitlements, `build_app.sh` con firma
-  inside-out + notarización). **DMG firmado y notarizado generado y verificado en
-  el Mac del usuario** (2026-09-09): Hardened Runtime, Developer ID
-  `V29BTBRY6G`, timestamp; ventana y login Gmail OK.
+- **Funcionalidad:** madura. v1→v7.5 (Fases 1–29), v8 (refinamiento) y v9 (app
+  macOS Developer ID + notarización) completados en `main`.
+- **v9 — app macOS en `main`:** `paths.py` relocaliza el estado escribible a
+  `~/Library/Application Support/GestorDeCorreos/`; `macos/` (pywebview, py2app,
+  firma inside-out, notarización, DMG, icono). Verificada en el Mac.
+- **v10 — Fase 36 (rama `feat/auto-update`):** `updater.py` + `/api/update/check`
+  y `/api/update/install`; `VERSION` como fuente única; menú `pywebview` +
+  botón `#upd-check`; `build_app.sh` emite `latest.json` + zip versionado.
+  Código + tests hechos; **falta el flujo real con un Release de prueba**.
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `143 tests` · **143 verdes** (v9 añadió `test_paths.py`,
-  +7; el rewiring de rutas no cambió ningún test existente).
+- **Suite automatizada:** `156 tests` · **156 verdes** (v10 añadió
+  `test_updater.py` +9 y 4 tests de servidor/frontend).
 - **Testeo humano:** `TESTING_HUMANO.md` 30/30 ✅ (v7.5).
 
-## Milestone v9 — Fases (rama `feat/macos-app`)
+## Milestone v10 — Fases (rama `feat/auto-update`)
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
-| 34 — App macOS (Developer ID) | `paths.py` + relocalización de estado; `macos/` (pywebview, py2app, entitlements, `build_app.sh`), docs | ✅ Done (2026-09-09). DMG firmado + notarizado + stapled, verificado en el Mac |
+| 36 — Buscar actualizaciones | `updater.py` + endpoints + menú/botón; `latest.json` en GitHub Releases; verificación sha256 + codesign + team-id; permiso + auto-reinstalación | 🟡 Código + tests (156/156). Falta verificar el flujo real en el Mac (Release de prueba). Ver ADR-013. |
+
+## Milestone v9 — App macOS (cerrado en `main`)
+
+| Fase | Descripción | Estado |
+|------|-------------|--------|
+| 34 — App macOS (Developer ID) | `paths.py` + relocalización; `macos/` pywebview/py2app/firma inside-out/notarización/DMG/icono | ✅ Done (2026-09-09), mergeado a `main` (`afad3a9`) |
 | 35 — Mac App Store | Shell nativo Swift + WKWebView, App Sandbox, App Review | ⬜ Futuro, rama aparte |
 
 ## Milestone v8 — Fases (cerrado en `main`)
@@ -89,6 +96,14 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-09-09 — v10 / Fase 36 (rama `feat/auto-update`): `updater.py`
+  (check/download+verify/install), `/api/update/check` y `/api/update/install`
+  (el servidor re-verifica el manifiesto), `/api/status` con `app_version` +
+  `bundled`, `VERSION` como fuente única, menú `pywebview` + botón `#upd-check`,
+  `build_app.sh` emite `GestorDeCorreos-<v>.zip` + `latest.json`. +13 tests
+  (156/156). Falta el flujo real con un Release de prueba. Ver ADR-013.
+- 2026-09-09 — v9 mergeada a `main` (`afad3a9`) + icono propio (`1c275b7`,
+  `macos/make_icon.py` desde `appicon-source.png`).
 - 2026-09-09 — Fase 34 completada. Build en el Mac del usuario: framework Python
   de python.org (el de Homebrew no vale), `google` forzado fuera del zip
   (`__init__.py` + `packages`), firma **inside-out** de ~150 binarios `.so`
@@ -123,14 +138,19 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-`feat/macos-app` mergeada a `main` (`afad3a9`). Icono propio añadido
-(`macos/AppIcon.icns` desde `appicon-source.png` vía `make_icon.py`; `setup.py`
-lo usa). **Rebuild del DMG en el Mac** para incorporar el icono:
-`PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`.
+**v10 / Fase 36 — verificar el auto-updater en el Mac** (rama `feat/auto-update`):
+
+1. Merge de `feat/auto-update` a `main` (o probar en la rama).
+2. `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh` → genera
+   `dist/GestorDeCorreos-1.0.0.zip`, `dist/latest.json`, DMG con el icono.
+3. Publicar Release `v1.0.0` con esos assets:
+   `gh release create v1.0.0 dist/GestorDeCorreos-1.0.0.zip dist/latest.json dist/GestorDeCorreos.dmg --title v1.0.0`.
+4. Subir `VERSION` a `1.1.0`, rebuild, publicar Release `v1.1.0`.
+5. Desde la `.app` v1.0.0 instalada: **Buscar actualizaciones** → debe detectar
+   v1.1.0, pedir permiso, instalar y reiniciar. Cerrar UPD-06.
 
 Pendientes menores:
-- AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta** (v1 solo
-  cubre argv en el primer lanzamiento).
-- CI en el Mac para regenerar el DMG por versión (opcional).
+- AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta**.
 - Fase 32 Stage C (`activeEmails`/`aiStatus`/`CATS` → `App.*`), opcional.
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
+- Sparkle (appcast + deltas) como alternativa futura al updater en Python.

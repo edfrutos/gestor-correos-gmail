@@ -88,13 +88,46 @@ def main() -> int:
         httpd.shutdown()
         return 1
 
-    webview.create_window(APP_TITLE, start_url, width=1180, height=820, min_size=(900, 600))
+    window = webview.create_window(APP_TITLE, start_url, width=1180, height=820, min_size=(900, 600))
     try:
-        webview.start()  # bloquea hasta que se cierran todas las ventanas
+        webview.start(menu=_build_menu(webview, window))
     finally:
         httpd.shutdown()
         server_thread.join(timeout=5)
     return 0
+
+
+def _build_menu(webview, window):
+    """Menú nativo con 'Buscar actualizaciones…'."""
+    try:
+        from webview.menu import Menu, MenuAction
+    except Exception:
+        return []
+
+    def on_check_updates():
+        import updater  # noqa: E402
+        info = updater.check_for_update()
+        if info.get("error"):
+            window.create_confirmation_dialog("Actualizaciones", info["error"])
+            return
+        if not info.get("update_available"):
+            window.create_confirmation_dialog(
+                "Actualizaciones", f"Ya tienes la última versión (v{info['current']})."
+            )
+            return
+        msg = (f"Versión {info['latest']} disponible (tienes v{info['current']}).\n\n"
+               "¿Descargar e instalar ahora? La app se cerrará y volverá a abrirse.")
+        if not window.create_confirmation_dialog("Actualización disponible", msg):
+            return
+        try:
+            app_path = updater.download_and_stage(info["url"], info["sha256"])
+            updater.install_and_relaunch(app_path)
+        except Exception as exc:  # noqa: BLE001
+            window.create_confirmation_dialog("Error", f"No se pudo instalar la actualización:\n{exc}")
+            return
+        os._exit(0)
+
+    return [Menu("Actualizaciones", [MenuAction("Buscar actualizaciones…", on_check_updates)])]
 
 
 if __name__ == "__main__":

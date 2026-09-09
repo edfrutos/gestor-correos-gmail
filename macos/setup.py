@@ -20,16 +20,17 @@ sys.path.insert(0, str(ROOT))
 
 APP = [str(ROOT / "macos" / "app_main.py")]
 ICON = ROOT / "macos" / "AppIcon.icns"  # generado por macos/make_icon.py
+VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()  # fuente única de versión
 
 DATA_FILES = [
-    ("", [str(ROOT / "index.html")]),
+    ("", [str(ROOT / "index.html"), str(ROOT / "VERSION")]),
     ("static", [str(p) for p in (ROOT / "static").glob("*") if p.is_file()]),
 ]
 
 # Módulos planos del proyecto (no son paquetes): se fuerzan como includes.
 PROJECT_MODULES = [
     "server", "gmail_client", "destructive_gmail", "storage",
-    "validators", "classifier", "ai_client", "paths",
+    "validators", "classifier", "ai_client", "paths", "updater",
 ]
 
 OPTIONS = {
@@ -55,8 +56,8 @@ OPTIONS = {
         "CFBundleName": "Gestor de Correos",
         "CFBundleDisplayName": "Gestor de Correos",
         "CFBundleIdentifier": "com.edefrutos.gestorcorreos",
-        "CFBundleShortVersionString": "1.0.0",
-        "CFBundleVersion": "1.0.0",
+        "CFBundleShortVersionString": VERSION,
+        "CFBundleVersion": VERSION,
         "LSMinimumSystemVersion": "12.0",
         "LSUIElement": False,
         "NSHighResolutionCapable": True,

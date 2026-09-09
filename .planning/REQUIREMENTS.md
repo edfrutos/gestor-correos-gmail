@@ -150,6 +150,15 @@
 - [x] **MAC-04**: Build reproducible con `macos/build_app.sh` + variables de entorno documentadas; produce un DMG firmado y notarizado. — Phase 34 (`dist/GestorDeCorreos.dmg` notarizado + stapled, 2026-09-09)
 - [x] **MAC-05**: `credentials.json` y el flujo OAuth de Gmail funcionan desde la app (usuario coloca `credentials.json` en Application Support). — Phase 34 (login Gmail verificado en el Mac)
 
+## v10 — Auto-actualización (rama `feat/auto-update`, en curso)
+
+- [x] **UPD-01**: La app ofrece "Buscar actualizaciones" en el menú nativo y en la UI web; muestra la versión en ejecución. — Phase 36
+- [x] **UPD-02**: La comprobación consulta `latest.json` del último GitHub Release y compara con la versión del bundle. — Phase 36
+- [x] **UPD-03**: Antes de instalar se verifica sha256 (manifiesto) + `codesign --verify --strict` + `spctl` (notarización) + `TeamIdentifier` esperado; cualquier fallo aborta. — Phase 36
+- [x] **UPD-04**: La instalación requiere permiso explícito del usuario y luego sustituye la `.app` y relanza (helper *detached*; admin si hace falta). — Phase 36
+- [x] **UPD-05**: `/api/update/install` re-verifica el manifiesto en el servidor y nunca instala una URL provista por el cliente; desde el código fuente la instalación automática está desactivada. — Phase 36
+- [ ] **UPD-06**: Flujo real verificado en el Mac (Release de prueba → actualización desde versión anterior). — Phase 36 (pendiente)
+
 ## Out of Scope
 
 | Feature | Reason |
@@ -237,6 +246,12 @@
 | MAC-03 | Phase 34 | Done |
 | MAC-04 | Phase 34 | Done |
 | MAC-05 | Phase 34 | Done |
+| UPD-01 | Phase 36 | Done |
+| UPD-02 | Phase 36 | Done |
+| UPD-03 | Phase 36 | Done |
+| UPD-04 | Phase 36 | Done |
+| UPD-05 | Phase 36 | Done |
+| UPD-06 | Phase 36 | Pending (verificación en Mac) |
 
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.
@@ -244,8 +259,9 @@
 - v8 (UX-*, MNT-*): 5 requisitos — 5 Done (Fases 30–33). MNT-02 con seguimiento
   opcional (Fase 32 Stage C).
 - v9 (MAC-*): 5 requisitos — 5 Done (Fase 34; DMG firmado + notarizado verificado 2026-09-09).
+- v10 (UPD-*): 6 requisitos — 5 Done (Fase 36, código + tests), 1 pendiente (verificación real en Mac).
 - Unmapped: 0.
 
 ---
 *Requirements defined: 2026-05-31*
-*Last updated: 2026-09-08 — apertura de v9 (app macOS, rama `feat/macos-app`). Estado canónico: `.planning/STATE.md`.*
+*Last updated: 2026-09-09 — apertura de v10 (auto-actualización, rama `feat/auto-update`). Estado canónico: `.planning/STATE.md`.*

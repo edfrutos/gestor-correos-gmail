@@ -2,10 +2,11 @@
 
 ## Snapshot
 
-**Fecha:** 2026-09-08
+**Fecha:** 2026-09-09
 **Proyecto:** Gestor de Correos — Servidor Local
-**Estado:** milestones v1 → v7.5 completados; v8 (refinamiento UX) en curso.
-Suite: 136 tests, todas verdes (Fases 31–33). Estado canónico: `.planning/STATE.md`.
+**Estado:** v1 → v9 completados (incl. app macOS firmada + notarizada);
+v10 (auto-actualización) en curso. Suite: 156 tests, todas verdes.
+Estado canónico: `.planning/STATE.md`.
 
 El proyecto sirve una interfaz HTML desde `server.py`, autentica contra Gmail API en modo `gmail.readonly` y permite buscar, priorizar, agrupar, filtrar, exportar y tratar correos ocultos. El borrado permanente usa una autorización separada, revocable y desactivada por defecto.
 
@@ -40,6 +41,13 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
   `window.App`; la superficie compartida app.js→summary.js pasa por `App.*`
   (Fase 32, ADR-011). Hecho: `App.api`, `App.state.deleted`. Pendiente Stage C:
   `activeEmails`, `aiStatus`, `CATS` (se reasignan en `app.js`).
+- App macOS (v9): `.app` pywebview firmada Developer ID + notarizada; el estado
+  escribible se relocaliza a `~/Library/Application Support/GestorDeCorreos/`
+  (`paths.py`), la app web/CLI no cambian. `VERSION` (raíz) = fuente única.
+- Auto-actualización (v10, ADR-013): `updater.py` + `/api/update/{check,install}`
+  + menú `pywebview`/botón `#upd-check`. Feed `latest.json` en GitHub Releases;
+  antes de instalar verifica sha256 + `codesign`/`spctl` + `TeamIdentifier`.
+  El servidor re-verifica el manifiesto; nunca instala una URL del cliente.
 
 ## Decisiones Iniciales
 

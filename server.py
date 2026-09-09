@@ -29,9 +29,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import updater
 from ai_client import ai_status, suggest_rules, summarize
 from classifier import get_base_config
-from paths import data_dir, data_path, resource_dir
+from paths import data_dir, data_path, is_bundled, resource_dir
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
 from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
 from storage import load_state, record_delete_results, save_user_state
@@ -143,7 +144,11 @@ class H(BaseHTTPRequestHandler):
             return self.handle_search(p.query)
 
         if p.path == '/api/status':
-            return self.j({'status': 'ok', **gmail_status(), 'ai': ai_status(), 'permanent_delete': delete_status()})
+            return self.j({'status': 'ok', **gmail_status(), 'ai': ai_status(), 'permanent_delete': delete_status(),
+                           'app_version': updater.current_version(), 'bundled': is_bundled()})
+
+        if p.path == '/api/update/check':
+            return self.j({'status': 'ok', **updater.check_for_update()})
 
         if p.path == '/api/config':
             return self.j({'status': 'ok', 'config': get_base_config()})
@@ -208,6 +213,9 @@ class H(BaseHTTPRequestHandler):
 
         if p.path == '/api/ai-suggest-rules':
             return self.handle_ai_suggest_rules()
+
+        if p.path == '/api/update/install':
+            return self.handle_update_install()
 
         self.send_error(404)
 
@@ -789,6 +797,30 @@ class H(BaseHTTPRequestHandler):
             return self.j({'status': 'ok', 'data': self._parse_eml_bytes(raw_bytes)})
         except Exception as e:
             return self.err(500, 'Error parseando archivo local', str(e))
+
+    def handle_update_install(self):
+        # El servidor vuelve a consultar el manifiesto y usa SU url/sha256:
+        # nunca instala una URL que venga del cliente.
+        if not is_bundled():
+            return self.err(400, 'No disponible', 'La instalación automática solo funciona en la app .app')
+        try:
+            info = updater.check_for_update()
+        except Exception as e:
+            return self.err(502, 'No se pudo comprobar la actualización', str(e))
+        if info.get('error'):
+            return self.err(502, 'No se pudo comprobar la actualización', info['error'])
+        if not info.get('update_available'):
+            return self.j({'status': 'ok', 'updated': False, 'current': info['current']})
+        try:
+            app_path = updater.download_and_stage(info['url'], info['sha256'])
+            updater.install_and_relaunch(app_path)
+        except Exception as e:
+            print(f'[Update] Error: {e}')
+            return self.err(500, 'No se pudo instalar la actualización', str(e))
+        # Damos tiempo a enviar la respuesta y salimos: el helper espera a que
+        # este proceso termine, sustituye la .app y relanza.
+        threading.Timer(1.5, lambda: os._exit(0)).start()
+        return self.j({'status': 'ok', 'updated': True, 'restarting': True, 'version': info['latest']})
 
     def _parse_eml_bytes(self, raw_bytes):
         msg = email.message_from_bytes(raw_bytes, policy=policy.default)

@@ -14,6 +14,7 @@ const API = '';
 App.api = API;
 let aiStatus={configured:false,remote:false,model:null};
 let deleteStatus={enabled:false,authorized:false,available:false,max_batch:100,state:'disabled',token_present:false,revoked:false};
+let appBundled=false;
 
 // ── UTILS ─────────────────────────────────────────────────
 const MO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -91,6 +92,8 @@ async function checkStatus(){
     const d=await r.json();
     aiStatus=d.ai||aiStatus;
     deleteStatus=d.permanent_delete||deleteStatus;
+    if(d.app_version){document.getElementById('ver-pill').textContent='v'+d.app_version;}
+    appBundled=d.bundled===true;
     if(d.ok){
       led.className='sled ok';
       msg.textContent='✓ Gmail conectado — búsqueda en tiempo real disponible';
@@ -112,6 +115,41 @@ async function checkStatus(){
     return null;
   }
 }
+
+// ── ACTUALIZACIONES ───────────────────────────────────────
+async function checkForUpdates(){
+  const btn=document.getElementById('upd-check');
+  const old=btn.textContent;
+  btn.disabled=true;btn.textContent='⟳ Comprobando…';
+  try{
+    const r=await fetch(`${API}/api/update/check`,{signal:AbortSignal.timeout(20000)});
+    const d=await r.json();
+    if(d.error){toast(d.error,'err');return;}
+    if(!d.update_available){toast(`Estás en la última versión (v${d.current})`,'ok');return;}
+    if(!d.can_auto_install){
+      toast(`v${d.latest} disponible. La instalación automática solo funciona en la app de escritorio.`,'err');
+      if(d.notes_url)window.open(d.notes_url,'_blank','noopener');
+      return;
+    }
+    const msg=`Versión ${d.latest} disponible (tienes v${d.current}).\n\n¿Descargar e instalar ahora? La app se cerrará y volverá a abrirse.`;
+    if(!confirm(msg))return;
+    btn.textContent='⟳ Descargando…';
+    toast('Descargando e instalando la actualización…','ok');
+    const ir=await fetch(`${API}/api/update/install`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const id=await ir.json().catch(()=>({}));
+    if(!ir.ok){throw new Error(id.detail||id.error||`Error HTTP ${ir.status}`);}
+    if(id.restarting){
+      document.body.innerHTML='<div style="padding:60px;text-align:center;font-family:sans-serif;color:#ccc">Instalando la actualización…<br>La app se reiniciará en unos segundos.</div>';
+    }else{
+      toast(`Ya tenías la última versión (v${id.current})`,'ok');
+    }
+  }catch(e){
+    toast('Error buscando actualizaciones: '+e.message,'err');
+  }finally{
+    btn.disabled=false;btn.textContent=old;
+  }
+}
+document.getElementById('upd-check').addEventListener('click',checkForUpdates);
 
 // ── CONFIGURACIÓN (UNIFICADA) ─────────────────────────────
 let CATS={};
