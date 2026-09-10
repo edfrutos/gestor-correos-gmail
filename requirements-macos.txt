@@ -1,0 +1,9 @@
+# Dependencias SOLO para construir la app de escritorio macOS.
+# La app web y la CLI no las necesitan (usan requirements.txt).
+#   python3 -m pip install -r requirements.txt -r requirements-macos.txt
+
+pywebview
+pyobjc-core
+pyobjc-framework-Cocoa
+pyobjc-framework-WebKit
+py2app

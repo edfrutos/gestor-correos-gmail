@@ -5,6 +5,7 @@ INDEX = Path(__file__).parents[1] / 'index.html'
 APP_JS = Path(__file__).parents[1] / 'static' / 'app.js'
 APP_CSS = Path(__file__).parents[1] / 'static' / 'app.css'
 SUMMARY_JS = Path(__file__).parents[1] / 'static' / 'summary.js'
+SHARED_JS = Path(__file__).parents[1] / 'static' / 'shared.js'
 
 
 def test_periodic_summary_ui_and_local_contract():
@@ -25,7 +26,9 @@ def test_periodic_summary_excludes_hidden_and_uses_loaded_messages():
     js = SUMMARY_JS.read_text(encoding='utf-8')
 
     assert 'activeEmails' in APP_JS.read_text(encoding='utf-8')
-    assert '.filter(e=>!deleted.has(e.id)' in js
+    # Fase 32 · Stage B: el Set de ocultos se comparte vía App.state.deleted.
+    # Intención inalterada: el resumen excluye los correos ocultos.
+    assert '.filter(e=>!App.state.deleted.has(e.id)' in js
     assert '/api/summary' not in html
 
 
@@ -46,7 +49,9 @@ def test_ai_summary_is_explicit_and_warns_before_remote_transmission():
 
     assert 'id="sum-ai"' in html
     assert 'function requestAiSummary()' in js
-    assert "fetch(`${API}/api/ai-summary`" in js
+    # Fase 32 · Stage B: la base de API se comparte vía App.api.
+    # Intención inalterada: endpoint correcto y aviso antes de envío remoto.
+    assert "fetch(`${App.api}/api/ai-summary`" in js
     assert "aiStatus.remote&&!confirm(" in js
 
 
@@ -56,13 +61,52 @@ def test_frontend_assets_are_externalized_without_build_tooling():
     assert '<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">' in html
     assert '<img class="hlogo" src="/static/logo.svg" alt="Gestor de Correos">' in html
     assert '<link rel="stylesheet" href="/static/app.css">' in html
+    assert '<script src="/static/shared.js"></script>' in html
     assert '<script src="/static/app.js"></script>' in html
     assert '<script src="/static/summary.js"></script>' in html
+    # Fase 32: shared.js define `App` y debe cargar antes que app.js y summary.js.
+    assert html.index('/static/shared.js') < html.index('/static/app.js') < html.index('/static/summary.js')
     assert '<style>' not in html
     assert '<script>' not in html
+    # Fase 32 · Stage A: sin manejadores JS inline en el HTML.
+    assert 'onclick=' not in html
+    assert SHARED_JS.exists()
     assert APP_JS.exists()
     assert APP_CSS.exists()
     assert SUMMARY_JS.exists()
+
+
+def test_check_for_updates_ui_and_contract():
+    # Fase 36: botón "Buscar actualizaciones" en la cabecera; el servidor
+    # re-verifica el manifiesto en /api/update/install (no se le pasa URL).
+    html = INDEX.read_text(encoding='utf-8')
+    js = APP_JS.read_text(encoding='utf-8')
+
+    assert 'id="upd-check"' in html
+    assert 'id="ver-pill"' in html
+    assert 'function checkForUpdates()' in js
+    assert "fetch(`${API}/api/update/check`" in js
+    assert "fetch(`${API}/api/update/install`" in js
+    assert 'd.can_auto_install' in js          # instalación auto solo en la .app
+    assert 'if(!confirm(msg))return;' in js    # permiso explícito antes de instalar
+
+
+def test_shared_namespace_is_declared_and_documented():
+    # Fase 32: `App` es el espacio de nombres compartido; lo define shared.js,
+    # app.js publica en él y summary.js lo consume sin globales desnudas.
+    shared = SHARED_JS.read_text(encoding='utf-8')
+    app = APP_JS.read_text(encoding='utf-8')
+    summary = SUMMARY_JS.read_text(encoding='utf-8')
+
+    assert 'window.App = window.App ||' in shared
+    assert 'App.api = API;' in app
+    assert 'App.state.deleted=deleted;' in app
+    assert 'SHARED SURFACE' in app
+    # Estado propio de summary.js: ya no vive en app.js.
+    assert 'summaryDays' not in app and 'summaryData' not in app
+    assert 'let summaryDays=30,summaryData=null;' in summary
+    # Paneles plegables cableados por JS, no por onclick inline.
+    assert "document.querySelectorAll('.ph[data-panel]')" in app
 
 
 def test_frontend_loads_live_sources_without_embedded_email_pool():
@@ -99,13 +143,19 @@ def test_responsive_controls_do_not_force_horizontal_overflow():
 
 
 def test_open_message_state_survives_attachment_hydration_render():
+    # Fase 30 (ADR-008): la vista de un correo es un modal ("subventana"); la
+    # hidratación de adjuntos ocurre al abrir el modal y lo re-renderiza sin
+    # cerrarlo, actualizando el objeto fuente de activeEmails.
     js = APP_JS.read_text(encoding='utf-8')
 
-    assert 'openMessages=new Set()' in js
-    assert "${openMessages.has(e.id)?' open':''}" in js
-    assert "if(openMessages.has(e.id))openMessages.delete(e.id);else openMessages.add(e.id);" in js
-    assert "c.classList.toggle('open',openMessages.has(e.id));" in js
-    assert "if(openMessages.has(e.id))hydrateMessageAttachments(e);" in js
+    assert 'function openEmailModal(emailOrig){' in js
+    assert "document.getElementById('email-modal').classList.add('show');" in js
+    assert 'if(!emailOrig.attachments_checked)hydrateMessageAttachments(emailOrig);' in js
+    # Abrir desde una tarjeta usa el objeto vivo de activeEmails, no la copia local.
+    assert 'const orig=activeEmails.find(ae=>ae.id===e.id)||e;' in js
+    assert 'openEmailModal(orig);' in js
+    # Tras hidratar, el modal abierto se vuelve a pintar (no se cierra).
+    assert 'if(emailModalEmail&&sources.some(s=>s.id===emailModalEmail.id))renderEmailModal();' in js
 
 
 def test_attachment_hydration_updates_source_message_and_finishes_on_error():

@@ -2,9 +2,11 @@
 
 ## Snapshot
 
-**Fecha:** 2026-06-11
-**Proyecto:** Gestor de Correos — Servidor Local  
-**Estado:** milestones v1 a v5 completados; 121 pruebas automatizadas pasando.
+**Fecha:** 2026-09-09
+**Proyecto:** Gestor de Correos — Servidor Local
+**Estado:** v1 → v9 completados (incl. app macOS firmada + notarizada);
+v10 (auto-actualización) en curso. Suite: 156 tests, todas verdes.
+Estado canónico: `.planning/STATE.md`.
 
 El proyecto sirve una interfaz HTML desde `server.py`, autentica contra Gmail API en modo `gmail.readonly` y permite buscar, priorizar, agrupar, filtrar, exportar y tratar correos ocultos. El borrado permanente usa una autorización separada, revocable y desactivada por defecto.
 
@@ -26,8 +28,26 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
 - El token destructivo se reutiliza mientras sea válido o renovable y puede revocarse explícitamente.
 - Los huérfanos se detectan y purgan de la referencia oculta y de la sesión cargada.
 - La app ya dispone de logo y favicon locales.
-- Las reglas base de clasificación y severidad siguen duplicadas entre Python y JavaScript.
+- Las reglas base de clasificación y severidad viven **solo en el backend**
+  (`classifier.py`) y el frontend las hidrata vía `/api/config` (Fase 22).
+  `static/app.js:136` mantiene un fallback mínimo para modo sin conexión.
 - Los huérfanos purgados no reaparecen tras recargar porque ya no existe el pool estático `BASE`.
+- La vista de correo es un **modal** (Fase 30, v8); la hidratación de adjuntos
+  ocurre al abrir el modal (`openEmailModal`), no al expandir la tarjeta.
+- Archivado y etiquetado por lotes se trocean en tandas de 100 IDs
+  (`BATCH_MODIFY_CHUNK`) y se rechazan lotes >1000 (Fase 33, ADR-010). El borrado
+  permanente mantiene su tope de 100 y tandas de 20 (`DELETE_EXECUTION_CHUNK`).
+- El front carga `shared.js → app.js → summary.js`. `static/shared.js` define
+  `window.App`; la superficie compartida app.js→summary.js pasa por `App.*`
+  (Fase 32, ADR-011). Hecho: `App.api`, `App.state.deleted`. Pendiente Stage C:
+  `activeEmails`, `aiStatus`, `CATS` (se reasignan en `app.js`).
+- App macOS (v9): `.app` pywebview firmada Developer ID + notarizada; el estado
+  escribible se relocaliza a `~/Library/Application Support/GestorDeCorreos/`
+  (`paths.py`), la app web/CLI no cambian. `VERSION` (raíz) = fuente única.
+- Auto-actualización (v10, ADR-013): `updater.py` + `/api/update/{check,install}`
+  + menú `pywebview`/botón `#upd-check`. Feed `latest.json` en GitHub Releases;
+  antes de instalar verifica sha256 + `codesign`/`spctl` + `TeamIdentifier`.
+  El servidor re-verifica el manifiesto; nunca instala una URL del cliente.
 
 ## Decisiones Iniciales
 
@@ -45,7 +65,9 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
 - Fuente de verdad Gmail para fuentes fijas y personalizadas, sin pool base incrustado.
 - Reglas editables por usuario con alta, edición, borrado y operador de palabras clave `alguna`/`todas`.
 - Resúmenes por periodo completados para 7/30 días; informes especializados por tipo de riesgo siguen siendo una posible ampliación.
-- Exportación del contenido completo de uno o varios correos seleccionados: cuerpo íntegro del mensaje, cabeceras y metadatos. La exportación operativa actual sólo genera resumen/cabecera y no satisface este pendiente.
+- Exportación del contenido completo (`.eml`/`.zip` RFC822 desde Gmail `format=raw`)
+  completada en la Fase 19 y persistida en `/exports`. La exportación *operativa*
+  (Markdown/JSON) sigue siendo un artefacto distinto, de resumen.
 
 ## Próximas Preguntas
 

@@ -1,4 +1,9 @@
 // ── PERIODIC SUMMARY ───────────────────────────────────────
+// Depende de `App.*` (static/shared.js) y de funciones helper de app.js
+// (esc, gurl, itemMeta, messageSeverity, severityRank, severityReason, toast,
+// CATS). Estado propio de este módulo: summaryDays / summaryData.
+let summaryDays=30,summaryData=null;
+
 function countBy(items,keyFn){
   const out={};
   items.forEach(item=>{const key=keyFn(item);if(key)out[key]=(out[key]||0)+1;});
@@ -18,7 +23,7 @@ function dateDaysAgo(days){
 }
 function visibleDatedItems(){
   return activeEmails
-    .filter(e=>!deleted.has(e.id)&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||''))
+    .filter(e=>!App.state.deleted.has(e.id)&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||''))
     .map(itemMeta);
 }
 function itemsBetween(items,start,end){
@@ -204,7 +209,7 @@ async function requestAiSummary(){
   button.disabled=true;
   button.textContent='Resumiendo…';
   try{
-    const r=await fetch(`${API}/api/ai-summary`,{
+    const r=await fetch(`${App.api}/api/ai-summary`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({prompt:summaryMarkdown(summaryData||buildPeriodicSummary(summaryDays))})

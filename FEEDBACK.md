@@ -1,7 +1,8 @@
 # Feedback Técnico y de Producto
 
-> Revisión viva sincronizada el 2026-06-12. Milestone v7.0 completado.
-> La suite automatizada contiene **129 pruebas** operativas.
+> Revisión viva sincronizada el 2026-09-08. Milestones v1 → v7.5 completados;
+> v8–v10 completados/en curso. Suite: **156 pruebas, todas verdes**.
+> Estado canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## Sinopsis
 La herramienta ha evolucionado de un panel de lectura local a un gestor de inteligencia operativa bidireccional. Ahora permite organizar la bandeja de entrada real de Gmail mediante archivado, etiquetado y automatización inteligente, manteniendo una seguridad estricta y permitiendo el despliegue remoto seguro vía VPN.
@@ -32,8 +33,14 @@ La herramienta ha evolucionado de un panel de lectura local a un gestor de intel
 
 ## Deuda Técnica Actual
 
-- **Escalabilidad de Lotes**: Verificar el rendimiento del servidor ante archivados masivos de más de 200 correos simultáneos.
-- **Modularización JS**: Aunque está separado por archivos, algunos módulos siguen teniendo dependencias cruzadas mediante variables globales que podrían encapsularse mejor.
+Milestone v8 (ver `.planning/STATE.md` y `.planning/ROADMAP.md`):
+
+- ✅ **Suite verde** (Fase 31): 3 tests obsoletos por rediseño saneados.
+- ✅ **Escalabilidad de Lotes** (Fase 33): archivado/etiquetado troceado en tandas
+  de 100 y acotado a 1000/lote; aviso en UI para lotes grandes (ADR-010).
+- ✅ **Modularización JS** (Fase 32 Stage A+B): espacio de nombres `App`
+  (`static/shared.js`); `API`/`deleted` compartidos vía `App.*`; sin `onclick`
+  inline (ADR-011). Seguimiento opcional: Stage C (`activeEmails`/`aiStatus`/`CATS`).
 
 ## Criterio de Éxito Actualizado
 

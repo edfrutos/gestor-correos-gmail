@@ -7,6 +7,7 @@ from email.utils import parseaddr
 from pathlib import Path
 
 from classifier import classify_metadata
+from paths import data_path
 
 try:
     from google.auth.transport.requests import Request
@@ -23,9 +24,16 @@ except ImportError:
 
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
-BASE_DIR = Path(__file__).parent
-CREDS = BASE_DIR / 'credentials.json'
-TOKEN = BASE_DIR / 'token.json'
+# Estado escribible: carpeta del proyecto desde el código fuente,
+# ~/Library/Application Support/GestorDeCorreos/ dentro del .app (ver paths.py).
+CREDS = data_path('credentials.json')
+TOKEN = data_path('token.json')
+
+# Gmail acepta como máximo 1000 IDs por llamada a users.messages.batchModify.
+# Troceamos en lotes menores para acotar el tamaño de cada petición, permitir
+# lotes grandes desde la UI y mantener las llamadas serializadas bajo _api_lock.
+BATCH_MODIFY_CHUNK = 100
+MAX_BATCH_MODIFY = 1000
 
 _svc = None
 _svc_lock = threading.Lock()
@@ -304,18 +312,30 @@ def search(sender='', after='', before='', q='', max_r=30, custom_rules=None):
     return out
 
 
-def archive_messages(message_ids):
+def _batch_modify_chunked(message_ids, body_extra):
+    """Aplica batchModify en tandas de BATCH_MODIFY_CHUNK bajo _api_lock.
+
+    Devuelve un resumen {'total', 'chunks'} en vez de la respuesta cruda de
+    Gmail (batchModify responde cuerpo vacío). Cualquier error en una tanda se
+    propaga: las tandas anteriores ya se habrán aplicado en Gmail.
+    """
     svc = gmail()
     if not svc:
         return None
+    ids = list(message_ids)
+    chunks = 0
     with _api_lock:
-        return svc.users().messages().batchModify(
-            userId='me',
-            body={
-                'ids': message_ids,
-                'removeLabelIds': ['INBOX']
-            }
-        ).execute()
+        for start in range(0, len(ids), BATCH_MODIFY_CHUNK):
+            batch = ids[start:start + BATCH_MODIFY_CHUNK]
+            body = {'ids': batch}
+            body.update(body_extra)
+            svc.users().messages().batchModify(userId='me', body=body).execute()
+            chunks += 1
+    return {'total': len(ids), 'chunks': chunks}
+
+
+def archive_messages(message_ids):
+    return _batch_modify_chunked(message_ids, {'removeLabelIds': ['INBOX']})
 
 
 def get_labels():
@@ -347,14 +367,10 @@ def create_label(name):
 
 
 def apply_label(message_ids, label_id, archive=False):
-    svc = gmail()
-    if not svc:
-        return None
-    body = {'ids': message_ids, 'addLabelIds': [label_id]}
+    body_extra = {'addLabelIds': [label_id]}
     if archive:
-        body['removeLabelIds'] = ['INBOX']
-    with _api_lock:
-        return svc.users().messages().batchModify(userId='me', body=body).execute()
+        body_extra['removeLabelIds'] = ['INBOX']
+    return _batch_modify_chunked(message_ids, body_extra)
 
 
 def get_attachment(message_id, attachment_id):

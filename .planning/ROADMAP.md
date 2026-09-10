@@ -488,8 +488,181 @@ Scope:
 - Lector EML integrado en la app (sin dependencias externas).
 - Integración con macOS Services ("Acciones rápidas").
 
+## Milestone 8: Refinamiento UX y Mantenimiento
+
+Goal: pulir la experiencia de uso y saldar deuda técnica sin ampliar la
+superficie funcional ni la de escritura en Gmail. Estado canónico en
+`.planning/STATE.md`.
+
+### Phase 30 — Refactor UX v8
+
+**Status:** Completed 2026-06-16 (`e504f4c`, `b6679f3`).
+
+**Outcome:** la vista de un correo se abre en un modal dedicado (subventana),
+las categorías del panel lateral son reactivas y el estado de IA es reseteable.
+
+Scope:
+- Sustituir la tarjeta expandible inline por un modal con hidratación de
+  adjuntos bajo demanda (`openEmailModal`).
+- Categorías reactivas al aplicar/editar reglas y filtros.
+- Reset del estado de IA y mejoras de filtros, scroll y modal.
+
+Requirements: UX-01, UX-02.
+
+### Phase 31 — Suite Verde
+
+**Status:** Completed 2026-09-08.
+
+**Outcome:** `pytest` 129/129 verde. Los 3 tests obsoletos se reescribieron al
+contrato vigente (exportación a `EXPORTS_DIR` + JSON; modal de correo con
+re-render tras hidratar adjuntos). Sin cambios de comportamiento en `server.py`
+ni `static/app.js`.
+
+Scope:
+- Actualizar `test_handle_messages_export_single_eml` y `..._zip` al contrato
+  actual (escritura en `/exports`, respuesta JSON).
+- Actualizar `test_open_message_state_survives_attachment_hydration_render` al
+  modelo de modal, o sustituirlo por una aserción del contrato vigente.
+- Sin cambios de comportamiento en `server.py` ni `static/app.js`.
+
+Requirement: MNT-01.
+
+Verification: `.venv/bin/python -m pytest` sin fallos.
+
+### Phase 32 — Encapsulación JS
+
+**Status:** Stage A + B completados 2026-09-08. Stage C opcional, pendiente.
+Plan: `.planning/phases/32-encapsulacion-js/32-PLAN.md` (contexto: `32-CONTEXT.md`).
+
+**Outcome:** la superficie compartida `app.js → summary.js` empieza a pasar por
+un espacio de nombres `App` explícito (`static/shared.js`), sin build tooling.
+
+Entregado (Stage A + B):
+- `summaryDays`/`summaryData` reubicados en `summary.js` (estado que solo usa él).
+- Cabecera SHARED SURFACE en `app.js` y `summary.js`.
+- `index.html` sin `onclick` inline: paneles plegables cableados por JS.
+- `static/shared.js` (nuevo, registrado en `STATIC_FILES`, cargado primero)
+  define `window.App`. `app.js` publica `App.api` y `App.state.deleted`;
+  `summary.js` los consume vía `App.*` (0 globales desnudas de esos dos).
+- `test_frontend_contract.py`: 3 aserciones actualizadas al acceso vía `App`
+  (intención preservada) + `test_shared_namespace_is_declared_and_documented`.
+
+Pendiente (Stage C, opcional): `activeEmails`, `aiStatus`, `CATS` — se reasignan
+en `app.js` (~36 sitios); requiere smoke manual del plan humano §2–§6.
+
+Requirement: MNT-02. Decisión: ADR-011.
+
+Verification: `pytest` (136/136) · `node --check` (shared.js, app.js, summary.js) ·
+smoke de servido estático y orden de `<script>`.
+
+### Phase 33 — Rendimiento de Lotes
+
+**Status:** Completed 2026-09-08.
+
+**Outcome:** archivado y etiquetado de lotes grandes troceados internamente y
+acotados; la UI avisa antes de lotes grandes.
+
+Hallazgo: el borrado permanente ya troceaba (`DELETE_EXECUTION_CHUNK = 20`),
+pero `archive_messages` y `apply_label` enviaban **todos** los IDs en una sola
+llamada a `batchModify` (límite duro de Gmail: 1000 IDs/petición), sin cota ni
+troceado.
+
+Scope entregado:
+- `gmail_client._batch_modify_chunked`: tandas de `BATCH_MODIFY_CHUNK = 100` bajo
+  `_api_lock`, devuelve `{'total','chunks'}`. `archive_messages` y `apply_label`
+  pasan a usarlo.
+- Handlers `/api/messages/archive` y `/api/messages/label`: rechazan lotes
+  > `MAX_BATCH_MODIFY = 1000` y devuelven `chunks` en la respuesta.
+- `static/app.js`: `guardBatchSize()` — corta en >1000 y pide confirmación en
+  >200; el texto del botón indica el volumen.
+- +6 tests (troceado, cota de lote, ocultado local).
+
+Requirement: MNT-03. Decisión: ADR-010.
+
+Verification: `.venv/bin/python -m pytest` (135/135) · `py_compile` · `node --check static/app.js`.
+
+## Milestone 9: App macOS nativa
+
+Goal: distribuir la herramienta como una `.app` de macOS con ventana propia, sin
+romper la app web ni la CLI. Rama: `feat/macos-app`.
+Plan: `.planning/phases/34-app-macos/34-PLAN.md`. Decisión: ADR-012.
+
+### Phase 34 — App macOS (Developer ID + notarización)
+
+**Status:** Completed 2026-09-09.
+
+**Outcome:** `.app` con WKWebView (`pywebview`) que arranca/detiene `server.py`,
+empaquetada con py2app, firmada (Developer ID Application), Hardened Runtime,
+notarizada y *stapled*, distribuida en DMG (`dist/GestorDeCorreos.dmg`). La app
+web y la CLI no cambian. Verificado en el Mac del usuario: ventana + login Gmail
+OK; `codesign -dv` → `flags=runtime`, Developer ID `V29BTBRY6G`, timestamp.
+
+Scope entregado:
+- `paths.py`: carpeta de datos escribible (proyecto desde fuente,
+  `~/Library/Application Support/GestorDeCorreos/` en el `.app`) y carpeta de
+  recursos de solo lectura. `gmail_client`/`destructive_gmail`/`storage`/`server`
+  toman sus rutas de ahí, manteniendo nombres de constante y tests. +7 tests.
+- `macos/`: `app_main.py` (pywebview, puerto libre efímero), `setup.py` (py2app),
+  `entitlements.plist`, `build_app.sh`, `README.md`. `requirements-macos.txt`.
+
+Hallazgos del build real (fijados en `build_app.sh` y `setup.py`):
+- Homebrew Python no vale para py2app: hace falta **framework build** (python.org)
+  → `PYTHON=/usr/local/bin/python3.12`.
+- `google` es namespace package: crea `__init__.py` en el build-venv y va en
+  `packages` para no acabar dentro de `python3XX.zip` (un `.so` en un zip no se
+  puede firmar).
+- `codesign --deep` no firma los binarios anidados → notarización *Invalid*.
+  Firma **inside-out**: cada `.so`/`.dylib`/framework con `--options runtime
+  --timestamp`, el bundle al final con entitlements.
+
+Requisitos: MAC-01 … MAC-05 (todos Done).
+
+Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
+`spctl` accepted en el Mac.
+
+### Phase 35 — Mac App Store (futuro)
+
+**Status:** Not started. Rama y milestone aparte.
+
+Shell nativo Swift/SwiftUI + WKWebView, App Sandbox, `server.py` como helper
+bundled o port parcial a Swift, cert *3rd Party Mac Developer*, App Review.
+
+## Milestone 10: Auto-actualización
+
+Goal: la app comprueba, descarga (con permiso) y se auto-instala una versión
+nueva. Rama `feat/auto-update`. Decisión: ADR-013.
+
+### Phase 36 — Buscar actualizaciones (updater en Python)
+
+**Status:** In progress.
+
+**Outcome:** menú nativo **Buscar actualizaciones…** + botón en la UI web.
+Consulta `latest.json` en el último GitHub Release; si hay versión mayor,
+descarga el `.zip`, verifica **sha256 + `codesign`/`spctl` + TeamIdentifier**,
+pide permiso explícito y se reinstala (`ditto` sobre la `.app` + relaunch vía
+helper detached; `osascript` con admin si el destino lo exige).
+
+Scope:
+- `updater.py`: `current_version` (del `Info.plist` en la `.app`, del archivo
+  `VERSION` desde fuente), `check_for_update`, `download_and_stage` (verifica),
+  `install_and_relaunch`.
+- `server.py`: `GET /api/update/check`, `POST /api/update/install` (re-verifica
+  el manifiesto en el servidor; **nunca** instala una URL del cliente); `/api/status`
+  añade `app_version` y `bundled`.
+- `static/`: pill de versión + botón `#upd-check` → `checkForUpdates()`.
+- `macos/app_main.py`: menú `webview.menu` con la acción.
+- `VERSION` como fuente única de versión (lo lee `setup.py` y `updater.py`).
+- `build_app.sh`: genera `GestorDeCorreos-<v>.zip` + `latest.json` (con sha256).
+- Sparkle queda como opción futura si se quiere appcast con deltas.
+
+Requisitos: UPD-01 … UPD-05.
+
+Verification: `pytest` (156/156) · `node --check` · flujo real en el Mac
+(publicar un Release de prueba y actualizar desde una versión anterior).
+
 ## Product Backlog — Future Features
 
 - **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.
 - **Histórico de Auditoría Extendido:** Trazabilidad completa de acciones AI y archivados masivos.
 - **Análisis de Adjuntos:** Búsqueda y filtrado avanzado por tipo/tamaño de archivo adjunto.
+- **Sincronización AI automática:** aplicar sugerencias de IA como "reglas temporales" para limpiezas puntuales.

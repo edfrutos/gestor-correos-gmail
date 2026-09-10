@@ -29,24 +29,32 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import updater
 from ai_client import ai_status, suggest_rules, summarize
 from classifier import get_base_config
+from paths import data_dir, data_path, is_bundled, resource_dir
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
-from gmail_client import CREDS, GMAIL_OK, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
+from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
 from storage import load_state, record_delete_results, save_user_state
 from validators import ApiError, parse_max, validate_attachment_id, validate_date, validate_delete_request, validate_filename, validate_gmail_id, validate_mime_type, validate_sender
 
 
 def load_env():
-    env_file = Path(__file__).parent / '.env'
-    if not env_file.exists():
-        return
-    for line in env_file.read_text(encoding='utf-8').splitlines():
-        line = line.strip()
-        if not line or line.startswith('#') or '=' not in line:
+    # Carga el .env de la carpeta del proyecto (uso CLI/web) y, si existe, el de
+    # la carpeta de datos (uso dentro del .app). El primero que define una clave
+    # gana (os.environ.setdefault).
+    candidates = [Path(__file__).parent / '.env', data_dir() / '.env']
+    seen = set()
+    for env_file in candidates:
+        if env_file in seen or not env_file.exists():
             continue
-        key, value = line.split('=', 1)
-        os.environ.setdefault(key.strip(), value.strip())
+        seen.add(env_file)
+        for line in env_file.read_text(encoding='utf-8').splitlines():
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, value = line.split('=', 1)
+            os.environ.setdefault(key.strip(), value.strip())
 
 
 # Cargar variables de entorno desde .env si existe
@@ -58,16 +66,19 @@ PORT = int(os.getenv('PORT', 8765))
 HEADLESS = os.getenv('HEADLESS') == '1'
 ENV_ORIGINS = os.getenv('ALLOWED_ORIGINS', '').split(',')
 
-BASE_DIR = Path(__file__).parent
-EXPORTS_DIR = BASE_DIR / 'exports'
-EXPORTS_DIR.mkdir(exist_ok=True)
+# Assets de solo lectura (bundle en el .app, carpeta del proyecto desde fuente).
+ASSET_DIR = resource_dir()
+# Estado escribible (Application Support en el .app, carpeta del proyecto desde fuente).
+EXPORTS_DIR = data_path('exports')
+EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 HIDDEN_PAGE_SIZE = 20
 STATIC_FILES = {
-    '/static/app.css': ('text/css; charset=utf-8', BASE_DIR / 'static' / 'app.css'),
-    '/static/app.js': ('text/javascript; charset=utf-8', BASE_DIR / 'static' / 'app.js'),
-    '/static/summary.js': ('text/javascript; charset=utf-8', BASE_DIR / 'static' / 'summary.js'),
-    '/static/logo.svg': ('image/svg+xml', BASE_DIR / 'static' / 'logo.svg'),
-    '/static/favicon.svg': ('image/svg+xml', BASE_DIR / 'static' / 'favicon.svg'),
+    '/static/app.css': ('text/css; charset=utf-8', ASSET_DIR / 'static' / 'app.css'),
+    '/static/shared.js': ('text/javascript; charset=utf-8', ASSET_DIR / 'static' / 'shared.js'),
+    '/static/app.js': ('text/javascript; charset=utf-8', ASSET_DIR / 'static' / 'app.js'),
+    '/static/summary.js': ('text/javascript; charset=utf-8', ASSET_DIR / 'static' / 'summary.js'),
+    '/static/logo.svg': ('image/svg+xml', ASSET_DIR / 'static' / 'logo.svg'),
+    '/static/favicon.svg': ('image/svg+xml', ASSET_DIR / 'static' / 'favicon.svg'),
 }
 def _header_hostname(value):
     try:
@@ -133,7 +144,11 @@ class H(BaseHTTPRequestHandler):
             return self.handle_search(p.query)
 
         if p.path == '/api/status':
-            return self.j({'status': 'ok', **gmail_status(), 'ai': ai_status(), 'permanent_delete': delete_status()})
+            return self.j({'status': 'ok', **gmail_status(), 'ai': ai_status(), 'permanent_delete': delete_status(),
+                           'app_version': updater.current_version(), 'bundled': is_bundled()})
+
+        if p.path == '/api/update/check':
+            return self.j({'status': 'ok', **updater.check_for_update()})
 
         if p.path == '/api/config':
             return self.j({'status': 'ok', 'config': get_base_config()})
@@ -199,6 +214,9 @@ class H(BaseHTTPRequestHandler):
         if p.path == '/api/ai-suggest-rules':
             return self.handle_ai_suggest_rules()
 
+        if p.path == '/api/update/install':
+            return self.handle_update_install()
+
         self.send_error(404)
 
     def request_is_local(self):
@@ -209,7 +227,7 @@ class H(BaseHTTPRequestHandler):
         return origin is None or origin in LOCAL_ORIGINS
 
     def serve_index(self):
-        return self.serve_file(BASE_DIR / 'index.html', 'text/html; charset=utf-8')
+        return self.serve_file(ASSET_DIR / 'index.html', 'text/html; charset=utf-8')
 
     def serve_static(self, path):
         content_type, file_path = STATIC_FILES[path]
@@ -597,6 +615,8 @@ class H(BaseHTTPRequestHandler):
             message_ids = [validate_gmail_id(mid) for mid in payload['message_ids']]
             if not message_ids:
                 raise ApiError('Lista de IDs vacía')
+            if len(message_ids) > MAX_BATCH_MODIFY:
+                raise ApiError('Demasiados mensajes', detail=f'El límite por lote es de {MAX_BATCH_MODIFY} correos')
         except ApiError as e:
             return self.err(e.status, str(e), e.detail)
 
@@ -604,9 +624,9 @@ class H(BaseHTTPRequestHandler):
             return
 
         try:
-            # 1. Archivar en Gmail
-            archive_messages(message_ids)
-            
+            # 1. Archivar en Gmail (troceado internamente en tandas)
+            summary = archive_messages(message_ids)
+
             # 2. Ocultar localmente
             state = load_state()
             hidden_ids = state.get('hidden_ids', [])
@@ -624,6 +644,7 @@ class H(BaseHTTPRequestHandler):
             return self.j({
                 'status': 'ok',
                 'archived': len(message_ids),
+                'chunks': (summary or {}).get('chunks', 0),
                 'hidden_added': added,
                 'state': state
             })
@@ -672,9 +693,11 @@ class H(BaseHTTPRequestHandler):
             message_ids = [validate_gmail_id(mid) for mid in payload.get('message_ids', [])]
             label_id = validate_gmail_id(payload.get('label_id', ''), 'label_id')
             archive = bool(payload.get('archive', False))
-            
+
             if not message_ids:
                 raise ApiError('Lista de IDs vacía')
+            if len(message_ids) > MAX_BATCH_MODIFY:
+                raise ApiError('Demasiados mensajes', detail=f'El límite por lote es de {MAX_BATCH_MODIFY} correos')
         except ApiError as e:
             return self.err(e.status, str(e), e.detail)
 
@@ -682,9 +705,9 @@ class H(BaseHTTPRequestHandler):
             return
 
         try:
-            # 1. Aplicar etiqueta (y opcionalmente archivar)
-            apply_label(message_ids, label_id, archive=archive)
-            
+            # 1. Aplicar etiqueta (y opcionalmente archivar), troceado internamente
+            summary = apply_label(message_ids, label_id, archive=archive)
+
             # 2. Si se archivó, ocultar localmente
             added = 0
             state = None
@@ -703,6 +726,7 @@ class H(BaseHTTPRequestHandler):
             return self.j({
                 'status': 'ok',
                 'labeled': len(message_ids),
+                'chunks': (summary or {}).get('chunks', 0),
                 'archived': archive,
                 'hidden_added': added,
                 'state': state
@@ -773,6 +797,30 @@ class H(BaseHTTPRequestHandler):
             return self.j({'status': 'ok', 'data': self._parse_eml_bytes(raw_bytes)})
         except Exception as e:
             return self.err(500, 'Error parseando archivo local', str(e))
+
+    def handle_update_install(self):
+        # El servidor vuelve a consultar el manifiesto y usa SU url/sha256:
+        # nunca instala una URL que venga del cliente.
+        if not is_bundled():
+            return self.err(400, 'No disponible', 'La instalación automática solo funciona en la app .app')
+        try:
+            info = updater.check_for_update()
+        except Exception as e:
+            return self.err(502, 'No se pudo comprobar la actualización', str(e))
+        if info.get('error'):
+            return self.err(502, 'No se pudo comprobar la actualización', info['error'])
+        if not info.get('update_available'):
+            return self.j({'status': 'ok', 'updated': False, 'current': info['current']})
+        try:
+            app_path = updater.download_and_stage(info['url'], info['sha256'])
+            updater.install_and_relaunch(app_path)
+        except Exception as e:
+            print(f'[Update] Error: {e}')
+            return self.err(500, 'No se pudo instalar la actualización', str(e))
+        # Damos tiempo a enviar la respuesta y salimos: el helper espera a que
+        # este proceso termine, sustituye la .app y relanza.
+        threading.Timer(1.5, lambda: os._exit(0)).start()
+        return self.j({'status': 'ok', 'updated': True, 'restarting': True, 'version': info['latest']})
 
     def _parse_eml_bytes(self, raw_bytes):
         msg = email.message_from_bytes(raw_bytes, policy=policy.default)

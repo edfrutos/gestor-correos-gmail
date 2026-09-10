@@ -1,4 +1,5 @@
 # Local secrets and OAuth session state
+.env
 credentials.json
 token.json
 delete_token.json
@@ -11,8 +12,19 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
+# macOS app build artifacts (py2app / firma / notarización)
+build/
+dist/
+build-venv/
+*.app/
+*.dmg
+*.zip
+
 # macOS
 .DS_Store
+Icon?
+Icon
+
 
 # Local exports and scratch files
 exports/
@@ -20,3 +32,6 @@ exports/
 
 # Generated knowledge graph
 graphify-out/
+
+# credenciales locales de firma/notarización
+macos/build.env

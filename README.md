@@ -2,7 +2,8 @@
 
 Panel local de inteligencia operativa para consultar, organizar y tratar correos técnicos de Gmail. Detecta riesgos (SSL, facturas, seguridad) y automatiza el orden del buzón real sin exponer datos fuera del equipo local o VPN privada.
 
-**Estado actual:** Milestone v7.5 completado · **127 pruebas** superadas · Plan de testeo humano 30/30 ✅
+**Estado actual:** Milestones v1–v7.5 completados · v8–v10 (macOS: app firmada + auto-actualización) · **156 pruebas verdes** · Plan de testeo humano 30/30 ✅
+Estado detallado y canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## Créditos
 
@@ -79,6 +80,21 @@ La primera búsqueda abre el flujo OAuth de Google. El token se guarda en `token
 ```
 Si el servidor ya está en marcha, abre el visor en la instancia activa.
 
+### App de escritorio para macOS
+
+Además de la app web, hay una `.app` de macOS con ventana propia (WKWebView) que
+arranca el servidor por dentro. Reutiliza el mismo backend; **la app web y la CLI
+no cambian**. Prueba sin empaquetar:
+
+```bash
+.venv/bin/python -m pip install -r requirements-macos.txt
+.venv/bin/python macos/app_main.py
+```
+
+Build firmado + notarizado (DMG, distribución Developer ID): ver
+[`macos/README.md`](macos/README.md). En la `.app` instalada, el estado vive en
+`~/Library/Application Support/GestorDeCorreos/` (ahí va `credentials.json`).
+
 ### Flujo habitual
 1. **Buscar** — remitente, texto libre o rango de fechas.
 2. **Revisar** — clasificación automática por categoría y severidad.
@@ -144,4 +160,6 @@ Si el servidor ya está en marcha, abre el visor en la instancia activa.
 .venv/bin/python -m pytest
 ```
 
-Suite automatizada: **127 pruebas** (2 fallos pre-existentes en mocks de exportación, no afectan funcionalidad).
+Suite automatizada: **156 pruebas, todas verdes** (2026-09-09). Historial
+y decisiones de diseño en [`.planning/STATE.md`](.planning/STATE.md) y
+[`.planning/DECISIONS.md`](.planning/DECISIONS.md).
