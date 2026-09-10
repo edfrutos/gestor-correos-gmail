@@ -35,3 +35,4 @@ graphify-out/
 
 # credenciales locales de firma/notarización
 macos/build.env
+macos/AppIcon.icns
