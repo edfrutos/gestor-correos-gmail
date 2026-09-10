@@ -55,6 +55,20 @@ def test_check_for_update_reports_up_to_date(monkeypatch):
     assert result["update_available"] is False
 
 
+def test_check_for_update_reports_missing_feed_as_404(monkeypatch):
+    from urllib.error import HTTPError
+
+    def raise_404(url, binary=False):
+        raise HTTPError(url, 404, "Not Found", {}, None)
+
+    monkeypatch.setattr(updater, "current_version", lambda: "1.0.0")
+    monkeypatch.setattr(updater, "_http_get", raise_404)
+    result = updater.check_for_update()
+    assert result["no_feed"] is True
+    assert result["update_available"] is False
+    assert "publicada" in result["error"]
+
+
 def test_check_for_update_handles_network_error(monkeypatch):
     def boom(url, binary=False):
         raise OSError("sin red")

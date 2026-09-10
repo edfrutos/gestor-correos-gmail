@@ -22,6 +22,7 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 import paths
@@ -103,6 +104,12 @@ def check_for_update():
     current = current_version()
     try:
         manifest = fetch_manifest()
+    except HTTPError as exc:
+        if exc.code == 404:
+            return {"current": current, "update_available": False,
+                    "no_feed": True,
+                    "error": "Aún no hay ninguna versión publicada para comprobar."}
+        return {"current": current, "error": f"No se pudo consultar actualizaciones (HTTP {exc.code})."}
     except Exception as exc:
         return {"current": current, "error": f"No se pudo consultar actualizaciones: {exc}"}
     available = parse_version(manifest["version"]) > parse_version(current)

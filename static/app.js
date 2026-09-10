@@ -124,7 +124,7 @@ async function checkForUpdates(){
   try{
     const r=await fetch(`${API}/api/update/check`,{signal:AbortSignal.timeout(20000)});
     const d=await r.json();
-    if(d.error){toast(d.error,'err');return;}
+    if(d.error){toast(d.error,d.no_feed?'ok':'err');return;}
     if(!d.update_available){toast(`Estás en la última versión (v${d.current})`,'ok');return;}
     if(!d.can_auto_install){
       toast(`v${d.latest} disponible. La instalación automática solo funciona en la app de escritorio.`,'err');
