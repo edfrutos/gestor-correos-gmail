@@ -17,6 +17,7 @@ import json
 import os
 import plistlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -178,7 +179,6 @@ def download_and_stage(url, sha256, workdir=None):
     if got.lower() != str(sha256).lower():
         raise RuntimeError(f"sha256 no coincide (esperado {sha256}, obtenido {got})")
     extract_dir = tmp / "extracted"
-    extract_dir.mkdir(parents=True, exist_ok=True)
     # `ditto`, no `zipfile`: el zip lo genera `build_app.sh` con
     # `ditto -c -k --keepParent`, que preserva symlinks (p.ej. el framework
     # de Python, lleno de `Versions/Current -> 3.x`), atributos extendidos y
@@ -186,7 +186,24 @@ def download_and_stage(url, sha256, workdir=None):
     # (los deja como archivos regulares con el texto del destino dentro), lo
     # que descuadra el bundle frente a lo firmado y `codesign --verify`
     # falla. `ditto -x -k` es el extractor simétrico de `ditto -c -k`.
-    _run(["/usr/bin/ditto", "-x", "-k", str(zip_path), str(extract_dir)])
+    #
+    # `ditto` puede fallar de forma puntual creando algún symlink (fallo
+    # transitorio de filesystem); un solo reintento, limpiando el directorio
+    # de extracción antes de repetir, resuelve ese caso sin exponerlo al
+    # usuario como un error de actualización.
+    extract_error = None
+    for attempt in range(2):
+        if extract_dir.exists():
+            shutil.rmtree(extract_dir, ignore_errors=True)
+        extract_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            _run(["/usr/bin/ditto", "-x", "-k", str(zip_path), str(extract_dir)])
+            extract_error = None
+            break
+        except RuntimeError as exc:
+            extract_error = exc
+    if extract_error is not None:
+        raise extract_error
     apps = list(extract_dir.glob("*.app")) or list(extract_dir.rglob("*.app"))
     if not apps:
         raise RuntimeError("El paquete de actualización no contiene ninguna .app")
