@@ -20,7 +20,6 @@ import re
 import subprocess
 import sys
 import tempfile
-import zipfile
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -133,12 +132,22 @@ def _sha256(path):
     return digest.hexdigest()
 
 
+def _run(cmd):
+    """subprocess.run con el motivo real del fallo si el comando falla.
+
+    `check=True` por sí solo solo da el returncode: para diagnosticar hace
+    falta el stderr/stdout del propio comando.
+    """
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(f"{cmd[0]} falló: {detail or f'exit {result.returncode}'}")
+    return result
+
+
 def _verify_app_signature(app_path):
     """codesign estricto + spctl (notarización) + TeamIdentifier esperado."""
-    subprocess.run(
-        ["/usr/bin/codesign", "--verify", "--strict", "--deep", str(app_path)],
-        check=True, capture_output=True,
-    )
+    _run(["/usr/bin/codesign", "--verify", "--strict", "--deep", str(app_path)])
     spctl = subprocess.run(
         ["/usr/sbin/spctl", "-a", "-t", "exec", "-vv", str(app_path)],
         capture_output=True, text=True,
@@ -169,8 +178,15 @@ def download_and_stage(url, sha256, workdir=None):
     if got.lower() != str(sha256).lower():
         raise RuntimeError(f"sha256 no coincide (esperado {sha256}, obtenido {got})")
     extract_dir = tmp / "extracted"
-    with zipfile.ZipFile(zip_path) as archive:
-        archive.extractall(extract_dir)
+    extract_dir.mkdir(parents=True, exist_ok=True)
+    # `ditto`, no `zipfile`: el zip lo genera `build_app.sh` con
+    # `ditto -c -k --keepParent`, que preserva symlinks (p.ej. el framework
+    # de Python, lleno de `Versions/Current -> 3.x`), atributos extendidos y
+    # resource forks. El módulo `zipfile` de Python no reconstruye symlinks
+    # (los deja como archivos regulares con el texto del destino dentro), lo
+    # que descuadra el bundle frente a lo firmado y `codesign --verify`
+    # falla. `ditto -x -k` es el extractor simétrico de `ditto -c -k`.
+    _run(["/usr/bin/ditto", "-x", "-k", str(zip_path), str(extract_dir)])
     apps = list(extract_dir.glob("*.app")) or list(extract_dir.rglob("*.app"))
     if not apps:
         raise RuntimeError("El paquete de actualización no contiene ninguna .app")
