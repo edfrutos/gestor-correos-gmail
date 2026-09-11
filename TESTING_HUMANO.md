@@ -52,3 +52,16 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
     - [x] Autoriza en la bandeja de ocultos.
     - [x] Borra un correo de prueba. Verifica que desaparece de Gmail (ni en papelera).
 - [x] **Revocación:** Pulsa "Revocar autorización" y verifica que el acceso destructivo se cierra.
+
+## 9. Auto-actualización (app macOS)
+- [x] **Detección:** Con una `.app` instalada en una versión anterior a la publicada en GitHub Releases, pulsa **Buscar actualizaciones** (menú nativo o botón `#upd-check`). Verifica que informa de la versión nueva disponible.
+- [x] **Descarga e instalación:** Acepta la actualización. Verifica que descarga el `.zip`, pide permiso, se reinstala y la app se relanza sola en la versión nueva (comprobar en "Acerca de" o en la pill de versión).
+- [x] **Sin actualización:** Con la última versión ya instalada, pulsa **Buscar actualizaciones** de nuevo y verifica que informa de que ya tienes la versión más reciente.
+- [x] **Sin Release publicado:** Si `latest.json` no existe todavía (HTTP 404), verifica el mensaje claro de "aún no hay ninguna versión publicada" en vez de un error genérico.
+
+Verificado en el Mac el 2026-09-11 con Releases reales encadenados
+(v1.1.0 → v1.2.0 → v1.2.1): detecta, descarga, verifica firma (`codesign`
++ `spctl` + `TeamIdentifier`) e instala. Nota: si la instancia de partida
+tiene un updater anterior al fix de `ditto` (`0a6afbb`), la primera
+actualización automática no la repara — necesita una reinstalación manual
+una vez (ver `macos/README.md`).

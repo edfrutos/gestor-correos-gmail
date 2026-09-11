@@ -57,7 +57,8 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
 - **Suite automatizada:** `157 tests` · **157 verdes**.
-- **Testeo humano:** `TESTING_HUMANO.md` 30/30 ✅ (v7.5).
+- **Testeo humano:** `TESTING_HUMANO.md` 35/35 ✅ (v7.5 + sección 9 de
+  auto-actualización, v10).
 
 ## Milestone v10 — Fases (rama `feat/auto-update`)
 
