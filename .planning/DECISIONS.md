@@ -207,7 +207,8 @@ tocar la lógica.
 ## ADR-013 — Auto-actualización vía GitHub Releases (updater en Python)
 
 **Date:** 2026-09-09
-**Status:** Accepted (Fase 36, rama `feat/auto-update`)
+**Status:** Accepted y verificado en el Mac (2026-09-11, Fase 36, rama
+`feat/auto-update`)
 
 La app comprueba/descarga/instala actualizaciones con un **updater propio en
 Python** (`updater.py` + endpoints `/api/update/*` + menú `pywebview`), no con
@@ -239,3 +240,14 @@ ID + notarización de Apple para la autenticidad.
 - `VERSION` (raíz) es la fuente única de versión: la leen `macos/setup.py`
   (`CFBundle*Version`) y `updater.py` (fallback fuera del bundle).
 - Migrar a Sparkle (appcast + deltas) queda como opción futura.
+
+**Addendum (2026-09-11):** la extracción del `.zip` descargado usaba
+`zipfile`, que no reconstruye symlinks — corrompía `Versions/Current` del
+framework de Python embebido y `codesign --verify --strict` fallaba tras
+instalar. Fix: `ditto -x -k` (simétrico de `ditto -c -k` en
+`build_app.sh`), con un reintento si `ditto` falla puntual creando algún
+symlink. Como la extracción la ejecuta siempre el código ya cargado del
+proceso en marcha (nunca el de la nueva versión descargada), una instancia
+con el updater anterior a este fix no se autorepara actualizando — necesita
+una reinstalación manual una vez para quedar en una versión con el fix.
+Verificado en el Mac con Releases reales v1.1.0 → v1.2.0 → v1.2.1.

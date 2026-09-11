@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v10
 milestone_name: Auto-actualización
-status: in_progress
-last_updated: "2026-09-09T00:00:00.000Z"
+status: completed
+last_updated: "2026-09-11T00:00:00.000Z"
 branch: feat/auto-update
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 0
   completed_plans: 0
-  percent: 85
+  percent: 100
 ---
 
 # State — Fuente única de estado
@@ -28,8 +28,9 @@ datos de Gmail fuera del equipo local o de una VPN privada.
 
 **Current focus:** Milestone v10 — **auto-actualización** de la app macOS (menú
 nativo + botón UI, verificación de firma, permiso explícito, auto-reinstalación).
-Rama `feat/auto-update`. Milestone v9 (app macOS) mergeada a `main`
-(`afad3a9`), con icono propio (`1c275b7`).
+Verificada de extremo a extremo en el Mac (v1.1.0 → v1.2.0 → v1.2.1, releases
+reales en GitHub). Rama `feat/auto-update`, aún sin mergear a `main`. Milestone
+v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 
 ## Current Status
 
@@ -40,20 +41,29 @@ Rama `feat/auto-update`. Milestone v9 (app macOS) mergeada a `main`
   firma inside-out, notarización, DMG, icono). Verificada en el Mac.
 - **v10 — Fase 36 (rama `feat/auto-update`):** `updater.py` + `/api/update/check`
   y `/api/update/install`; `VERSION` como fuente única; menú `pywebview` +
-  botón `#upd-check`; `build_app.sh` emite `latest.json` + zip versionado.
-  Código + tests hechos; **falta el flujo real con un Release de prueba**.
+  botón `#upd-check`; `build_app.sh` emite `latest.json` + zip versionado y
+  DMG con acceso directo a `/Applications`. **Verificado en el Mac con
+  Releases reales** (v1.1.0 → v1.2.0 → v1.2.1): detecta, descarga, verifica
+  firma y se auto-reinstala. UPD-06 cerrado.
+- **Aprendizaje clave (extracción de zip):** la extracción original usaba
+  `zipfile`, que no reconstruye symlinks — corrompía `Versions/Current` del
+  framework de Python embebido y `codesign --verify` fallaba tras instalar
+  la actualización. Fix: `ditto -x -k` (simétrico de `ditto -c -k` en
+  `build_app.sh`), con un reintento si `ditto` falla puntual creando algún
+  symlink. **Importante:** ese fix vive en el updater de la app que hace la
+  extracción — una instancia con el updater viejo (`zipfile`) no se autorepara
+  actualizando; necesita una reinstalación manual una vez.
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `156 tests` · **156 verdes** (v10 añadió
-  `test_updater.py` +9 y 4 tests de servidor/frontend).
+- **Suite automatizada:** `157 tests` · **157 verdes**.
 - **Testeo humano:** `TESTING_HUMANO.md` 30/30 ✅ (v7.5).
 
 ## Milestone v10 — Fases (rama `feat/auto-update`)
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
-| 36 — Buscar actualizaciones | `updater.py` + endpoints + menú/botón; `latest.json` en GitHub Releases; verificación sha256 + codesign + team-id; permiso + auto-reinstalación | 🟡 Código + tests (156/156). Falta verificar el flujo real en el Mac (Release de prueba). Ver ADR-013. |
+| 36 — Buscar actualizaciones | `updater.py` + endpoints + menú/botón; `latest.json` en GitHub Releases; verificación sha256 + codesign + team-id; permiso + auto-reinstalación | ✅ Done (2026-09-11). Verificado en el Mac con Releases reales (v1.1.0→v1.2.0→v1.2.1). Ver ADR-013. |
 
 ## Milestone v9 — App macOS (cerrado en `main`)
 
@@ -96,6 +106,14 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-09-11 — v10 / Fase 36 cerrado: fix de extracción (`ditto` en vez de
+  `zipfile`, preserva symlinks del framework de Python — `0a6afbb`) +
+  corrección de `VERSION` que se había quedado en 1.1.0 pese al mensaje de
+  commit (`6075f74`) + reintento de `ditto` ante fallo puntual de symlink y
+  DMG con acceso a `/Applications` (`72a119f`) + `VERSION` 1.2.1 (`c1400e1`).
+  Verificado en el Mac de punta a punta con Releases reales v1.1.0 → v1.2.0 →
+  v1.2.1: "Buscar actualizaciones" detecta, descarga, verifica firma e instala.
+  UPD-06 cerrado. Suite 157/157.
 - 2026-09-09 — v10 / Fase 36 (rama `feat/auto-update`): `updater.py`
   (check/download+verify/install), `/api/update/check` y `/api/update/install`
   (el servidor re-verifica el manifiesto), `/api/status` con `app_version` +
@@ -138,16 +156,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v10 / Fase 36 — verificar el auto-updater en el Mac** (rama `feat/auto-update`):
-
-1. Merge de `feat/auto-update` a `main` (o probar en la rama).
-2. `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh` → genera
-   `dist/GestorDeCorreos-1.0.0.zip`, `dist/latest.json`, DMG con el icono.
-3. Publicar Release `v1.0.0` con esos assets:
-   `gh release create v1.0.0 dist/GestorDeCorreos-1.0.0.zip dist/latest.json dist/GestorDeCorreos.dmg --title v1.0.0`.
-4. Subir `VERSION` a `1.1.0`, rebuild, publicar Release `v1.1.0`.
-5. Desde la `.app` v1.0.0 instalada: **Buscar actualizaciones** → debe detectar
-   v1.1.0, pedir permiso, instalar y reiniciar. Cerrar UPD-06.
+**v10 cerrado.** Queda mergear `feat/auto-update` a `main` (la rama tiene 4
+commits por delante de lo que se mergeó en el PR #1: `0a6afbb`, `6075f74`,
+`72a119f`, `c1400e1` — el tag `v1.2.0` en `main` apunta a un commit anterior a
+estos fixes, así que `main` todavía no los tiene).
 
 Pendientes menores:
 - AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta**.

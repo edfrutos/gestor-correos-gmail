@@ -2,7 +2,7 @@
 
 Este documento guía al usuario a través de las pruebas manuales para verificar que todas las prestaciones de la aplicación funcionan según lo esperado.
 
-> Suite automatizada: 156 tests, todas verdes (2026-09-09).
+> Suite automatizada: 157 tests, todas verdes (2026-09-11).
 > Estado canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## 1. Configuración y Arranque

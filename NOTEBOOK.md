@@ -2,10 +2,10 @@
 
 ## Snapshot
 
-**Fecha:** 2026-09-09
+**Fecha:** 2026-09-11
 **Proyecto:** Gestor de Correos — Servidor Local
-**Estado:** v1 → v9 completados (incl. app macOS firmada + notarizada);
-v10 (auto-actualización) en curso. Suite: 156 tests, todas verdes.
+**Estado:** v1 → v10 completados (incl. app macOS firmada + notarizada y
+auto-actualización verificada en el Mac). Suite: 157 tests, todas verdes.
 Estado canónico: `.planning/STATE.md`.
 
 El proyecto sirve una interfaz HTML desde `server.py`, autentica contra Gmail API en modo `gmail.readonly` y permite buscar, priorizar, agrupar, filtrar, exportar y tratar correos ocultos. El borrado permanente usa una autorización separada, revocable y desactivada por defecto.
@@ -48,6 +48,13 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
   + menú `pywebview`/botón `#upd-check`. Feed `latest.json` en GitHub Releases;
   antes de instalar verifica sha256 + `codesign`/`spctl` + `TeamIdentifier`.
   El servidor re-verifica el manifiesto; nunca instala una URL del cliente.
+  Verificado en el Mac de punta a punta (v1.1.0 → v1.2.0 → v1.2.1).
+- La extracción del zip usa `ditto -x -k`, no `zipfile` (este último no
+  reconstruye symlinks — corrompía el framework de Python embebido y
+  `codesign --verify` fallaba). Reintento de `ditto` ante fallo puntual de
+  symlink. Ojo: el fix vive en el código del updater que hace la extracción
+  (el de la app ya instalada, no el de la nueva versión), así que una
+  instancia con el updater anterior no se autorepara actualizando.
 
 ## Decisiones Iniciales
 

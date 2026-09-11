@@ -634,7 +634,8 @@ nueva. Rama `feat/auto-update`. Decisión: ADR-013.
 
 ### Phase 36 — Buscar actualizaciones (updater en Python)
 
-**Status:** In progress.
+**Status:** Done (2026-09-11). Verificado en el Mac con Releases reales
+(v1.1.0 → v1.2.0 → v1.2.1).
 
 **Outcome:** menú nativo **Buscar actualizaciones…** + botón en la UI web.
 Consulta `latest.json` en el último GitHub Release; si hay versión mayor,
@@ -655,10 +656,11 @@ Scope:
 - `build_app.sh`: genera `GestorDeCorreos-<v>.zip` + `latest.json` (con sha256).
 - Sparkle queda como opción futura si se quiere appcast con deltas.
 
-Requisitos: UPD-01 … UPD-05.
+Requisitos: UPD-01 … UPD-06.
 
-Verification: `pytest` (156/156) · `node --check` · flujo real en el Mac
-(publicar un Release de prueba y actualizar desde una versión anterior).
+Verification: `pytest` (157/157) · `node --check` · flujo real en el Mac
+verificado (Releases v1.1.0 → v1.2.0 → v1.2.1: detecta, descarga, verifica
+firma y se auto-reinstala).
 
 ## Product Backlog — Future Features
 
