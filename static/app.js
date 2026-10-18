@@ -2,8 +2,9 @@
 // Vía el objeto global `App` (definido en static/shared.js):
 //   App.api            ← API           (Fase 32 · Stage B)
 //   App.state.deleted  ← Set de ocultos (Fase 32 · Stage B)
-// Todavía leídas como global desnudo por summary.js (pendiente Stage C):
-//   activeEmails, aiStatus, CATS       (se reasignan en este archivo)
+//   App.state.activeEmails, App.state.aiStatus, App.config.CATS
+//                      ← accessors de solo lectura sobre los `let` de este
+//                        archivo, que se siguen reasignando aquí (Stage C)
 // Funciones helper compartidas (nivel superior en este archivo):
 //   esc, toast, gurl, itemMeta, messageSeverity, severityRank, severityReason
 // Orden de carga: shared.js → app.js → summary.js
@@ -255,6 +256,12 @@ let customSrcs=[];
 let cf='all',cq='',activeCat='all',selMode=false;
 const deleted=new Set(),selected=new Set(),openMessages=new Set();
 App.state.deleted=deleted;
+// Stage C: getters, no copias — reflejan cada reasignación de app.js.
+Object.defineProperties(App.state,{
+  activeEmails:{get:()=>activeEmails,enumerable:true},
+  aiStatus:{get:()=>aiStatus,enumerable:true},
+});
+Object.defineProperty(App.config,'CATS',{get:()=>CATS,enumerable:true});
 // Gmail limita batchModify a 1000 IDs; avisamos antes en lotes grandes.
 const MAX_GMAIL_BATCH=1000,BIG_BATCH_WARN=200;
 function guardBatchSize(ids,verb){

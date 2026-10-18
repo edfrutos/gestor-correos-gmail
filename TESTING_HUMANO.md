@@ -2,7 +2,7 @@
 
 Este documento guía al usuario a través de las pruebas manuales para verificar que todas las prestaciones de la aplicación funcionan según lo esperado.
 
-> Suite automatizada: 181 tests, todas verdes (2026-10-18).
+> Suite automatizada: 191 tests, todas verdes (2026-10-18).
 > Estado canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## 1. Configuración y Arranque
@@ -46,6 +46,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Abrir archivo externo:** Desde la terminal, ejecuta:
     `.venv/bin/python server.py --open "/ruta/a/cualquier/archivo.eml"`
     - [x] Verifica que la app se abre (o usa la instancia abierta) y muestra ese correo específico en el visor.
+- [ ] **Abrir `.eml` desde el Finder (app macOS):** con la `.app` **cerrada**, doble clic en un `.eml` (o "Abrir con → Gestor de Correos") → se abre la app y el visor muestra ese correo. Con la app **ya abierta**, repite con otro `.eml` → el visor lo muestra sin recargar la página (los resultados cargados siguen ahí).
 
 ## 8. Seguridad y Mantenimiento
 - [x] **Borrado Permanente:** Habilita `ENABLE_PERMANENT_DELETE=1`.

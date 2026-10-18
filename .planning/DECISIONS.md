@@ -139,7 +139,7 @@ sin streaming.
 ## ADR-011 — Espacio de Nombres `App` para el Estado Compartido del Front
 
 **Date:** 2026-09-08
-**Status:** Accepted (Fase 32, Stage A+B; Stage C pendiente/opcional)
+**Status:** Accepted (Fase 32, Stage A+B 2026-09-08; Stage C 2026-10-18)
 
 `static/shared.js` (classic script, cargado antes que `app.js` y `summary.js`,
 registrado en `STATIC_FILES`) define `window.App = { api, state:{deleted}, config }`.
@@ -156,6 +156,13 @@ Fuera de alcance por ahora (Stage C): `activeEmails`, `aiStatus`, `CATS` se
 reasignan en `app.js` (~36 sitios); moverlos exige repunte total o accessors y
 smoke manual del plan humano. `app.js` no tiene tests de runtime, así que se
 prioriza el incremento de bajo riesgo.
+
+Stage C (2026-10-18): se resuelve con **accessors**, no con repunte.
+`app.js` define getters de solo lectura (`Object.defineProperties(App.state,…)`
+para `activeEmails`/`aiStatus`, `Object.defineProperty(App.config,'CATS',…)`)
+sobre sus propios `let`, que siguen reasignándose en `app.js` sin tocar sus
+~36 usos. `summary.js` lee solo `App.state.activeEmails`, `App.state.aiStatus`
+y `App.config.CATS`; un test del contrato prohíbe esas tres como global desnudo.
 
 **Rationale:** `test_frontend_contract.py` fija fragmentos literales de código;
 un refactor a módulos ES rompería decenas de aserciones y su valor como guardarraíl.

@@ -531,7 +531,7 @@ Verification: `.venv/bin/python -m pytest` sin fallos.
 
 ### Phase 32 — Encapsulación JS
 
-**Status:** Stage A + B completados 2026-09-08. Stage C opcional, pendiente.
+**Status:** Stage A + B completados 2026-09-08. Stage C completado 2026-10-18.
 Plan: `.planning/phases/32-encapsulacion-js/32-PLAN.md` (contexto: `32-CONTEXT.md`).
 
 **Outcome:** la superficie compartida `app.js → summary.js` empieza a pasar por
@@ -547,8 +547,10 @@ Entregado (Stage A + B):
 - `test_frontend_contract.py`: 3 aserciones actualizadas al acceso vía `App`
   (intención preservada) + `test_shared_namespace_is_declared_and_documented`.
 
-Pendiente (Stage C, opcional): `activeEmails`, `aiStatus`, `CATS` — se reasignan
-en `app.js` (~36 sitios); requiere smoke manual del plan humano §2–§6.
+Stage C (2026-10-18): `activeEmails`, `aiStatus`, `CATS` expuestos como getters
+en `App.state`/`App.config` (siguen reasignándose en `app.js`); `summary.js` ya no
+usa ninguna global desnuda de estado. Pendiente: smoke manual del plan humano
+§2–§6 en el Mac (resumen periódico, tendencias, resumen IA).
 
 Requirement: MNT-02. Decisión: ADR-011.
 

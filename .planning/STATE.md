@@ -4,7 +4,7 @@ milestone: v10
 milestone_name: Auto-actualización
 status: completed
 last_updated: "2026-09-11T00:00:00.000Z"
-branch: feat/auto-update
+branch: main
 progress:
   total_phases: 1
   completed_phases: 1
@@ -29,7 +29,8 @@ datos de Gmail fuera del equipo local o de una VPN privada.
 **Current focus:** Milestone v10 — **auto-actualización** de la app macOS (menú
 nativo + botón UI, verificación de firma, permiso explícito, auto-reinstalación).
 Verificada de extremo a extremo en el Mac (v1.1.0 → v1.2.0 → v1.2.1, releases
-reales en GitHub). Rama `feat/auto-update`, aún sin mergear a `main`. Milestone
+reales en GitHub). Mergeada a `main` en el PR #2 (`524c015`, 2026-10-18), con
+el endurecimiento de la extracción del zip. Milestone
 v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 
 ## Current Status
@@ -59,8 +60,8 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `181 tests` · **181 verdes**.
-- **Testeo humano:** `TESTING_HUMANO.md` 35/35 ✅ (v7.5 + sección 9 de
+- **Suite automatizada:** `191 tests` · **191 verdes**.
+- **Testeo humano:** `TESTING_HUMANO.md` 35/37 ✅ (pendientes en el Mac: abrir `.eml` desde el Finder §7; validación del zip §9) (v7.5 + sección 9 de
   auto-actualización, v10).
 
 ## Milestone v10 — Fases (rama `feat/auto-update`)
@@ -83,7 +84,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | 30 — Refactor UX v8 | Categorías reactivas, subventana (modal) de correos, reset de IA, filtros/scroll/modal | ✅ Done (`e504f4c`, `b6679f3`) |
 | 31 — Suite verde | Sanear los 3 tests obsoletos contra el contrato vigente; suite 129/129 verde | ✅ Done (2026-09-08) |
 | 33 — Rendimiento de lotes | Troceado interno de archivado/etiquetado (`BATCH_MODIFY_CHUNK=100`), cota de lote (`MAX_BATCH_MODIFY=1000`) y aviso en UI para lotes >200 | ✅ Done (2026-09-08) |
-| 32 — Encapsulación JS | Stage A (relocación `summaryDays`/`summaryData`, cabecera SHARED SURFACE, sin `onclick` inline) + Stage B (`static/shared.js` con `App`; `API`/`deleted` compartidos vía `App.*`) | ✅ Done (2026-09-08). Stage C (`activeEmails`/`aiStatus`/`CATS`) opcional, pendiente |
+| 32 — Encapsulación JS | Stage A (relocación `summaryDays`/`summaryData`, cabecera SHARED SURFACE, sin `onclick` inline) + Stage B (`static/shared.js` con `App`; `API`/`deleted` compartidos vía `App.*`) | ✅ Done (2026-09-08). Stage C (`activeEmails`/`aiStatus`/`CATS` como getters en `App`) ✅ 2026-10-18 |
 
 ## Known Issues
 
@@ -110,11 +111,25 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   pero un Release comprometido podría servir una `.app` **antigua** legítima
   (downgrade). Instalaciones ≤ v1.2.1 no tienen la validación del zip hasta
   actualizar a una versión que la incluya.
-- `static/*.js` comparte estado mediante variables globales; refactor a encapsular
-  con cuidado para no romper el contrato del frontend (`test_frontend_contract.py`).
+- `app.js` sigue usando sus `let` de nivel superior internamente (`summary.js` ya
+  solo lee vía `App.*`); cualquier refactor mayor (módulos ES) debe respetar el
+  contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
 
+- 2026-10-18 — `/api/read-eml` limitado a `.eml` (rama `feat/macos-odoc`):
+  antes `?path=` leía cualquier fichero local. Ahora resuelve la ruta (sigue
+  symlinks) y exige sufijo `.eml` + fichero regular, tanto para `path` como para
+  `file` en `/exports` (400 si no es `.eml`, 404 si no existe). +5 tests, 167/167.
+- 2026-10-18 — AppleEvent `odoc` (rama `feat/macos-odoc`): `macos/app_main.py`
+  añade `application:openFiles:` al `AppDelegate` de pywebview; `EmlOpener`
+  abre el visor vía `openEmlReader` sin recargar o encola hasta `loaded` en
+  arranque en frío. `?view=` ahora va con la ruta URL-encoded. +5 tests
+  (`tests/test_macos_app.py`), suite 162/162. Falta verificación en el Mac.
+- 2026-10-18 — Fase 32 Stage C (rama `feat/js-stage-c`): `app.js` expone
+  `activeEmails`/`aiStatus`/`CATS` como getters en `App.state`/`App.config`;
+  `summary.js` sin globales desnudas de estado. Contrato reforzado (sin nuevos
+  tests, +6 aserciones). Suite 157/157. Ver ADR-011.
 - 2026-10-18 — Hallazgo de seguridad (Cursor) en PR #2, severidad media:
   `ditto -x -k` extraía el zip de actualización antes de validar nada.
   Fix en `updater.py`: `_check_zip_entries` valida el índice del zip (una
@@ -130,7 +145,6 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   validadas (`O_EXCL|O_NOFOLLOW`, symlinks al final, sin setuid, tope de 2 GiB
   descomprimido, nada bajo un symlink). Zip real de v1.2.1 reproducido
   1664/1664. 181/181. Pendiente: Release nuevo y repetir §9 en el Mac.
-
 - 2026-09-11 — v10 / Fase 36 cerrado: fix de extracción (`ditto` en vez de
   `zipfile`, preserva symlinks del framework de Python — `0a6afbb`) +
   corrección de `VERSION` que se había quedado en 1.1.0 pese al mensaje de
@@ -181,14 +195,19 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v10 cerrado.** Queda mergear `feat/auto-update` a `main` (PR #2). La rama
-tiene 7 commits por delante de lo que se mergeó en el PR #1 (`fe55367`):
-`5ac2b30`, `0a6afbb`, `6075f74`, `72a119f`, `c1400e1`, `aa34c1a`, `64bd082`.
-Los tags `v1.2.0` y `v1.2.1` apuntan ambos a `fe55367`, anterior a estos fixes,
-así que `main` todavía no los tiene.
+**v10 cerrado y en `main`** (PR #2, `524c015`). Ojo: los tags `v1.2.0` y
+`v1.2.1` apuntan a `fe55367` (merge del PR #1), anterior a los fixes de
+extracción; el código que se construyó para esas Releases no coincide con
+ningún tag.
 
-Pendientes menores:
-- AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta**.
-- Fase 32 Stage C (`activeEmails`/`aiStatus`/`CATS` → `App.*`), opcional.
+Siguiente:
+1. Mergear el PR #3 (Stage C, `odoc`, `read-eml` solo `.eml`).
+2. `VERSION` → 1.2.2, `build_app.sh`, publicar el Release con tag sobre `main`
+   e instalarlo (desde v1.2.1 la actualización usa todavía `ditto`; con un zip
+   legítimo es seguro). Desde v1.2.2, repetir §9 contra un Release posterior.
+
+Pendientes en el Mac:
+- Verificar en el Mac el `odoc` (abrir `.eml` desde el Finder con la app cerrada y abierta, `TESTING_HUMANO.md` §7).
+- Smoke manual de Fase 32 Stage C (plan humano §2–§6: resumen periódico, tendencias, resumen IA) en el Mac.
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
 - Sparkle (appcast + deltas) como alternativa futura al updater en Python.

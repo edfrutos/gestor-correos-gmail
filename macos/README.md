@@ -207,6 +207,10 @@ presente. Para cambiar el icono, reemplaza `appicon-source.png` y relanza el scr
 
 ## Limitaciones conocidas (v1)
 
-- Abrir un `.eml` desde el Finder funciona en el **primer** lanzamiento (argv).
-  El `AppleEvent odoc` para una app ya abierta se añadirá después.
+- Abrir un `.eml` desde el Finder (doble clic / "Abrir con") llega como
+  `AppleEvent odoc`: `app_main.py` añade `application:openFiles:` al
+  `AppDelegate` de pywebview y abre el visor **sin recargar la página** si la
+  app ya está abierta, o lo encola hasta el evento `loaded` si se está
+  lanzando. Depende de la clase interna `webview.platforms.cocoa.BrowserView`;
+  si pywebview la cambia, se ignora con un aviso en stderr (la app sigue).
 - Sin App Sandbox (no hace falta para Developer ID). El hito App Store lo añade.

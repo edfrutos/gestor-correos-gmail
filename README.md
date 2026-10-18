@@ -2,7 +2,7 @@
 
 Panel local de inteligencia operativa para consultar, organizar y tratar correos técnicos de Gmail. Detecta riesgos (SSL, facturas, seguridad) y automatiza el orden del buzón real sin exponer datos fuera del equipo local o VPN privada.
 
-**Estado actual:** Milestones v1–v10 completados (macOS: app firmada + auto-actualización verificada en el Mac) · **181 pruebas verdes** · Plan de testeo humano 35/35 ✅
+**Estado actual:** Milestones v1–v10 completados (macOS: app firmada + auto-actualización verificada en el Mac) · **191 pruebas verdes** · Plan de testeo humano 35/37 ✅
 Estado detallado y canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## Créditos
@@ -134,7 +134,7 @@ Build firmado + notarizado (DMG, distribución Developer ID): ver
 | POST | `/api/messages/label` | Aplica etiqueta (y opcionalmente archiva) por lotes |
 | POST | `/api/messages/export` | Exporta `.eml` o `.zip` al directorio `/exports` |
 | GET | `/api/exports` | Lista los archivos en `/exports` |
-| GET | `/api/read-eml` | Parsea un `.eml` del directorio `/exports` |
+| GET | `/api/read-eml` | Parsea un `.eml` de `/exports` (`file`) o una ruta local (`path`); rechaza todo lo que no sea `.eml` |
 | POST | `/api/read-eml` | Parsea un `.eml` enviado como bytes (adjuntos incluidos en base64) |
 | POST | `/api/ai-suggest-rules` | Sugiere reglas basadas en actividad reciente |
 | POST | `/api/ai-summary` | Resumen IA del informe operativo |
@@ -149,6 +149,7 @@ Build firmado + notarizado (DMG, distribución Developer ID): ver
 - **Zero-Persistence**: los cuerpos de los correos nunca se escriben en disco.
 - **Archivos sensibles**: `credentials.json`, `token.json`, `delete_token.json` y `app_state.json` con permisos `600`. Están en `.gitignore`.
 - **CORS & Host**: el servidor rechaza orígenes externos y cabeceras Host no autorizadas. `ALLOWED_ORIGINS` acepta URLs con o sin barra final.
+- **Lector EML**: `/api/read-eml` solo abre ficheros `.eml` (se comprueba la ruta resuelta, así que un symlink disfrazado tampoco cuela).
 - **Secretos IA**: la clave API permanece únicamente en el backend; el frontend nunca la recibe.
 - **Frontera destructiva**: el scope `https://mail.google.com/` está aislado en `delete_token.json`, independiente del token de lectura normal.
 
@@ -160,6 +161,6 @@ Build firmado + notarizado (DMG, distribución Developer ID): ver
 .venv/bin/python -m pytest
 ```
 
-Suite automatizada: **181 pruebas, todas verdes** (2026-10-18). Historial
+Suite automatizada: **191 pruebas, todas verdes** (2026-10-18). Historial
 y decisiones de diseño en [`.planning/STATE.md`](.planning/STATE.md) y
 [`.planning/DECISIONS.md`](.planning/DECISIONS.md).

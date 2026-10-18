@@ -687,3 +687,54 @@ def test_handle_update_install_noop_when_up_to_date(monkeypatch):
     body = response_json(handler)
     assert handler.status_sent == 200
     assert body['updated'] is False
+
+
+# /api/read-eml solo abre ficheros .eml (ruta externa o dentro de EXPORTS_DIR).
+EML_BYTES = b'From: a@example.com\r\nSubject: Aviso\r\n\r\nCuerpo\r\n'
+
+
+def read_eml(query):
+    handler = DummyHandler()
+    handler.handle_read_eml(query)
+    return handler.status_sent, response_json(handler)
+
+
+def test_read_eml_external_path_opens_eml(tmp_path):
+    eml = tmp_path / 'Aviso.EML'
+    eml.write_bytes(EML_BYTES)
+    status, data = read_eml(f'path={eml}')
+    assert status == 200
+    assert data['data']['subject'] == 'Aviso'
+
+
+def test_read_eml_external_path_rejects_non_eml(tmp_path):
+    secret = tmp_path / 'token.json'
+    secret.write_text('{"token": "x"}')
+    status, data = read_eml(f'path={secret}')
+    assert status == 400
+    assert 'token' not in json.dumps(data)
+
+
+def test_read_eml_rejects_symlink_disguised_as_eml(tmp_path):
+    secret = tmp_path / 'token.json'
+    secret.write_text('{"token": "x"}')
+    link = tmp_path / 'trampa.eml'
+    link.symlink_to(secret)
+    status, _ = read_eml(f'path={link}')
+    assert status == 400
+
+
+def test_read_eml_rejects_directory_named_eml(tmp_path):
+    folder = tmp_path / 'carpeta.eml'
+    folder.mkdir()
+    status, _ = read_eml(f'path={folder}')
+    assert status == 404
+
+
+def test_read_eml_exports_file_must_be_eml(monkeypatch, tmp_path):
+    monkeypatch.setattr(server, 'EXPORTS_DIR', tmp_path)
+    (tmp_path / 'lote.zip').write_bytes(b'PK')
+    (tmp_path / 'ok.eml').write_bytes(EML_BYTES)
+    assert read_eml('file=lote.zip')[0] == 400
+    assert read_eml('file=ok.eml')[0] == 200
+    assert read_eml('file=falta.eml')[0] == 404

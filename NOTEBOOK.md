@@ -5,7 +5,7 @@
 **Fecha:** 2026-09-11
 **Proyecto:** Gestor de Correos — Servidor Local
 **Estado:** v1 → v10 completados (incl. app macOS firmada + notarizada y
-auto-actualización verificada en el Mac). Suite: 181 tests, todas verdes.
+auto-actualización verificada en el Mac). Suite: 191 tests, todas verdes.
 Estado canónico: `.planning/STATE.md`.
 
 El proyecto sirve una interfaz HTML desde `server.py`, autentica contra Gmail API en modo `gmail.readonly` y permite buscar, priorizar, agrupar, filtrar, exportar y tratar correos ocultos. El borrado permanente usa una autorización separada, revocable y desactivada por defecto.
@@ -39,8 +39,9 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
   permanente mantiene su tope de 100 y tandas de 20 (`DELETE_EXECUTION_CHUNK`).
 - El front carga `shared.js → app.js → summary.js`. `static/shared.js` define
   `window.App`; la superficie compartida app.js→summary.js pasa por `App.*`
-  (Fase 32, ADR-011). Hecho: `App.api`, `App.state.deleted`. Pendiente Stage C:
-  `activeEmails`, `aiStatus`, `CATS` (se reasignan en `app.js`).
+  (Fase 32, ADR-011). Hecho: `App.api`, `App.state.deleted` y (Stage C) getters
+  `App.state.activeEmails`/`App.state.aiStatus`/`App.config.CATS` sobre los `let`
+  que se reasignan en `app.js`.
 - App macOS (v9): `.app` pywebview firmada Developer ID + notarizada; el estado
   escribible se relocaliza a `~/Library/Application Support/GestorDeCorreos/`
   (`paths.py`), la app web/CLI no cambian. `VERSION` (raíz) = fuente única.

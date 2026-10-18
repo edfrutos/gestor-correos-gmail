@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -52,7 +53,7 @@ def test_ai_summary_is_explicit_and_warns_before_remote_transmission():
     # Fase 32 · Stage B: la base de API se comparte vía App.api.
     # Intención inalterada: endpoint correcto y aviso antes de envío remoto.
     assert "fetch(`${App.api}/api/ai-summary`" in js
-    assert "aiStatus.remote&&!confirm(" in js
+    assert "App.state.aiStatus.remote&&!confirm(" in js
 
 
 def test_frontend_assets_are_externalized_without_build_tooling():
@@ -105,6 +106,16 @@ def test_shared_namespace_is_declared_and_documented():
     # Estado propio de summary.js: ya no vive en app.js.
     assert 'summaryDays' not in app and 'summaryData' not in app
     assert 'let summaryDays=30,summaryData=null;' in summary
+    # Stage C: activeEmails/aiStatus/CATS se exponen como getters (no copias)
+    # y summary.js solo los lee vía App.*.
+    assert "Object.defineProperties(App.state,{" in app
+    assert "activeEmails:{get:()=>activeEmails,enumerable:true}" in app
+    assert "aiStatus:{get:()=>aiStatus,enumerable:true}" in app
+    assert "Object.defineProperty(App.config,'CATS',{get:()=>CATS,enumerable:true});" in app
+    code = '\n'.join(l for l in summary.splitlines() if not l.lstrip().startswith('//'))
+    for name in ('activeEmails', 'aiStatus', 'CATS'):
+        bare = re.findall(r'(?<![\w.])' + name + r'\b', code)
+        assert not bare, f'summary.js usa {name} como global desnudo'
     # Paneles plegables cableados por JS, no por onclick inline.
     assert "document.querySelectorAll('.ph[data-panel]')" in app
 
