@@ -101,6 +101,7 @@ def test_download_and_stage_rejects_sha_mismatch(monkeypatch, tmp_path):
 import hashlib
 import os
 import stat
+import warnings
 import zipfile
 
 APP = "Gestor de Correos.app"
@@ -108,7 +109,8 @@ APP = "Gestor de Correos.app"
 
 def build_zip(path, files=(), links=()):
     """files: [(nombre, bytes)], links: [(nombre, destino)] como symlinks."""
-    with zipfile.ZipFile(path, "w") as zf:
+    with warnings.catch_warnings(), zipfile.ZipFile(path, "w") as zf:
+        warnings.simplefilter("ignore")  # algunos casos repiten nombres a propósito
         for name, data in files:
             zf.writestr(name, data)
         for name, target in links:
@@ -150,6 +152,14 @@ def test_check_zip_entries_accepts_real_bundle_layout(tmp_path):
     ([(f"{APP}/x", b"")], [(f"{APP}/Contents/Frameworks/up", "../.."), (f"{APP}/esc", "Contents/Frameworks/up/..")], "sale de la .app"),
     ([(f"{APP}/x", b"")], [("__MACOSX/l", "x")], "Symlink no permitido"),
     ([(f"{APP}/x", b"")], [(f"{APP}/a", "b"), (f"{APP}/b", "a")], "demasiado larga"),
+    # mismo nombre dos veces: ditto aplica en orden, el validador vería solo el último
+    ([(f"{APP}/x", b""), (f"{APP}/la/evil.plist", b"")], [(f"{APP}/la", "Contents"), (f"{APP}/la", "Contents")], "duplicada"),
+    ([(f"{APP}/x", b""), (f"{APP}/x", b"otra")], [], "duplicada"),
+    ([(f"{APP}/d/", b""), (f"{APP}/x", b"")], [(f"{APP}/d", "Contents")], "duplicada"),
+    # APFS no distingue mayúsculas ni NFC/NFD: "la" y "LA" son la misma ruta
+    ([(f"{APP}/x", b""), (f"{APP}/LA/evil.plist", b"")], [(f"{APP}/la", "../../..")], "sale de la .app"),
+    ([(f"{APP}/x", b""), (f"{APP}/X", b"")], [], "duplicada"),
+    ([(f"{APP}/caf\u00e9", b""), (f"{APP}/cafe\u0301", b"")], [], "duplicada"),
 ])
 def test_check_zip_entries_rejects_escapes(tmp_path, files, links, match):
     z = build_zip(tmp_path / "u.zip", files, links)
@@ -206,3 +216,27 @@ def test_check_extracted_links_catches_escape_on_disk(tmp_path):
     os.symlink(str(tmp_path), app / "fuera")
     with pytest.raises(RuntimeError, match="tras extraer"):
         updater._check_extracted_links(app)
+
+
+def test_check_zip_entries_rejects_ordered_overwrite_from_review(tmp_path):
+    # Caso exacto del PR #2 (2ª revisión): enlace que sale, fichero escrito a
+    # través de él y un segundo enlace inocuo con el mismo nombre al final.
+    z = build_zip(tmp_path / "u.zip", [(f"{APP}/x", b"")], [])
+    with zipfile.ZipFile(z, "a") as zf:
+        for name, target in [(f"{APP}/la", "../../.."), (f"{APP}/la/evil.plist", None), (f"{APP}/la", "Contents")]:
+            info = zipfile.ZipInfo(name)
+            if target is None:
+                zf.writestr(info, b"evil")
+                continue
+            info.create_system = 3
+            info.external_attr = (stat.S_IFLNK | 0o755) << 16
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")  # zipfile avisa del nombre duplicado
+                zf.writestr(info, target)
+    with pytest.raises(RuntimeError, match="duplicada|sale de la .app"):
+        updater._check_zip_entries(z)
+
+
+def test_check_zip_entries_returns_root_with_original_case(tmp_path):
+    z = build_zip(tmp_path / "u.zip", LEGIT_FILES, LEGIT_LINKS)
+    assert updater._check_zip_entries(z) == APP  # no la forma canónica en minúsculas

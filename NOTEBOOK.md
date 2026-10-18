@@ -5,7 +5,7 @@
 **Fecha:** 2026-09-11
 **Proyecto:** Gestor de Correos — Servidor Local
 **Estado:** v1 → v10 completados (incl. app macOS firmada + notarizada y
-auto-actualización verificada en el Mac). Suite: 170 tests, todas verdes.
+auto-actualización verificada en el Mac). Suite: 178 tests, todas verdes.
 Estado canónico: `.planning/STATE.md`.
 
 El proyecto sirve una interfaz HTML desde `server.py`, autentica contra Gmail API en modo `gmail.readonly` y permite buscar, priorizar, agrupar, filtrar, exportar y tratar correos ocultos. El borrado permanente usa una autorización separada, revocable y desactivada por defecto.

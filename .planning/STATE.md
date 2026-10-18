@@ -56,7 +56,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `170 tests` · **170 verdes**.
+- **Suite automatizada:** `178 tests` · **178 verdes**.
 - **Testeo humano:** `TESTING_HUMANO.md` 35/35 ✅ (v7.5 + sección 9 de
   auto-actualización, v10).
 
@@ -118,7 +118,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   sola `.app` raíz, sin `..`/absolutas, symlinks resueltos dentro de la
   `.app` siguiendo cadenas) antes de `ditto`, y `_check_extracted_links`
   re-comprueba con `realpath` tras extraer. Probado contra el zip real de
-  v1.2.1. +13 tests, 170/170. Pendiente: Release nuevo y repetir §9 en el Mac.
+  v1.2.1. 2ª revisión (otro hallazgo medio): rechazar nombres duplicados
+  (ditto aplica en orden) y comparar rutas como APFS (sin mayúsculas, NFD).
+  +21 tests, 178/178. Pendiente: Release nuevo y repetir §9 en el Mac.
 
 - 2026-09-11 — v10 / Fase 36 cerrado: fix de extracción (`ditto` en vez de
   `zipfile`, preserva symlinks del framework de Python — `0a6afbb`) +

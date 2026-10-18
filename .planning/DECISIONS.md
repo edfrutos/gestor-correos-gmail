@@ -271,6 +271,12 @@ temporal durante la extracción. Fix, en dos barreras:
   cada symlink real dentro de la `.app`.
 - La `.app` a instalar es la raíz validada, no la primera que devuelva
   `glob`/`rglob`.
+- (2ª revisión) Nombres **duplicados** rechazados: `ditto` aplica las entradas
+  en orden, así que un symlink que sale, un fichero escrito a través de él y
+  otro symlink inocuo con el mismo nombre al final burlaban un validador que
+  solo mira el árbol final. Toda comparación usa la forma canónica de APFS
+  (`_fs_key`: sin mayúsculas, NFD), porque `la`/`LA` o `é` NFC/NFD son la
+  misma ruta en disco.
 
 Comprobado contra el zip real de v1.2.1 (1664 entradas, 4 symlinks internos
 del framework de Python y `site.pyc`): pasa. Mismo matiz que el addendum

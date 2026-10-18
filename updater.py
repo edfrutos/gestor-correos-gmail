@@ -27,6 +27,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import zipfile
 from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError
@@ -179,6 +180,17 @@ _MAX_SYMLINK_DEPTH = 40
 _ZIP_METADATA_ROOT = "__MACOSX"
 
 
+def _fs_key(component):
+    """Forma canónica de un componente de ruta tal como lo compara APFS.
+
+    APFS (por defecto) no distingue mayúsculas ni formas de normalización
+    Unicode: `la`, `LA` y `la` en NFC/NFD son la misma entrada en disco.
+    Toda la validación trabaja con esta forma para no ver dos rutas donde
+    `ditto` escribirá en una sola.
+    """
+    return unicodedata.normalize("NFD", unicodedata.normalize("NFD", component).casefold())
+
+
 def _virtual_realpath(parts, links, depth=0):
     """Resuelve `parts` sobre el árbol del zip siguiendo sus symlinks.
 
@@ -216,24 +228,39 @@ def _check_zip_entries(zip_path):
     except zipfile.BadZipFile as exc:
         raise RuntimeError(f"El paquete de actualización no es un zip válido: {exc}") from exc
     with zf:
-        infos = zf.infolist()
-        entries, links = [], {}
-        for info in infos:
+        # Todo en forma canónica (`_fs_key`); `seen` rechaza nombres repetidos:
+        # `ditto` aplica las entradas en orden, así que un mismo nombre dos
+        # veces (p. ej. un symlink que sale de la .app, un fichero escrito a
+        # través de él y luego otro symlink inocuo encima) haría que el árbol
+        # final validado no fuese el que se escribió.
+        entries, links, seen = [], {}, set()
+        root_name = None
+        for info in zf.infolist():
             name = info.filename
             if not name or "\\" in name or any(ord(c) < 32 for c in name):
                 raise RuntimeError(f"Entrada no válida en la actualización: {name!r}")
             path = PurePosixPath(name)
             if path.is_absolute() or ".." in path.parts:
                 raise RuntimeError(f"Ruta fuera del paquete en la actualización: {name!r}")
-            parts = [p for p in path.parts if p != "."]
-            if not parts:
+            raw_parts = [p for p in path.parts if p != "."]
+            if not raw_parts:
                 continue
+            parts = [_fs_key(p) for p in raw_parts]
+            key = "/".join(parts)
+            if key in seen:
+                raise RuntimeError(f"Entrada duplicada en la actualización: {name!r}")
+            seen.add(key)
             entries.append(parts)
+            if parts[0] != _fs_key(_ZIP_METADATA_ROOT) and root_name is None:
+                root_name = raw_parts[0]
             if stat.S_ISLNK(info.external_attr >> 16):
-                if parts[0] == _ZIP_METADATA_ROOT:
+                if parts[0] == _fs_key(_ZIP_METADATA_ROOT):
                     raise RuntimeError(f"Symlink no permitido en la actualización: {name!r}")
-                links["/".join(parts)] = zf.read(info).decode("utf-8", "strict")
-        roots = {parts[0] for parts in entries} - {_ZIP_METADATA_ROOT}
+                target = zf.read(info).decode("utf-8", "strict")
+                if target.startswith("/"):
+                    raise RuntimeError(f"Symlink que sale de la .app en la actualización: {name!r} -> {target!r}")
+                links[key] = "/".join(_fs_key(c) for c in target.split("/"))
+        roots = {parts[0] for parts in entries} - {_fs_key(_ZIP_METADATA_ROOT)}
         if len(roots) != 1 or not next(iter(roots)).endswith(".app"):
             raise RuntimeError("El paquete de actualización debe contener una única .app en la raíz")
         root = next(iter(roots))
@@ -243,17 +270,17 @@ def _check_zip_entries(zip_path):
 
         for link, target in links.items():
             link_parts = link.split("/")
-            if target.startswith("/") or not inside(_virtual_realpath(link_parts[:-1] + target.split("/"), links)):
+            if not inside(_virtual_realpath(link_parts[:-1] + target.split("/"), links)):
                 raise RuntimeError(f"Symlink que sale de la .app en la actualización: {link!r} -> {target!r}")
         for parts in entries:
             # Una entrada se escribe en el directorio real de su padre: si el
             # padre pasa por un symlink, debe seguir dentro de su raíz.
-            if parts[0] == _ZIP_METADATA_ROOT:
+            if parts[0] == _fs_key(_ZIP_METADATA_ROOT):
                 continue
             parent = _virtual_realpath(parts[:-1], links)
             if not inside(parent) and parts[:-1]:
                 raise RuntimeError(f"Entrada escrita fuera de la .app: {'/'.join(parts)!r}")
-    return root
+    return root_name
 
 
 def _check_extracted_links(app_path):
