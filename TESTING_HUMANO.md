@@ -46,7 +46,9 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Abrir archivo externo:** Desde la terminal, ejecuta:
     `.venv/bin/python server.py --open "/ruta/a/cualquier/archivo.eml"`
     - [x] Verifica que la app se abre (o usa la instancia abierta) y muestra ese correo específico en el visor.
-- [x] **Abrir `.eml` desde el Finder (app macOS):** con la `.app` **cerrada**, clic derecho en un `.eml` → "Abrir con → Gestor de Correos" (la app es visor *alternativo*: el doble clic abre Apple Mail salvo que se elija "Obtener información → Abrir con → Cambiar todo…"). Para tener un `.eml`: "✉ Exportar EML" en la app (queda en `~/Library/Application Support/GestorDeCorreos/exports`) o "⋮ → Descargar mensaje" en Gmail web → se abre la app y el visor muestra ese correo. Con la app **ya abierta**, repite con otro `.eml` → el visor lo muestra sin recargar la página (los resultados cargados siguen ahí).
+- [x] **Abrir `.eml` desde el Finder (app macOS):** con la `.app` **cerrada**, clic derecho en un `.eml` → "Abrir con → Gestor de Correos" → se abre la app y el visor muestra ese correo. Con la app **ya abierta**, repite con otro `.eml` → el visor lo muestra sin recargar la página (los resultados cargados siguen ahí).
+    - La app es visor *alternativo* de `.eml`: el doble clic abre Apple Mail salvo que se elija "Obtener información → Abrir con → Cambiar todo…".
+    - Para tener un `.eml`: "✉ Exportar EML" en la app (queda en `~/Library/Application Support/GestorDeCorreos/exports`) o "⋮ → Descargar mensaje" en Gmail web.
 
 ## 8. Seguridad y Mantenimiento
 - [x] **Borrado Permanente:** Habilita `ENABLE_PERMANENT_DELETE=1`.
