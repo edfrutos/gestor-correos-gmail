@@ -71,3 +71,9 @@ def test_handler_install_is_a_noop_without_cocoa_backend():
     # En Linux/CI no hay pyobjc ni backend Cocoa: no debe lanzar.
     _, opener = make_opener()
     assert app_main._install_open_files_handler(opener) is False
+
+
+def test_update_menu_info_uses_page_toast_with_escaped_text():
+    window = FakeWindow()
+    app_main._toast(window, 'Sin "feed"\ny más', 'err')
+    assert window.calls == ['toast("Sin \\"feed\\"\\ny m\\u00e1s", "err")']

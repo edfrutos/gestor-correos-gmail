@@ -60,7 +60,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `191 tests` · **191 verdes**.
+- **Suite automatizada:** `192 tests` · **192 verdes**.
 - **Testeo humano:** `TESTING_HUMANO.md` 35/37 ✅ (pendientes en el Mac: abrir `.eml` desde el Finder §7; validación del zip §9) (v7.5 + sección 9 de
   auto-actualización, v10).
 
