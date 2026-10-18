@@ -61,8 +61,8 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
 - **Suite automatizada:** `195 tests` · **195 verdes**.
-- **Testeo humano:** `TESTING_HUMANO.md` 35/37 ✅ (pendientes en el Mac: abrir `.eml` desde el Finder §7; validación del zip §9) (v7.5 + sección 9 de
-  auto-actualización, v10).
+- **Testeo humano:** `TESTING_HUMANO.md` 37/37 ✅ (2026-10-18: §7 `odoc` y §9
+  validación del zip verificados en el Mac; §2–§6 repasados tras Stage C).
 
 ## Milestone v10 — Fases (rama `feat/auto-update`)
 
@@ -118,6 +118,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-18 — **Release v1.2.3 publicado** (tag en `3eb70df`, PR #6:
+  anti-downgrade). Actualización 1.2.2 → 1.2.3 verificada en el Mac (§9);
+  §7 (`odoc`) y repaso de §2–§6 tras Stage C, todo correcto. Testeo humano 37/37.
 - 2026-10-18 — **Release v1.2.2 publicado** (tag en `b250f0a`, primer tag que
   coincide con el código compilado). Build firmado y notarizado (`.app` y DMG
   aceptados por `spctl`); actualización 1.2.1 → 1.2.2 verificada en el Mac.
@@ -208,16 +211,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.2.2 publicado** (tag `v1.2.2` en `b250f0a`) y actualización 1.2.1 → 1.2.2
-verificada en el Mac. Los tags `v1.2.0` y `v1.2.1` siguen en `fe55367`
-(anteriores a los fixes de extracción; no coinciden con lo compilado).
+**v1.2.3 publicado** (tag `v1.2.3` en `3eb70df`) y verificado en el Mac;
+testeo humano 37/37. `v1.2.2` (`b250f0a`) y `v1.2.3` son los primeros tags que
+coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en `fe55367`.
 
-Siguiente:
-1. Mergear `fix/update-no-downgrade` (ya con `VERSION` 1.2.3) y publicar v1.2.3:
-   `build_app.sh` y el `gh release create … --target <commit>` que imprime.
-2. En el Mac: actualizar 1.2.2 → 1.2.3 cubre `TESTING_HUMANO.md` §9
-   (primera actualización extraída por `_extract_zip`). Además §7 (`odoc`) y
-   §2–§6 (Stage C).
+Sin trabajo bloqueante. Próxima Release: mismo flujo (subir `VERSION`,
+`build_app.sh`, el `gh release create … --target <commit>` que imprime).
 
 Otros pendientes:
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).

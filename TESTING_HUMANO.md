@@ -46,7 +46,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Abrir archivo externo:** Desde la terminal, ejecuta:
     `.venv/bin/python server.py --open "/ruta/a/cualquier/archivo.eml"`
     - [x] Verifica que la app se abre (o usa la instancia abierta) y muestra ese correo específico en el visor.
-- [ ] **Abrir `.eml` desde el Finder (app macOS):** con la `.app` **cerrada**, doble clic en un `.eml` (o "Abrir con → Gestor de Correos") → se abre la app y el visor muestra ese correo. Con la app **ya abierta**, repite con otro `.eml` → el visor lo muestra sin recargar la página (los resultados cargados siguen ahí).
+- [x] **Abrir `.eml` desde el Finder (app macOS):** con la `.app` **cerrada**, clic derecho en un `.eml` → "Abrir con → Gestor de Correos" (la app es visor *alternativo*: el doble clic abre Apple Mail salvo que se elija "Obtener información → Abrir con → Cambiar todo…"). Para tener un `.eml`: "✉ Exportar EML" en la app (queda en `~/Library/Application Support/GestorDeCorreos/exports`) o "⋮ → Descargar mensaje" en Gmail web → se abre la app y el visor muestra ese correo. Con la app **ya abierta**, repite con otro `.eml` → el visor lo muestra sin recargar la página (los resultados cargados siguen ahí).
 
 ## 8. Seguridad y Mantenimiento
 - [x] **Borrado Permanente:** Habilita `ENABLE_PERMANENT_DELETE=1`.
@@ -59,7 +59,11 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Descarga e instalación:** Acepta la actualización. Verifica que descarga el `.zip`, pide permiso, se reinstala y la app se relanza sola en la versión nueva (comprobar en "Acerca de" o en la pill de versión).
 - [x] **Sin actualización:** Con la última versión ya instalada, pulsa **Buscar actualizaciones** de nuevo y verifica que informa de que ya tienes la versión más reciente.
 - [x] **Sin Release publicado:** Si `latest.json` no existe todavía (HTTP 404), verifica el mensaje claro de "aún no hay ninguna versión publicada" en vez de un error genérico.
-- [ ] **Validación del zip (2026-10-18):** publica un Release nuevo construido con el `updater.py` que valida el zip antes de extraerlo, instálalo y desde esa versión repite **Detección** y **Descarga e instalación** contra el siguiente Release. Debe actualizar igual que antes (el zip legítimo pasa la validación).
+- [x] **Validación del zip (2026-10-18):** publica un Release nuevo construido con el `updater.py` que valida el zip antes de extraerlo, instálalo y desde esa versión repite **Detección** y **Descarga e instalación** contra el siguiente Release. Debe actualizar igual que antes (el zip legítimo pasa la validación).
+
+Verificado en el Mac el 2026-10-18 con v1.2.2 → v1.2.3 (primera
+actualización extraída por `_extract_zip`, con anti-downgrade en la versión
+recibida). §2–§7 repasados tras Fase 32 Stage C y `odoc`: sin regresiones.
 
 Verificado en el Mac el 2026-09-11 con Releases reales encadenados
 (v1.1.0 → v1.2.0 → v1.2.1): detecta, descarga, verifica firma (`codesign`
