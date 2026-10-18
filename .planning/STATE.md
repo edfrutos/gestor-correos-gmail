@@ -106,8 +106,8 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   mantiene su frontera destructiva adicional.
 - Las sugerencias/resúmenes de IA envían metadatos (asunto/remitente) a un
   proveedor externo solo si el usuario lo habilita y confirma.
-- Updater: `latest.json` va firmado (Ed25519, `latest.json.sig`, rama
-  `feat/signed-manifest`); el zip se valida antes de extraer, la `.app` por
+- Updater: `latest.json` va firmado (Ed25519, `latest.json.sig`, desde
+  v1.2.4); el zip se valida antes de extraer, la `.app` por
   firma + Team ID y su versión (del `Info.plist` sellado) debe ser mayor que
   la instalada (ADR-013, addenda 2026-10-18). Queda el *freeze* (replay de un
   manifiesto firmado antiguo). Cada protección del updater solo actúa a
@@ -122,7 +122,15 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
-- 2026-10-18 — **Firma de `latest.json`** (rama `feat/signed-manifest`):
+- 2026-10-18 — **Release v1.2.4 publicado** (tag en `4b05863`, PR #9: firma
+  de `latest.json`). Assets: zip, DMG, `latest.json` y `latest.json.sig`.
+  Comprobado contra GitHub con `updater`: la firma verifica con la clave
+  embebida; el `latest.json` de v1.2.3 (sin `.sig`) se rechaza con error de
+  firma; como cliente 1.2.3 detecta 1.2.4, sha256 y validación del zip OK.
+  Actualización 1.2.3 → 1.2.4 verificada en el Mac (esa aún sin verificar la
+  firma: la hace el updater instalado).
+
+- 2026-10-18 — **Firma de `latest.json`** (rama `feat/signed-manifest`, PR #9):
   `fetch_manifest` exige `latest.json.sig` (Ed25519 sobre
   `MANIFEST_SIG_CONTEXT + bytes`) y la verifica contra `UPDATE_PUBLIC_KEYS`
   antes de parsear; *fail closed* (sin firma ≠ "no hay versión").
@@ -130,7 +138,6 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   `UPDATE_SIGNING_KEY`, comprueba la clave antes de compilar y publica la
   `.sig`. `cryptography` explícita en `requirements.txt`. +14 tests, 209/209.
   Clave real generada en el Mac y pública embebida; `VERSION` 1.2.4.
-  Pendiente: Release v1.2.4 y §9 «Manifiesto firmado» desde v1.2.4 → siguiente.
 
 - 2026-10-18 — **Release v1.2.3 publicado** (tag en `3eb70df`, PR #6:
   anti-downgrade). Actualización 1.2.2 → 1.2.3 verificada en el Mac (§9);
@@ -225,17 +232,17 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.2.3 publicado** (tag `v1.2.3` en `3eb70df`) y verificado en el Mac;
-testeo humano 37/37. `v1.2.2` (`b250f0a`) y `v1.2.3` son los primeros tags que
+**v1.2.4 publicado** (tag `v1.2.4` en `4b05863`) con `latest.json` firmado,
+e instalado en el Mac desde 1.2.3. Testeo humano 37/38. `v1.2.2`–`v1.2.4`
 coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en `fe55367`.
 
-Firma de `latest.json` (rama `feat/signed-manifest`, UPD-07): clave generada
-en el Mac (`~/.config/gestor-correos/update_signing.pem`, pública `39a60417…`
-embebida en `updater.UPDATE_PUBLIC_KEYS`), `VERSION` 1.2.4. Falta:
-`UPDATE_SIGNING_KEY` en `macos/build.env`, merge, Release v1.2.4 con
-`latest.json.sig` (1.2.3 → 1.2.4 sigue sin verificar firma) y después §9
-«Manifiesto firmado» con v1.2.4 → siguiente Release. Próxima Release: mismo flujo (subir `VERSION`,
-`build_app.sh`, el `gh release create … --target <commit>` que imprime).
+Para cerrar UPD-07 falta §9 «Manifiesto firmado»: la primera actualización
+que verifica la firma, desde la 1.2.4 instalada hacia el siguiente Release
+(v1.2.5, con `latest.json.sig`). Clave privada en
+`~/.config/gestor-correos/update_signing.pem` (`UPDATE_SIGNING_KEY` en
+`macos/build.env`), pública `39a60417…` en `updater.UPDATE_PUBLIC_KEYS`.
+Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
+`gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
 Otros pendientes:
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
