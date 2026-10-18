@@ -779,8 +779,14 @@ class H(BaseHTTPRequestHandler):
                 filepath = Path(external_path)
             else:
                 filepath = EXPORTS_DIR / validate_filename(filename)
-                
-            if not filepath.exists():
+
+            # Solo .eml: sin esto, ?path= leería cualquier fichero del disco.
+            # Se comprueba la ruta resuelta para que un symlink "x.eml" no
+            # apunte a otro tipo de fichero.
+            filepath = filepath.resolve()
+            if filepath.suffix.lower() != '.eml':
+                return self.err(400, 'Solo se pueden abrir archivos .eml')
+            if not filepath.is_file():
                 return self.err(404, 'Archivo no encontrado')
             
             raw_bytes = filepath.read_bytes()

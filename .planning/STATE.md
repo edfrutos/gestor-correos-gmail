@@ -56,7 +56,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `162 tests` · **162 verdes**.
+- **Suite automatizada:** `167 tests` · **167 verdes**.
 - **Testeo humano:** `TESTING_HUMANO.md` 35/36 ✅ (pendiente: abrir `.eml` desde el Finder, §7) (v7.5 + sección 9 de
   auto-actualización, v10).
 
@@ -107,6 +107,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-10-18 — `/api/read-eml` limitado a `.eml` (rama `feat/macos-odoc`):
+  antes `?path=` leía cualquier fichero local. Ahora resuelve la ruta (sigue
+  symlinks) y exige sufijo `.eml` + fichero regular, tanto para `path` como para
+  `file` en `/exports` (400 si no es `.eml`, 404 si no existe). +5 tests, 167/167.
 
 - 2026-10-18 — AppleEvent `odoc` (rama `feat/macos-odoc`): `macos/app_main.py`
   añade `application:openFiles:` al `AppDelegate` de pywebview; `EmlOpener`
