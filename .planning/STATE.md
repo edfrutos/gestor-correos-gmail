@@ -80,7 +80,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | 30 — Refactor UX v8 | Categorías reactivas, subventana (modal) de correos, reset de IA, filtros/scroll/modal | ✅ Done (`e504f4c`, `b6679f3`) |
 | 31 — Suite verde | Sanear los 3 tests obsoletos contra el contrato vigente; suite 129/129 verde | ✅ Done (2026-09-08) |
 | 33 — Rendimiento de lotes | Troceado interno de archivado/etiquetado (`BATCH_MODIFY_CHUNK=100`), cota de lote (`MAX_BATCH_MODIFY=1000`) y aviso en UI para lotes >200 | ✅ Done (2026-09-08) |
-| 32 — Encapsulación JS | Stage A (relocación `summaryDays`/`summaryData`, cabecera SHARED SURFACE, sin `onclick` inline) + Stage B (`static/shared.js` con `App`; `API`/`deleted` compartidos vía `App.*`) | ✅ Done (2026-09-08). Stage C (`activeEmails`/`aiStatus`/`CATS`) opcional, pendiente |
+| 32 — Encapsulación JS | Stage A (relocación `summaryDays`/`summaryData`, cabecera SHARED SURFACE, sin `onclick` inline) + Stage B (`static/shared.js` con `App`; `API`/`deleted` compartidos vía `App.*`) | ✅ Done (2026-09-08). Stage C (`activeEmails`/`aiStatus`/`CATS` como getters en `App`) ✅ 2026-10-18 |
 
 ## Known Issues
 
@@ -102,10 +102,16 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   mantiene su frontera destructiva adicional.
 - Las sugerencias/resúmenes de IA envían metadatos (asunto/remitente) a un
   proveedor externo solo si el usuario lo habilita y confirma.
-- `static/*.js` comparte estado mediante variables globales; refactor a encapsular
-  con cuidado para no romper el contrato del frontend (`test_frontend_contract.py`).
+- `app.js` sigue usando sus `let` de nivel superior internamente (`summary.js` ya
+  solo lee vía `App.*`); cualquier refactor mayor (módulos ES) debe respetar el
+  contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-10-18 — Fase 32 Stage C (rama `feat/js-stage-c`): `app.js` expone
+  `activeEmails`/`aiStatus`/`CATS` como getters en `App.state`/`App.config`;
+  `summary.js` sin globales desnudas de estado. Contrato reforzado (sin nuevos
+  tests, +6 aserciones). Suite 157/157. Ver ADR-011.
 
 - 2026-09-11 — v10 / Fase 36 cerrado: fix de extracción (`ditto` en vez de
   `zipfile`, preserva symlinks del framework de Python — `0a6afbb`) +
@@ -165,6 +171,6 @@ así que `main` todavía no los tiene.
 
 Pendientes menores:
 - AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta**.
-- Fase 32 Stage C (`activeEmails`/`aiStatus`/`CATS` → `App.*`), opcional.
+- Smoke manual de Fase 32 Stage C (plan humano §2–§6: resumen periódico, tendencias, resumen IA) en el Mac.
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
 - Sparkle (appcast + deltas) como alternativa futura al updater en Python.

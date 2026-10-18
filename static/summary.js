@@ -1,7 +1,7 @@
 // ── PERIODIC SUMMARY ───────────────────────────────────────
-// Depende de `App.*` (static/shared.js) y de funciones helper de app.js
-// (esc, gurl, itemMeta, messageSeverity, severityRank, severityReason, toast,
-// CATS). Estado propio de este módulo: summaryDays / summaryData.
+// Depende de `App.*` (static/shared.js: api, state.deleted/activeEmails/
+// aiStatus, config.CATS) y de funciones helper de app.js (esc, gurl, itemMeta,
+// messageSeverity, severityRank, severityReason, toast). Estado propio de este módulo: summaryDays / summaryData.
 let summaryDays=30,summaryData=null;
 
 function countBy(items,keyFn){
@@ -22,7 +22,7 @@ function dateDaysAgo(days){
   return date.toISOString().slice(0,10);
 }
 function visibleDatedItems(){
-  return activeEmails
+  return App.state.activeEmails
     .filter(e=>!App.state.deleted.has(e.id)&&/^\d{4}-\d{2}-\d{2}$/.test(e.date||''))
     .map(itemMeta);
 }
@@ -106,10 +106,10 @@ function summaryRows(entries,labelFn=value=>value){
 }
 function summaryMarkdown(summary){
   const providers=summary.providers.slice(0,10).map(([name,count])=>`- ${name}: ${count}`).join('\n')||'- Sin datos';
-  const categories=summary.categories.slice(0,10).map(([key,count])=>`- ${(CATS[key]&&CATS[key].label)||key}: ${count}`).join('\n')||'- Sin datos';
+  const categories=summary.categories.slice(0,10).map(([key,count])=>`- ${(App.config.CATS[key]&&App.config.CATS[key].label)||key}: ${count}`).join('\n')||'- Sin datos';
   const actions=summary.actions.map(e=>`- [${e._summary}](${gurl(e.id)}) · ${e._provider} · ${e.date} · ${severityReason(e)}`).join('\n')||'- Sin acciones de severidad alta';
   const providerTrends=summary.trends.providerIncreases.slice(0,10).map(([name,count,delta])=>`- ${name}: ${count} (${formatDelta(delta)})`).join('\n')||'- Sin aumentos relevantes';
-  const categoryTrends=summary.trends.categoryIncreases.slice(0,10).map(([key,count,delta])=>`- ${(CATS[key]&&CATS[key].label)||key}: ${count} (${formatDelta(delta)})`).join('\n')||'- Sin aumentos relevantes';
+  const categoryTrends=summary.trends.categoryIncreases.slice(0,10).map(([key,count,delta])=>`- ${(App.config.CATS[key]&&App.config.CATS[key].label)||key}: ${count} (${formatDelta(delta)})`).join('\n')||'- Sin aumentos relevantes';
   const recurring=summary.trends.recurringSubjects.map(item=>`- ${item.label} · ${item.provider}: ${item.count} repeticiones`).join('\n')||'- Sin asuntos recurrentes';
   return [
     `# Resumen operativo · últimos ${summary.days} días`,
@@ -167,7 +167,7 @@ function renderPeriodicSummary(){
     </div>
     <div class="sum-sections">
       <section class="sum-section"><h3>Proveedores principales</h3><div class="sum-list">${summaryRows(summaryData.providers)}</div></section>
-      <section class="sum-section"><h3>Categorías principales</h3><div class="sum-list">${summaryRows(summaryData.categories,key=>(CATS[key]&&CATS[key].label)||key)}</div></section>
+      <section class="sum-section"><h3>Categorías principales</h3><div class="sum-list">${summaryRows(summaryData.categories,key=>(App.config.CATS[key]&&App.config.CATS[key].label)||key)}</div></section>
     </div>
     <section class="sum-section" style="margin-bottom:10px"><h3>Acciones prioritarias</h3><div class="sum-actions">${
       summaryData.actions.length
@@ -184,7 +184,7 @@ function renderPeriodicSummary(){
       </div>
       <div class="sum-sections">
         <div><h3>Proveedores al alza</h3><div class="sum-list">${trendRows(summaryData.trends.providerIncreases)}</div></div>
-        <div><h3>Categorías al alza</h3><div class="sum-list">${trendRows(summaryData.trends.categoryIncreases,key=>(CATS[key]&&CATS[key].label)||key)}</div></div>
+        <div><h3>Categorías al alza</h3><div class="sum-list">${trendRows(summaryData.trends.categoryIncreases,key=>(App.config.CATS[key]&&App.config.CATS[key].label)||key)}</div></div>
       </div>
       <div><h3>Asuntos recurrentes</h3><div class="sum-list">${
         summaryData.trends.recurringSubjects.length
@@ -199,11 +199,11 @@ function openPeriodicSummary(){
   renderPeriodicSummary();
 }
 async function requestAiSummary(){
-  if(!aiStatus.configured){
+  if(!App.state.aiStatus.configured){
     toast('Configura AI_BASE_URL y AI_MODEL en el servidor','err');
     return;
   }
-  if(aiStatus.remote&&!confirm('El resumen operativo se enviará al proveedor AI remoto configurado. ¿Continuar?'))return;
+  if(App.state.aiStatus.remote&&!confirm('El resumen operativo se enviará al proveedor AI remoto configurado. ¿Continuar?'))return;
   const button=document.getElementById('sum-ai');
   const result=document.getElementById('sum-ai-result');
   button.disabled=true;

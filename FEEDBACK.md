@@ -40,7 +40,7 @@ Milestone v8 (ver `.planning/STATE.md` y `.planning/ROADMAP.md`):
   de 100 y acotado a 1000/lote; aviso en UI para lotes grandes (ADR-010).
 - ✅ **Modularización JS** (Fase 32 Stage A+B): espacio de nombres `App`
   (`static/shared.js`); `API`/`deleted` compartidos vía `App.*`; sin `onclick`
-  inline (ADR-011). Seguimiento opcional: Stage C (`activeEmails`/`aiStatus`/`CATS`).
+  inline (ADR-011). Stage C hecho: `activeEmails`/`aiStatus`/`CATS` vía getters en `App`.
 
 ## Criterio de Éxito Actualizado
 

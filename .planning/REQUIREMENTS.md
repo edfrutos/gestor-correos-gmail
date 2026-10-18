@@ -139,7 +139,7 @@
 - [x] **UX-01**: La vista de un correo se abre en un modal dedicado (subventana) con hidratación de adjuntos bajo demanda. — Phase 30
 - [x] **UX-02**: Las categorías del panel lateral son reactivas y el estado de IA es reseteable. — Phase 30
 - [x] **MNT-01**: La suite automatizada está 100 % verde (129/129; saneo de los 3 tests obsoletos). — Phase 31 (2026-09-08)
-- [x] **MNT-02**: `static/*.js` reduce las dependencias cruzadas por variable global sin build tooling — espacio de nombres `App` (`static/shared.js`); `API` y `deleted` compartidos vía `App.*`; `summaryDays`/`summaryData` reubicados; sin `onclick` inline. — Phase 32 Stage A+B (2026-09-08). Seguimiento opcional: Stage C (`activeEmails`/`aiStatus`/`CATS`).
+- [x] **MNT-02**: `static/*.js` reduce las dependencias cruzadas por variable global sin build tooling — espacio de nombres `App` (`static/shared.js`); `API` y `deleted` compartidos vía `App.*`; `summaryDays`/`summaryData` reubicados; sin `onclick` inline. — Phase 32 Stage A+B (2026-09-08). Stage C (2026-10-18): `activeEmails`/`aiStatus`/`CATS` vía getters en `App`.
 - [x] **MNT-03**: Archivado/etiquetado de lotes grandes troceado (`BATCH_MODIFY_CHUNK=100`) y acotado (`MAX_BATCH_MODIFY=1000`); aviso en UI >200. — Phase 33 (2026-09-08)
 
 ## v9 — App macOS nativa (rama `feat/macos-app`, en curso)
@@ -239,7 +239,7 @@
 | UX-01 | Phase 30 | Done |
 | UX-02 | Phase 30 | Done |
 | MNT-01 | Phase 31 | Done |
-| MNT-02 | Phase 32 (Stage A+B) | Done · Stage C opcional |
+| MNT-02 | Phase 32 (Stage A+B+C) | Done |
 | MNT-03 | Phase 33 | Done |
 | MAC-01 | Phase 34 | Done |
 | MAC-02 | Phase 34 | Done |
@@ -256,10 +256,10 @@
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.
 - v6 (EXP-*, NET-*): 10 requisitos, Done (Fases 19–20).
-- v8 (UX-*, MNT-*): 5 requisitos — 5 Done (Fases 30–33). MNT-02 con seguimiento
-  opcional (Fase 32 Stage C).
+- v8 (UX-*, MNT-*): 5 requisitos — 5 Done (Fases 30–33). MNT-02 incluye Stage C
+  (Fase 32, 2026-10-18).
 - v9 (MAC-*): 5 requisitos — 5 Done (Fase 34; DMG firmado + notarizado verificado 2026-09-09).
-- v10 (UPD-*): 6 requisitos — 5 Done (Fase 36, código + tests), 1 pendiente (verificación real en Mac).
+- v10 (UPD-*): 6 requisitos — 6 Done (Fase 36; verificación real en Mac 2026-09-11).
 - Unmapped: 0.
 
 ---

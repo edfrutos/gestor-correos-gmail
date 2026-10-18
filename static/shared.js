@@ -4,8 +4,9 @@
 // summary.js accede siempre vía `App.*`, nunca por variable global desnuda.
 //   App.api            → base de la API local (string, la fija app.js)
 //   App.state.deleted  → Set de IDs de correos ocultos localmente
-// Pendiente Stage C (Fase 32): App.state.activeEmails, App.state.aiStatus,
-// App.config.CATS — hoy summary.js aún los lee como global de app.js.
+//   App.state.activeEmails, App.state.aiStatus, App.config.CATS
+//                      → getters que define app.js sobre sus propias variables
+//                        (se reasignan allí; Fase 32 · Stage C)
 window.App = window.App || {
   api: '',
   state: { deleted: null },

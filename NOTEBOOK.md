@@ -39,8 +39,9 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
   permanente mantiene su tope de 100 y tandas de 20 (`DELETE_EXECUTION_CHUNK`).
 - El front carga `shared.js → app.js → summary.js`. `static/shared.js` define
   `window.App`; la superficie compartida app.js→summary.js pasa por `App.*`
-  (Fase 32, ADR-011). Hecho: `App.api`, `App.state.deleted`. Pendiente Stage C:
-  `activeEmails`, `aiStatus`, `CATS` (se reasignan en `app.js`).
+  (Fase 32, ADR-011). Hecho: `App.api`, `App.state.deleted` y (Stage C) getters
+  `App.state.activeEmails`/`App.state.aiStatus`/`App.config.CATS` sobre los `let`
+  que se reasignan en `app.js`.
 - App macOS (v9): `.app` pywebview firmada Developer ID + notarizada; el estado
   escribible se relocaliza a `~/Library/Application Support/GestorDeCorreos/`
   (`paths.py`), la app web/CLI no cambian. `VERSION` (raíz) = fuente única.
