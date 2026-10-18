@@ -5,7 +5,7 @@
 **Fecha:** 2026-09-11
 **Proyecto:** Gestor de Correos — Servidor Local
 **Estado:** v1 → v10 completados (incl. app macOS firmada + notarizada y
-auto-actualización verificada en el Mac). Suite: 167 tests, todas verdes.
+auto-actualización verificada en el Mac). Suite: 191 tests, todas verdes.
 Estado canónico: `.planning/STATE.md`.
 
 El proyecto sirve una interfaz HTML desde `server.py`, autentica contra Gmail API en modo `gmail.readonly` y permite buscar, priorizar, agrupar, filtrar, exportar y tratar correos ocultos. El borrado permanente usa una autorización separada, revocable y desactivada por defecto.
@@ -50,10 +50,12 @@ El valor principal no es leer Gmail, sino transformar mensajes técnicos dispers
   antes de instalar verifica sha256 + `codesign`/`spctl` + `TeamIdentifier`.
   El servidor re-verifica el manifiesto; nunca instala una URL del cliente.
   Verificado en el Mac de punta a punta (v1.1.0 → v1.2.0 → v1.2.1).
-- La extracción del zip usa `ditto -x -k`, no `zipfile` (este último no
-  reconstruye symlinks — corrompía el framework de Python embebido y
-  `codesign --verify` fallaba). Reintento de `ditto` ante fallo puntual de
-  symlink. Ojo: el fix vive en el código del updater que hace la extracción
+- La extracción del zip la hace `updater._extract_zip` (Python), el mismo
+  código que lo valida (`_check_zip_entries`): recrea symlinks y permisos
+  como `ditto -x -k`, pero sin la diferencia de parsers que dejaba escribir
+  fuera del directorio temporal (ADR-013, addendum 2026-10-18).
+  `zipfile.extractall` a secas no vale: no reconstruye symlinks y corrompía
+  el framework de Python embebido (`codesign --verify` fallaba). Ojo: el fix vive en el código del updater que hace la extracción
   (el de la app ya instalada, no el de la nueva versión), así que una
   instancia con el updater anterior no se autorepara actualizando.
 

@@ -2,7 +2,7 @@
 
 Este documento guía al usuario a través de las pruebas manuales para verificar que todas las prestaciones de la aplicación funcionan según lo esperado.
 
-> Suite automatizada: 167 tests, todas verdes (2026-10-18).
+> Suite automatizada: 191 tests, todas verdes (2026-10-18).
 > Estado canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## 1. Configuración y Arranque
@@ -59,10 +59,11 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Descarga e instalación:** Acepta la actualización. Verifica que descarga el `.zip`, pide permiso, se reinstala y la app se relanza sola en la versión nueva (comprobar en "Acerca de" o en la pill de versión).
 - [x] **Sin actualización:** Con la última versión ya instalada, pulsa **Buscar actualizaciones** de nuevo y verifica que informa de que ya tienes la versión más reciente.
 - [x] **Sin Release publicado:** Si `latest.json` no existe todavía (HTTP 404), verifica el mensaje claro de "aún no hay ninguna versión publicada" en vez de un error genérico.
+- [ ] **Validación del zip (2026-10-18):** publica un Release nuevo construido con el `updater.py` que valida el zip antes de extraerlo, instálalo y desde esa versión repite **Detección** y **Descarga e instalación** contra el siguiente Release. Debe actualizar igual que antes (el zip legítimo pasa la validación).
 
 Verificado en el Mac el 2026-09-11 con Releases reales encadenados
 (v1.1.0 → v1.2.0 → v1.2.1): detecta, descarga, verifica firma (`codesign`
 + `spctl` + `TeamIdentifier`) e instala. Nota: si la instancia de partida
-tiene un updater anterior al fix de `ditto` (`0a6afbb`), la primera
+tiene un updater anterior al fix de extracción de symlinks (`0a6afbb`), la primera
 actualización automática no la repara — necesita una reinstalación manual
 una vez (ver `macos/README.md`).
