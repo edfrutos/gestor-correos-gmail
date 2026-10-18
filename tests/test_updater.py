@@ -100,6 +100,7 @@ def test_download_and_stage_rejects_sha_mismatch(monkeypatch, tmp_path):
 # ── Validación del índice del zip antes de extraer (hallazgo de seguridad PR #2) ──
 import hashlib
 import os
+import plistlib
 import stat
 import warnings
 import zipfile
@@ -167,12 +168,13 @@ def test_check_zip_entries_rejects_escapes(tmp_path, files, links, match):
         updater._check_zip_entries(z)
 
 
-def build_zip_with_modes(path):
+def build_zip_with_modes(path, version="99.0.0"):
     """Zip con la forma del de `ditto -c -k --keepParent`: modos Unix + symlinks."""
+    plist = plistlib.dumps({"CFBundleShortVersionString": version})
     with zipfile.ZipFile(path, "w") as zf:
         for name, data, mode in [
             (f"{APP}/", b"", stat.S_IFDIR | 0o755),
-            (f"{APP}/Contents/Info.plist", b"plist", stat.S_IFREG | 0o644),
+            (f"{APP}/Contents/Info.plist", plist, stat.S_IFREG | 0o644),
             (f"{APP}/Contents/MacOS/Gestor", b"bin", stat.S_IFREG | 0o755),
             (f"{FRAMEWORK}/Versions/3.12/Python", b"lib", stat.S_IFREG | 0o755),
             ("__MACOSX/._x", b"appledouble", stat.S_IFREG | 0o644),
@@ -278,3 +280,32 @@ def test_check_zip_entries_rejects_ordered_overwrite_from_review(tmp_path):
 def test_check_zip_entries_returns_root_with_original_case(tmp_path):
     z = build_zip(tmp_path / "u.zip", LEGIT_FILES, LEGIT_LINKS)
     assert updater._check_zip_entries(z) == APP  # no la forma canónica en minúsculas
+
+
+@pytest.mark.parametrize("version", ["1.2.2", "1.0.0"])
+def test_download_and_stage_rejects_same_or_older_signed_app(monkeypatch, tmp_path, version):
+    # Release comprometido: .app antigua legítima (firma válida) con latest.json que miente
+    monkeypatch.setattr(sys, "frozen", False, raising=False)
+    monkeypatch.setattr(updater, "_read_version_file", lambda: "1.2.2")
+    old = build_zip_with_modes(tmp_path / "old.zip", version=version).read_bytes()
+    (tmp_path / "work").mkdir()
+    monkeypatch.setattr(updater, "_http_get", lambda url, binary=False: old)
+    monkeypatch.setattr(updater, "_verify_app_signature", lambda app: None)
+    with pytest.raises(RuntimeError, match="no es más nuevo"):
+        updater.download_and_stage("https://x/u.zip", hashlib.sha256(old).hexdigest(), workdir=tmp_path / "work")
+
+
+def test_download_and_stage_rejects_app_without_version(monkeypatch, tmp_path):
+    z = build_zip_with_modes(tmp_path / "u.zip")
+    with zipfile.ZipFile(z) as src, zipfile.ZipFile(tmp_path / "nov.zip", "w") as dst:
+        for info in src.infolist():
+            data = src.read(info)
+            if info.filename.endswith("Info.plist"):
+                data = plistlib.dumps({"CFBundleIdentifier": "x"})
+            dst.writestr(info, data)
+    raw = (tmp_path / "nov.zip").read_bytes()
+    (tmp_path / "work").mkdir()
+    monkeypatch.setattr(updater, "_http_get", lambda url, binary=False: raw)
+    monkeypatch.setattr(updater, "_verify_app_signature", lambda app: None)
+    with pytest.raises(RuntimeError, match="versión del paquete"):
+        updater.download_and_stage("https://x/u.zip", hashlib.sha256(raw).hexdigest(), workdir=tmp_path / "work")

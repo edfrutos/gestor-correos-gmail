@@ -354,6 +354,24 @@ def _extract_zip(zip_path, dest):
         os.symlink(target, out)
 
 
+def _check_not_downgrade(app_path):
+    """Rechaza una `.app` que no sea más nueva que la instalada.
+
+    Se lee del `Info.plist` ya extraído, que la firma sella: un Release
+    comprometido puede servir una `.app` antigua legítima con un
+    `latest.json` que diga otra versión, pero no puede cambiar la que
+    lleva dentro sin romper la firma (ADR-013).
+    """
+    try:
+        data = plistlib.loads((app_path / "Contents" / "Info.plist").read_bytes())
+        new = str(data["CFBundleShortVersionString"])
+    except Exception as exc:
+        raise RuntimeError(f"No se pudo leer la versión del paquete: {exc}") from exc
+    current = current_version()
+    if parse_version(new) <= parse_version(current):
+        raise RuntimeError(f"El paquete es v{new} y no es más nuevo que la v{current} instalada")
+
+
 def download_and_stage(url, sha256, workdir=None):
     """Descarga el zip, verifica sha256, extrae y valida firma.
 
@@ -376,6 +394,7 @@ def download_and_stage(url, sha256, workdir=None):
         raise RuntimeError("El paquete de actualización no contiene ninguna .app")
     _check_extracted_links(app_path)
     _verify_app_signature(app_path)
+    _check_not_downgrade(app_path)
     return app_path
 
 

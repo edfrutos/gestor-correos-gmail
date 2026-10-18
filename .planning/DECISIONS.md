@@ -304,3 +304,13 @@ cubre las actualizaciones posteriores a instalar una versión que la incluya.
 Riesgo residual: un manifiesto firmado (p. ej. EdDSA, como Sparkle) cerraría
 también la sustitución del zip por otra `.app` antigua firmada del mismo team
 (downgrade); queda como mejora futura.
+
+- (4ª revisión, tras publicar v1.2.2) **Downgrade cerrado sin firmar el
+  manifiesto.** Después de verificar la firma, `_check_not_downgrade` lee el
+  `CFBundleShortVersionString` del `Info.plist` extraído (sellado por la firma)
+  y rechaza la instalación si no es mayor que la versión en ejecución. Un
+  Release comprometido ya no puede colar una `.app` antigua legítima con un
+  `latest.json` que diga otra versión: como mucho puede ofrecer una versión
+  legítima más nueva, o no ofrecer ninguna (*freeze*, que el usuario ve como
+  «estás en la última versión»). La firma del manifiesto queda solo como
+  defensa en profundidad. Mismo matiz: protege desde la versión que la incluye.

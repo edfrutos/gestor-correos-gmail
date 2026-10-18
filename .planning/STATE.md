@@ -60,7 +60,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `192 tests` · **192 verdes**.
+- **Suite automatizada:** `195 tests` · **195 verdes**.
 - **Testeo humano:** `TESTING_HUMANO.md` 35/37 ✅ (pendientes en el Mac: abrir `.eml` desde el Finder §7; validación del zip §9) (v7.5 + sección 9 de
   auto-actualización, v10).
 
@@ -107,16 +107,23 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 - Las sugerencias/resúmenes de IA envían metadatos (asunto/remitente) a un
   proveedor externo solo si el usuario lo habilita y confirma.
 - Updater: el manifiesto `latest.json` no va firmado. El zip se valida antes
-  de extraer y la `.app` por firma + Team ID (ADR-013, addendum 2026-10-18),
-  pero un Release comprometido podría servir una `.app` **antigua** legítima
-  (downgrade). Instalaciones ≤ v1.2.1 no tienen la validación del zip hasta
-  actualizar a una versión que la incluya.
+  de extraer, la `.app` por firma + Team ID y su versión (del `Info.plist`
+  sellado) debe ser mayor que la instalada (ADR-013, addenda 2026-10-18).
+  Queda el *freeze* (un Release comprometido que no ofrece actualizaciones).
+  Cada protección del updater solo actúa a partir de la versión que la
+  incluye: ≤ v1.2.1 sin validación del zip; ≤ v1.2.2 sin anti-downgrade.
 - `app.js` sigue usando sus `let` de nivel superior internamente (`summary.js` ya
   solo lee vía `App.*`); cualquier refactor mayor (módulos ES) debe respetar el
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
 
+- 2026-10-18 — **Release v1.2.2 publicado** (tag en `b250f0a`, primer tag que
+  coincide con el código compilado). Build firmado y notarizado (`.app` y DMG
+  aceptados por `spctl`); actualización 1.2.1 → 1.2.2 verificada en el Mac.
+  Después (rama `fix/update-no-downgrade`): `_check_not_downgrade` rechaza una
+  `.app` cuya versión (del `Info.plist` sellado por la firma) no sea mayor que
+  la instalada. +3 tests, 195/195.
 - 2026-10-18 — Preparación de v1.2.2 (rama `release/1.2.2`): `VERSION` 1.2.2;
   `build_app.sh` autocomprueba el zip con `updater._check_zip_entries` antes
   de publicar y el comando de Release lleva `--target <commit compilado>`
@@ -201,27 +208,19 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v10 cerrado y en `main`** (PR #2, `524c015`). Ojo: los tags `v1.2.0` y
-`v1.2.1` apuntan a `fe55367` (merge del PR #1), anterior a los fixes de
-extracción; el código que se construyó para esas Releases no coincide con
-ningún tag.
+**v1.2.2 publicado** (tag `v1.2.2` en `b250f0a`) y actualización 1.2.1 → 1.2.2
+verificada en el Mac. Los tags `v1.2.0` y `v1.2.1` siguen en `fe55367`
+(anteriores a los fixes de extracción; no coinciden con lo compilado).
 
-PR #3 mergeado (`ff54b40`). `VERSION` = 1.2.2 (rama `release/1.2.2`).
-
-Siguiente, **en el Mac** (necesita las claves de Developer ID):
-1. `git pull` en `main` y `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`
-   (aborta si el zip no pasa la validación del updater).
-2. `git push origin HEAD` + el `gh release create v1.2.2 … --target <commit>`
-   que imprime el script (el tag queda en el commit compilado).
-3. Desde la v1.2.1 instalada, **Buscar actualizaciones** → 1.2.2 (esa
-   extracción aún la hace `ditto`, el updater viejo; con un zip legítimo es
-   seguro). La validación nueva protege a partir de las actualizaciones
-   que reciba la 1.2.2.
-4. `TESTING_HUMANO.md`: §7 (`odoc`), §2–§6 (Stage C) y §9 (validación del zip,
-   contra el siguiente Release después de 1.2.2).
+Siguiente:
+1. Mergear `fix/update-no-downgrade` (ya con `VERSION` 1.2.3) y publicar v1.2.3:
+   `build_app.sh` y el `gh release create … --target <commit>` que imprime.
+2. En el Mac: actualizar 1.2.2 → 1.2.3 cubre `TESTING_HUMANO.md` §9
+   (primera actualización extraída por `_extract_zip`). Además §7 (`odoc`) y
+   §2–§6 (Stage C).
 
 Otros pendientes:
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
 - Sparkle (appcast + deltas) como alternativa futura al updater en Python.
-- Firmar `latest.json` (p. ej. EdDSA) para cerrar el downgrade a una `.app`
-  antigua legítima (ADR-013).
+- Firmar `latest.json` (p. ej. EdDSA): ya solo defensa en profundidad; el
+  downgrade lo cierra `_check_not_downgrade` (ADR-013).
