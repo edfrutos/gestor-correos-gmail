@@ -263,7 +263,7 @@ claves de Developer ID) podría envolver una `.app` legítima con entradas extra
 (`../`, rutas absolutas o symlinks) que escribieran fuera del directorio
 temporal durante la extracción. Fix, en dos barreras:
 - `_check_zip_entries` (antes de `ditto`): una única raíz `*.app` (más
-  `__MACOSX/` sin symlinks), sin rutas absolutas, `..`, `\\` ni caracteres de
+  `__MACOSX/` sin symlinks), sin rutas absolutas, `..`, `\` ni caracteres de
   control; cada symlink y el directorio padre de cada entrada se resuelven
   sobre un árbol virtual del propio zip (`_virtual_realpath`, sigue cadenas de
   symlinks como `realpath`) y deben quedar dentro de la `.app`.
