@@ -56,8 +56,8 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `157 tests` · **157 verdes**.
-- **Testeo humano:** `TESTING_HUMANO.md` 35/35 ✅ (v7.5 + sección 9 de
+- **Suite automatizada:** `162 tests` · **162 verdes**.
+- **Testeo humano:** `TESTING_HUMANO.md` 35/36 ✅ (pendiente: abrir `.eml` desde el Finder, §7) (v7.5 + sección 9 de
   auto-actualización, v10).
 
 ## Milestone v10 — Fases (rama `feat/auto-update`)
@@ -107,6 +107,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-10-18 — AppleEvent `odoc` (rama `feat/macos-odoc`): `macos/app_main.py`
+  añade `application:openFiles:` al `AppDelegate` de pywebview; `EmlOpener`
+  abre el visor vía `openEmlReader` sin recargar o encola hasta `loaded` en
+  arranque en frío. `?view=` ahora va con la ruta URL-encoded. +5 tests
+  (`tests/test_macos_app.py`), suite 162/162. Falta verificación en el Mac.
 
 - 2026-10-18 — Fase 32 Stage C (rama `feat/js-stage-c`): `app.js` expone
   `activeEmails`/`aiStatus`/`CATS` como getters en `App.state`/`App.config`;
@@ -170,7 +176,7 @@ Los tags `v1.2.0` y `v1.2.1` apuntan ambos a `fe55367`, anterior a estos fixes,
 así que `main` todavía no los tiene.
 
 Pendientes menores:
-- AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta**.
+- Verificar en el Mac el `odoc` (abrir `.eml` desde el Finder con la app cerrada y abierta, `TESTING_HUMANO.md` §7).
 - Smoke manual de Fase 32 Stage C (plan humano §2–§6: resumen periódico, tendencias, resumen IA) en el Mac.
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
 - Sparkle (appcast + deltas) como alternativa futura al updater en Python.

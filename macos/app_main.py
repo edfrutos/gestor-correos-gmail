@@ -13,6 +13,7 @@ Prueba en el Mac sin empaquetar:
     python3 macos/app_main.py [ruta/opcional/al/archivo.eml]
 """
 
+import json
 import os
 import socket
 import sys
@@ -20,6 +21,7 @@ import threading
 import time
 from http.server import ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import quote
 from urllib.request import urlopen
 
 # La carpeta del proyecto (padre de macos/) debe estar en sys.path para importar
@@ -51,9 +53,80 @@ def _wait_until_ready(url: str, timeout: float = 15.0) -> bool:
 
 def _eml_from_argv() -> str:
     for arg in sys.argv[1:]:
-        if arg.lower().endswith(".eml") and os.path.exists(arg):
+        if _is_eml(arg):
             return os.path.abspath(arg)
     return ""
+
+
+def _is_eml(path: str) -> bool:
+    return path.lower().endswith(".eml") and os.path.isfile(path)
+
+
+class EmlOpener:
+    """Abre en el visor los .eml que llegan por AppleEvent `odoc` (Finder).
+
+    Con la app ya abierta, inyecta `openEmlReader` en la página sin recargarla.
+    Si la página aún no ha cargado (arranque en frío desde el Finder), los
+    encola y los abre al dispararse `loaded`.
+    """
+
+    def __init__(self, window, run_async=None):
+        self.window = window
+        self.ready = False
+        self.pending = []
+        self._lock = threading.Lock()
+        # evaluate_js bloquea esperando al hilo principal de Cocoa, y `odoc`
+        # llega precisamente en ese hilo: hay que llamarlo desde otro.
+        self._run_async = run_async or (lambda fn: threading.Thread(target=fn, daemon=True).start())
+
+    def open(self, path: str) -> None:
+        if not _is_eml(path):
+            return
+        path = os.path.abspath(path)
+        with self._lock:
+            if not self.ready:
+                self.pending.append(path)
+                return
+        self._show(path)
+
+    def on_loaded(self) -> None:
+        with self._lock:
+            self.ready = True
+            pending, self.pending = self.pending, []
+        for path in pending:
+            self._show(path)
+
+    def _show(self, path: str) -> None:
+        js = f"openEmlReader('', {json.dumps(path)})"
+        self._run_async(lambda: self.window.evaluate_js(js))
+
+
+def _install_open_files_handler(opener: EmlOpener) -> bool:
+    """Añade `application:openFiles:` al AppDelegate de pywebview (Cocoa).
+
+    NSApplication entrega ahí los `odoc` tanto en el arranque en frío (los
+    encola hasta terminar de lanzar) como con la app ya abierta. Si el backend
+    no es Cocoa o pywebview cambia su clase interna, se ignora sin romper.
+    """
+    try:
+        import objc
+        from webview.platforms.cocoa import BrowserView
+    except Exception:
+        return False
+
+    def application_openFiles_(self, app, filenames):
+        for name in filenames:
+            opener.open(str(name))
+        app.replyToOpenOrPrint_(0)  # NSApplicationDelegateReplySuccess
+
+    try:
+        objc.classAddMethods(BrowserView.AppDelegate, [
+            objc.selector(application_openFiles_, selector=b"application:openFiles:", signature=b"v@:@@"),
+        ])
+    except Exception as exc:  # noqa: BLE001
+        print(f"[odoc] No se pudo registrar el manejador: {exc}", file=sys.stderr)
+        return False
+    return True
 
 
 def main() -> int:
@@ -79,7 +152,7 @@ def main() -> int:
     start_url = base_url
     eml = _eml_from_argv()
     if eml:
-        start_url = f"{base_url}/?view={eml}"
+        start_url = f"{base_url}/?view={quote(eml)}"
 
     try:
         import webview  # noqa: E402
@@ -89,6 +162,9 @@ def main() -> int:
         return 1
 
     window = webview.create_window(APP_TITLE, start_url, width=1180, height=820, min_size=(900, 600))
+    opener = EmlOpener(window)
+    window.events.loaded += opener.on_loaded
+    _install_open_files_handler(opener)
     try:
         webview.start(menu=_build_menu(webview, window))
     finally:
