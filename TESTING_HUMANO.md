@@ -2,7 +2,7 @@
 
 Este documento guía al usuario a través de las pruebas manuales para verificar que todas las prestaciones de la aplicación funcionan según lo esperado.
 
-> Suite automatizada: 178 tests, todas verdes (2026-10-18).
+> Suite automatizada: 181 tests, todas verdes (2026-10-18).
 > Estado canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## 1. Configuración y Arranque
@@ -63,6 +63,6 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 Verificado en el Mac el 2026-09-11 con Releases reales encadenados
 (v1.1.0 → v1.2.0 → v1.2.1): detecta, descarga, verifica firma (`codesign`
 + `spctl` + `TeamIdentifier`) e instala. Nota: si la instancia de partida
-tiene un updater anterior al fix de `ditto` (`0a6afbb`), la primera
+tiene un updater anterior al fix de extracción de symlinks (`0a6afbb`), la primera
 actualización automática no la repara — necesita una reinstalación manual
 una vez (ver `macos/README.md`).

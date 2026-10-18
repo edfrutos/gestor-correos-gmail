@@ -278,8 +278,20 @@ temporal durante la extracción. Fix, en dos barreras:
   (`_fs_key`: sin mayúsculas, NFD), porque `la`/`LA` o `é` NFC/NFD son la
   misma ruta en disco.
 
+- (3ª revisión) **`ditto` fuera de la extracción.** Validar con `zipfile` y
+  extraer con `ditto` deja un hueco en cada diferencia de interpretación del
+  formato (p. ej. `zipfile` aplica el extra Info-ZIP Unicode Path `0x7075`,
+  `ditto` puede usar el nombre de la cabecera local). Ahora `_extract_zip`
+  extrae con el mismo parser y exactamente las rutas validadas: ficheros con
+  `O_EXCL|O_NOFOLLOW`, symlinks creados al final (ninguna escritura los
+  atraviesa; ninguna entrada puede colgar de uno), permisos sin
+  setuid/setgid, `__MACOSX/` ignorado, tope de 2 GiB descomprimido. Revierte
+  el addendum anterior (`ditto` en vez de `zipfile`) sin volver a su bug:
+  los symlinks se recrean explícitamente.
+
 Comprobado contra el zip real de v1.2.1 (1664 entradas, 4 symlinks internos
-del framework de Python y `site.pyc`): pasa. Mismo matiz que el addendum
+del framework de Python y `site.pyc`): valida y se extrae idéntico, entrada
+por entrada (contenido, permisos y destino de cada symlink). Mismo matiz que el addendum
 anterior: la protección la aplica el updater **ya instalado**, así que solo
 cubre las actualizaciones posteriores a instalar una versión que la incluya.
 Riesgo residual: un manifiesto firmado (p. ej. EdDSA, como Sparkle) cerraría

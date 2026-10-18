@@ -7,11 +7,12 @@ Modelo de confianza (cualquier fallo aborta la instalación):
      (notarización) y se comprueba que el `TeamIdentifier` es el nuestro
      (autenticidad). Sin (3), un manifiesto manipulado permitiría ejecutar
      código arbitrario.
-  4. Antes de extraer, el índice del zip se valida (`_check_zip_entries`):
-     una única `.app` raíz, sin rutas absolutas ni `..`, y todo symlink
-     resuelto dentro de esa `.app`. La firma de (3) solo cubre la `.app`;
-     sin (4), un zip con entradas extra podría escribir fuera del directorio
-     temporal durante la extracción, antes de verificar nada.
+  4. El zip lo valida (`_check_zip_entries`) y lo extrae (`_extract_zip`) el
+     mismo código, con el mismo parser: una única `.app` raíz, sin rutas
+     absolutas ni `..`, sin nombres repetidos, ninguna entrada bajo un
+     symlink y todo symlink resuelto dentro de la `.app`. La firma de (3) solo
+     cubre la `.app`; sin (4), un zip con entradas extra podría escribir fuera
+     del directorio temporal durante la extracción, antes de verificar nada.
 
 La comprobación funciona también desde el código fuente; la instalación
 automática solo en la `.app` empaquetada (`paths.is_bundled()`).
@@ -176,8 +177,10 @@ def _verify_app_signature(app_path):
 
 
 _MAX_SYMLINK_DEPTH = 40
-# `ditto -c -k` puede guardar metadatos AppleDouble aquí; nunca se instala.
+# Metadatos AppleDouble de algunos zips de macOS: se ignoran, nunca se extraen.
 _ZIP_METADATA_ROOT = "__MACOSX"
+# El zip real ronda los 50 MB comprimido; muy por encima de lo descomprimido.
+_MAX_UNCOMPRESSED = 2 * 1024 ** 3
 
 
 def _fs_key(component):
@@ -186,7 +189,7 @@ def _fs_key(component):
     APFS (por defecto) no distingue mayúsculas ni formas de normalización
     Unicode: `la`, `LA` y `la` en NFC/NFD son la misma entrada en disco.
     Toda la validación trabaja con esta forma para no ver dos rutas donde
-    `ditto` escribirá en una sola.
+    el disco tiene una sola.
     """
     return unicodedata.normalize("NFD", unicodedata.normalize("NFD", component).casefold())
 
@@ -195,7 +198,7 @@ def _virtual_realpath(parts, links, depth=0):
     """Resuelve `parts` sobre el árbol del zip siguiendo sus symlinks.
 
     Igual que `os.path.realpath`, pero sin tocar disco: así se sabe a dónde
-    apuntaría cada enlace *antes* de que `ditto` lo cree. Devuelve None si la
+    apuntaría cada enlace *antes* de crearlo. Devuelve None si la
     ruta sube por encima de la raíz del archivo.
     """
     if depth > _MAX_SYMLINK_DEPTH:
@@ -222,17 +225,22 @@ def _virtual_realpath(parts, links, depth=0):
 
 
 def _check_zip_entries(zip_path):
-    """Valida el índice del zip antes de extraerlo; devuelve el nombre de la `.app`."""
+    """Valida el índice del zip antes de extraerlo; devuelve el nombre de la `.app`.
+
+    Solo tiene sentido junto con `_extract_zip`, que extrae con este mismo
+    parser y estas mismas rutas: validar con uno y extraer con otro (p. ej.
+    `ditto`) deja huecos en cada diferencia de interpretación del formato.
+    """
     try:
         zf = zipfile.ZipFile(zip_path)
     except zipfile.BadZipFile as exc:
         raise RuntimeError(f"El paquete de actualización no es un zip válido: {exc}") from exc
     with zf:
         # Todo en forma canónica (`_fs_key`); `seen` rechaza nombres repetidos:
-        # `ditto` aplica las entradas en orden, así que un mismo nombre dos
-        # veces (p. ej. un symlink que sale de la .app, un fichero escrito a
-        # través de él y luego otro symlink inocuo encima) haría que el árbol
-        # final validado no fuese el que se escribió.
+        # las entradas se aplican en orden, así que un mismo nombre dos veces
+        # (p. ej. un symlink que sale de la .app, un fichero escrito a través
+        # de él y luego otro symlink inocuo encima) haría que el árbol final
+        # validado no fuese el que se escribió.
         entries, links, seen = [], {}, set()
         root_name = None
         for info in zf.infolist():
@@ -265,8 +273,18 @@ def _check_zip_entries(zip_path):
             raise RuntimeError("El paquete de actualización debe contener una única .app en la raíz")
         root = next(iter(roots))
 
+        if sum(info.file_size for info in zf.infolist()) > _MAX_UNCOMPRESSED:
+            raise RuntimeError("El paquete de actualización es demasiado grande al descomprimir")
+
         def inside(parts):
             return parts is not None and len(parts) >= 1 and parts[0] == root
+
+        for parts in entries:
+            # `_extract_zip` crea los symlinks al final; nada debe colgar de
+            # uno (ditto tampoco guarda contenido "a través" de un enlace).
+            for i in range(1, len(parts)):
+                if "/".join(parts[:i]) in links:
+                    raise RuntimeError(f"Entrada bajo un symlink en la actualización: {'/'.join(parts)!r}")
 
         for link, target in links.items():
             link_parts = link.split("/")
@@ -295,6 +313,47 @@ def _check_extracted_links(app_path):
                     raise RuntimeError(f"Symlink que sale de la .app tras extraer: {full}")
 
 
+def _extract_zip(zip_path, dest):
+    """Extrae el zip ya validado por `_check_zip_entries`, sin `ditto`.
+
+    Reproduce lo que `ditto -x -k` hacía con el zip de `build_app.sh`
+    (`ditto -c -k --keepParent`: ficheros, carpetas, permisos y symlinks como
+    `Versions/Current -> 3.12`; sin xattrs ni AppleDouble), pero con el mismo
+    parser que la validación. `zipfile.extractall` no sirve: no recrea
+    symlinks y descuadra el bundle frente a lo firmado.
+
+    Los ficheros se crean con `O_EXCL|O_NOFOLLOW` y los symlinks al final,
+    así ninguna escritura atraviesa un enlace.
+    """
+    dest = Path(dest)
+    links = []
+    with zipfile.ZipFile(zip_path) as zf:
+        for info in zf.infolist():
+            parts = [p for p in PurePosixPath(info.filename).parts if p != "."]
+            if not parts or _fs_key(parts[0]) == _fs_key(_ZIP_METADATA_ROOT):
+                continue
+            out = dest.joinpath(*parts)
+            mode = (info.external_attr >> 16) & 0o7777
+            kind = stat.S_IFMT(info.external_attr >> 16)
+            if kind == stat.S_IFLNK:
+                links.append((out, zf.read(info).decode("utf-8", "strict")))
+                continue
+            if info.is_dir() or kind == stat.S_IFDIR:
+                out.mkdir(parents=True, exist_ok=True)
+                if mode:
+                    os.chmod(out, (mode & 0o777) | 0o700)
+                continue
+            out.parent.mkdir(parents=True, exist_ok=True)
+            fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, "wb") as fh, zf.open(info) as src:
+                shutil.copyfileobj(src, fh, 1 << 20)
+            # Sin setuid/setgid/sticky: el bundle no los necesita.
+            os.chmod(out, (mode & 0o777) or 0o644)
+    for out, target in links:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(target, out)
+
+
 def download_and_stage(url, sha256, workdir=None):
     """Descarga el zip, verifica sha256, extrae y valida firma.
 
@@ -308,31 +367,10 @@ def download_and_stage(url, sha256, workdir=None):
         raise RuntimeError(f"sha256 no coincide (esperado {sha256}, obtenido {got})")
     app_name = _check_zip_entries(zip_path)
     extract_dir = tmp / "extracted"
-    # `ditto`, no `zipfile`: el zip lo genera `build_app.sh` con
-    # `ditto -c -k --keepParent`, que preserva symlinks (p.ej. el framework
-    # de Python, lleno de `Versions/Current -> 3.x`), atributos extendidos y
-    # resource forks. El módulo `zipfile` de Python no reconstruye symlinks
-    # (los deja como archivos regulares con el texto del destino dentro), lo
-    # que descuadra el bundle frente a lo firmado y `codesign --verify`
-    # falla. `ditto -x -k` es el extractor simétrico de `ditto -c -k`.
-    #
-    # `ditto` puede fallar de forma puntual creando algún symlink (fallo
-    # transitorio de filesystem); un solo reintento, limpiando el directorio
-    # de extracción antes de repetir, resuelve ese caso sin exponerlo al
-    # usuario como un error de actualización.
-    extract_error = None
-    for attempt in range(2):
-        if extract_dir.exists():
-            shutil.rmtree(extract_dir, ignore_errors=True)
-        extract_dir.mkdir(parents=True, exist_ok=True)
-        try:
-            _run(["/usr/bin/ditto", "-x", "-k", str(zip_path), str(extract_dir)])
-            extract_error = None
-            break
-        except RuntimeError as exc:
-            extract_error = exc
-    if extract_error is not None:
-        raise extract_error
+    if extract_dir.exists():
+        shutil.rmtree(extract_dir)
+    extract_dir.mkdir(parents=True)
+    _extract_zip(zip_path, extract_dir)
     app_path = extract_dir / app_name
     if app_path.is_symlink() or not app_path.is_dir():
         raise RuntimeError("El paquete de actualización no contiene ninguna .app")

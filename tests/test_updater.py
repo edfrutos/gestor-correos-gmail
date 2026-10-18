@@ -146,7 +146,7 @@ def test_check_zip_entries_accepts_real_bundle_layout(tmp_path):
     ([(f"{APP}/x", b""), ("Otra.app/x", b"")], [], "única .app"),
     ([("payload/x", b"")], [], "única .app"),
     # symlink directo fuera de la .app y escritura a través de él
-    ([(f"{APP}/x", b""), (f"{APP}/la/evil.plist", b"")], [(f"{APP}/la", "../../../Library/LaunchAgents")], "sale de la .app"),
+    ([(f"{APP}/x", b""), (f"{APP}/la/evil.plist", b"")], [(f"{APP}/la", "../../../Library/LaunchAgents")], "sale de la .app|bajo un symlink"),
     ([(f"{APP}/x", b"")], [(f"{APP}/abs", "/Users/victima")], "sale de la .app"),
     # cadena: cada destino parece interno textualmente, pero físicamente sale
     ([(f"{APP}/x", b"")], [(f"{APP}/Contents/Frameworks/up", "../.."), (f"{APP}/esc", "Contents/Frameworks/up/..")], "sale de la .app"),
@@ -157,7 +157,7 @@ def test_check_zip_entries_accepts_real_bundle_layout(tmp_path):
     ([(f"{APP}/x", b""), (f"{APP}/x", b"otra")], [], "duplicada"),
     ([(f"{APP}/d/", b""), (f"{APP}/x", b"")], [(f"{APP}/d", "Contents")], "duplicada"),
     # APFS no distingue mayúsculas ni NFC/NFD: "la" y "LA" son la misma ruta
-    ([(f"{APP}/x", b""), (f"{APP}/LA/evil.plist", b"")], [(f"{APP}/la", "../../..")], "sale de la .app"),
+    ([(f"{APP}/x", b""), (f"{APP}/LA/evil.plist", b"")], [(f"{APP}/la", "../../..")], "sale de la .app|bajo un symlink"),
     ([(f"{APP}/x", b""), (f"{APP}/X", b"")], [], "duplicada"),
     ([(f"{APP}/caf\u00e9", b""), (f"{APP}/cafe\u0301", b"")], [], "duplicada"),
 ])
@@ -167,31 +167,30 @@ def test_check_zip_entries_rejects_escapes(tmp_path, files, links, match):
         updater._check_zip_entries(z)
 
 
-def fake_ditto_extract(cmd):
-    """Sustituto de `ditto -x -k` para Linux/CI: extrae y recrea symlinks."""
-    zip_path, dest = cmd[-2], cmd[-1]
-    with zipfile.ZipFile(zip_path) as zf:
-        for info in zf.infolist():
-            out = os.path.join(dest, info.filename)
-            os.makedirs(os.path.dirname(out), exist_ok=True)
-            if stat.S_ISLNK(info.external_attr >> 16):
-                os.symlink(zf.read(info).decode(), out)
-            elif not info.filename.endswith("/"):
-                with open(out, "wb") as fh:
-                    fh.write(zf.read(info))
+def build_zip_with_modes(path):
+    """Zip con la forma del de `ditto -c -k --keepParent`: modos Unix + symlinks."""
+    with zipfile.ZipFile(path, "w") as zf:
+        for name, data, mode in [
+            (f"{APP}/", b"", stat.S_IFDIR | 0o755),
+            (f"{APP}/Contents/Info.plist", b"plist", stat.S_IFREG | 0o644),
+            (f"{APP}/Contents/MacOS/Gestor", b"bin", stat.S_IFREG | 0o755),
+            (f"{FRAMEWORK}/Versions/3.12/Python", b"lib", stat.S_IFREG | 0o755),
+            ("__MACOSX/._x", b"appledouble", stat.S_IFREG | 0o644),
+        ]:
+            info = zipfile.ZipInfo(name)
+            info.create_system = 3
+            info.external_attr = mode << 16
+            zf.writestr(info, data)
+    with zipfile.ZipFile(path, "a") as zf:
+        for name, target in LEGIT_LINKS:
+            info = zipfile.ZipInfo(name)
+            info.create_system = 3
+            info.external_attr = (stat.S_IFLNK | 0o755) << 16
+            zf.writestr(info, target)
+    return path
 
 
-def stage(monkeypatch, tmp_path, zip_bytes):
-    calls = []
-    (tmp_path / "work").mkdir()
-    monkeypatch.setattr(updater, "_http_get", lambda url, binary=False: zip_bytes)
-    monkeypatch.setattr(updater, "_run", lambda cmd: (calls.append(cmd), fake_ditto_extract(cmd)))
-    monkeypatch.setattr(updater, "_verify_app_signature", lambda p: calls.append(("verify", p)))
-    sha = hashlib.sha256(zip_bytes).hexdigest()
-    return calls, updater.download_and_stage("https://x/u.zip", sha, workdir=tmp_path / "work")
-
-
-def test_download_and_stage_validates_before_extracting(monkeypatch, tmp_path):
+def test_download_and_stage_never_runs_ditto_and_rejects_before_writing(monkeypatch, tmp_path):
     bad = build_zip(tmp_path / "bad.zip", [(f"{APP}/x", b""), ("../evil", b"")]).read_bytes()
     calls = []
     (tmp_path / "w").mkdir()
@@ -199,15 +198,54 @@ def test_download_and_stage_validates_before_extracting(monkeypatch, tmp_path):
     monkeypatch.setattr(updater, "_run", lambda cmd: calls.append(cmd))
     with pytest.raises(RuntimeError, match="fuera del paquete"):
         updater.download_and_stage("https://x/u.zip", hashlib.sha256(bad).hexdigest(), workdir=tmp_path / "w")
-    assert calls == []  # ditto nunca llega a ejecutarse
+    assert calls == []
+    assert not (tmp_path / "evil").exists() and not (tmp_path / "w" / "extracted").exists()
 
 
-def test_download_and_stage_happy_path_returns_root_app(monkeypatch, tmp_path):
-    good = build_zip(tmp_path / "good.zip", LEGIT_FILES, LEGIT_LINKS).read_bytes()
-    calls, app_path = stage(monkeypatch, tmp_path, good)
-    assert app_path == tmp_path / "work" / "extracted" / APP
-    assert calls[0][0] == "/usr/bin/ditto"
-    assert calls[-1] == ("verify", app_path)
+def test_download_and_stage_extracts_bundle_with_symlinks_and_modes(monkeypatch, tmp_path):
+    good = build_zip_with_modes(tmp_path / "good.zip").read_bytes()
+    verified = []
+    (tmp_path / "work").mkdir()
+    monkeypatch.setattr(updater, "_http_get", lambda url, binary=False: good)
+    monkeypatch.setattr(updater, "_run", lambda cmd: pytest.fail(f"no debe invocar {cmd[0]}"))
+    monkeypatch.setattr(updater, "_verify_app_signature", verified.append)
+
+    app = updater.download_and_stage("https://x/u.zip", hashlib.sha256(good).hexdigest(), workdir=tmp_path / "work")
+
+    assert app == tmp_path / "work" / "extracted" / APP
+    assert verified == [app]
+    fw = app / "Contents/Frameworks/Python.framework"
+    assert os.readlink(fw / "Versions/Current") == "3.12"
+    assert (fw / "Python").read_bytes() == b"lib"  # symlink resuelto de verdad
+    assert os.readlink(app / "Contents/MacOS/python") == "../Frameworks/Python.framework/Python"
+    assert stat.S_IMODE(os.stat(app / "Contents/MacOS/Gestor").st_mode) == 0o755
+    assert stat.S_IMODE(os.stat(app / "Contents/Info.plist").st_mode) == 0o644
+    assert not (tmp_path / "work" / "extracted" / "__MACOSX").exists()
+
+
+def test_extract_zip_strips_setuid_bits(tmp_path):
+    z = tmp_path / "u.zip"
+    with zipfile.ZipFile(z, "w") as zf:
+        info = zipfile.ZipInfo(f"{APP}/Contents/MacOS/Gestor")
+        info.create_system = 3
+        info.external_attr = (stat.S_IFREG | 0o4755) << 16
+        zf.writestr(info, b"bin")
+    updater._check_zip_entries(z)
+    updater._extract_zip(z, tmp_path / "out")
+    assert stat.S_IMODE(os.stat(tmp_path / "out" / APP / "Contents/MacOS/Gestor").st_mode) == 0o755
+
+
+def test_check_zip_entries_rejects_entry_under_symlink(tmp_path):
+    z = build_zip(tmp_path / "u.zip", [(f"{APP}/Contents/x", b""), (f"{APP}/l/y", b"")], [(f"{APP}/l", "Contents")])
+    with pytest.raises(RuntimeError, match="bajo un symlink"):
+        updater._check_zip_entries(z)
+
+
+def test_check_zip_entries_rejects_zip_bomb(monkeypatch, tmp_path):
+    monkeypatch.setattr(updater, "_MAX_UNCOMPRESSED", 10)
+    z = build_zip(tmp_path / "u.zip", [(f"{APP}/x", b"0" * 11)])
+    with pytest.raises(RuntimeError, match="demasiado grande"):
+        updater._check_zip_entries(z)
 
 
 def test_check_extracted_links_catches_escape_on_disk(tmp_path):
