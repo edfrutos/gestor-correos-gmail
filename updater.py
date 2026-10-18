@@ -1,7 +1,10 @@
 """Buscar, descargar e instalar actualizaciones de la app macOS.
 
 Modelo de confianza (cualquier fallo aborta la instalación):
-  1. `latest.json` se descarga por HTTPS de GitHub Releases.
+  1. `latest.json` se descarga por HTTPS de GitHub Releases y se verifica su
+     firma Ed25519 (`latest.json.sig`) con la clave pública embebida
+     (`UPDATE_PUBLIC_KEYS`). Así ni la versión, ni la url, ni el sha256
+     dependen de quien pueda publicar assets en el Release.
   2. El `.zip` se verifica por sha256 contra el manifiesto (integridad).
   3. El `.app` extraído se verifica con `codesign --verify --strict`, `spctl`
      (notarización) y se comprueba que el `TeamIdentifier` es el nuestro
@@ -30,9 +33,13 @@ import sys
 import tempfile
 import unicodedata
 import zipfile
+from base64 import b64decode
 from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 import paths
 
@@ -41,6 +48,15 @@ EXPECTED_TEAM_ID = "V29BTBRY6G"
 DEFAULT_MANIFEST_URL = (
     "https://github.com/edfrutos/gestor-correos-gmail/releases/latest/download/latest.json"
 )
+# Claves públicas Ed25519 (hex, 32 bytes) que firman `latest.json`. La privada
+# no está en el repo: la usa `macos/sign_manifest.py` desde `build_app.sh`.
+# Se admite más de una para poder rotar: un Release firmado con la clave vieja
+# puede traer ya la nueva en esta tupla.
+UPDATE_PUBLIC_KEYS = (
+    "39a604179dc5b892e40bce062513c09faa5e0ac584b8be52461ec021312a3035",
+)
+# Separación de dominio: la firma solo vale para este manifiesto.
+MANIFEST_SIG_CONTEXT = b"gestor-correos/latest.json/v1\n"
 _UA = "GestorDeCorreos-Updater"
 _TIMEOUT = 20
 
@@ -95,8 +111,43 @@ def _http_get(url, binary=False):
     return raw if binary else raw.decode("utf-8")
 
 
+def signature_url(url=None):
+    return (url or manifest_url()) + ".sig"
+
+
+def verify_manifest_signature(raw, signature, public_keys=None):
+    """Verifica la firma Ed25519 (base64) de los bytes exactos de `latest.json`.
+
+    Lanza RuntimeError si no la firma ninguna de `public_keys`.
+    """
+    keys = UPDATE_PUBLIC_KEYS if public_keys is None else public_keys
+    if not keys:
+        raise RuntimeError("No hay clave pública configurada para verificar actualizaciones")
+    try:
+        sig = b64decode(signature.strip(), validate=True)
+    except Exception:
+        sig = b""
+    if len(sig) != 64:
+        raise RuntimeError("La firma del manifiesto de actualización no es válida")
+    for key in keys:
+        try:
+            Ed25519PublicKey.from_public_bytes(bytes.fromhex(key)).verify(sig, MANIFEST_SIG_CONTEXT + raw)
+            return
+        except InvalidSignature:
+            continue
+    raise RuntimeError("La firma del manifiesto de actualización no es válida")
+
+
 def fetch_manifest():
-    manifest = json.loads(_http_get(manifest_url()))
+    url = manifest_url()
+    raw = _http_get(url, binary=True)
+    try:
+        signature = _http_get(signature_url(url))
+    except HTTPError as exc:
+        # Distinto del 404 del manifiesto ("aún no hay versión publicada").
+        raise RuntimeError(f"No se pudo obtener la firma del manifiesto (HTTP {exc.code})") from exc
+    verify_manifest_signature(raw, signature)
+    manifest = json.loads(raw.decode("utf-8"))
     required = ("version", "url", "sha256")
     if not isinstance(manifest, dict) or any(k not in manifest for k in required):
         raise ValueError("Manifiesto de actualización inválido")

@@ -29,11 +29,15 @@ UPDATE_ZIP="dist/GestorDeCorreos-${VERSION}.zip"
 # Credenciales: variables de entorno, o un macos/build.env local (gitignoreado)
 #   DEV_ID_APP="Developer ID Application: Nombre (TEAMID)"
 #   AC_PROFILE="gestor-notary"
+#   UPDATE_SIGNING_KEY="$HOME/.config/gestor-correos/update_signing.pem"
+#     (clave Ed25519 que firma latest.json; se crea una vez con
+#      build-venv/bin/python macos/sign_manifest.py keygen <ruta>)
 [ -f macos/build.env ] && . macos/build.env
 
 require() { [ -n "${!1:-}" ] || { echo "Falta la variable: $1 (exporta o ponla en macos/build.env)" >&2; exit 1; }; }
 require DEV_ID_APP
 require AC_PROFILE
+require UPDATE_SIGNING_KEY
 
 # El tag del Release debe apuntar al commit que se compila (v1.2.0/v1.2.1 se
 # crearon sin --target y quedaron sobre otro commit de main).
@@ -48,6 +52,9 @@ echo "==> 1/9  Entorno de build  (PYTHON=${PYTHON})"
 "${PYTHON}" -m venv build-venv
 build-venv/bin/python -m pip install --upgrade pip wheel
 build-venv/bin/python -m pip install -r requirements.txt -r requirements-macos.txt
+# Antes de compilar nada: la clave que firmará latest.json debe ser la que
+# la app lleva embebida (updater.UPDATE_PUBLIC_KEYS).
+build-venv/bin/python macos/sign_manifest.py check "${UPDATE_SIGNING_KEY}"
 
 echo "==> 2/9  Convertir 'google' en paquete regular (para que no acabe en el zip)"
 # protobuf/google-* usan namespace packages (sin __init__.py). py2app deja el .so
@@ -128,6 +135,7 @@ cat > dist/latest.json <<JSON
   "notes_url": "https://github.com/${GH_REPO}/releases/tag/v${VERSION}"
 }
 JSON
+build-venv/bin/python macos/sign_manifest.py sign "${UPDATE_SIGNING_KEY}" dist/latest.json
 
 echo "==> Autocomprobación: el zip pasa la validación del auto-updater"
 # Mismo código que ejecutará la app instalada antes de extraer la actualización
@@ -139,10 +147,11 @@ echo "Listo:"
 echo "  ${DMG}            (distribución manual)"
 echo "  ${UPDATE_ZIP}     (asset del Release para el auto-updater)"
 echo "  dist/latest.json  (asset del Release; el updater lo consulta)"
+echo "  dist/latest.json.sig  (su firma Ed25519; sin ella la app rechaza el manifiesto)"
 echo
 echo "Publicar la actualización:"
 echo "  git push origin HEAD   # el commit ${BUILD_COMMIT:0:7} debe estar en GitHub"
-echo "  gh release create v${VERSION} \"${UPDATE_ZIP}\" dist/latest.json \"${DMG}\" --target ${BUILD_COMMIT} --title v${VERSION} --notes '...'"
+echo "  gh release create v${VERSION} \"${UPDATE_ZIP}\" dist/latest.json dist/latest.json.sig \"${DMG}\" --target ${BUILD_COMMIT} --title v${VERSION} --notes '...'"
 echo
 echo "Verifica en otro Mac:  spctl -a -vvv -t install \"${DMG}\""
 echo "                       spctl -a -vvv \"${BUNDLE}\""

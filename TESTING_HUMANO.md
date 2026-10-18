@@ -62,6 +62,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Sin actualización:** Con la última versión ya instalada, pulsa **Buscar actualizaciones** de nuevo y verifica que informa de que ya tienes la versión más reciente.
 - [x] **Sin Release publicado:** Si `latest.json` no existe todavía (HTTP 404), verifica el mensaje claro de "aún no hay ninguna versión publicada" en vez de un error genérico.
 - [x] **Validación del zip (2026-10-18):** publica un Release nuevo construido con el `updater.py` que valida el zip antes de extraerlo, instálalo y desde esa versión repite **Detección** y **Descarga e instalación** contra el siguiente Release. Debe actualizar igual que antes (el zip legítimo pasa la validación).
+- [ ] **Manifiesto firmado:** con una versión que ya verifica la firma de `latest.json` instalada, repite **Detección** y **Descarga e instalación** contra el siguiente Release (con `latest.json.sig`). Debe actualizar igual. Opcional: con `GESTOR_UPDATE_MANIFEST_URL` apuntando a un `latest.json` sin `.sig` (o con la firma de otro), **Buscar actualizaciones** debe dar un error de firma, no "estás en la última versión".
 
 Verificado en el Mac el 2026-10-18 con v1.2.2 → v1.2.3 (primera
 actualización extraída por `_extract_zip`, con anti-downgrade en la versión

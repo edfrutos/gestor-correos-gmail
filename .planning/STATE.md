@@ -60,8 +60,8 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `195 tests` · **195 verdes**.
-- **Testeo humano:** `TESTING_HUMANO.md` 37/37 ✅ (2026-10-18: §7 `odoc` y §9
+- **Suite automatizada:** `209 tests` · **209 verdes**.
+- **Testeo humano:** `TESTING_HUMANO.md` 37/38 (pendiente §9 «Manifiesto firmado»; 2026-10-18: §7 `odoc` y §9
   validación del zip verificados en el Mac; §2–§6 repasados tras Stage C).
 
 ## Milestone v10 — Fases (rama `feat/auto-update`)
@@ -106,17 +106,31 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   mantiene su frontera destructiva adicional.
 - Las sugerencias/resúmenes de IA envían metadatos (asunto/remitente) a un
   proveedor externo solo si el usuario lo habilita y confirma.
-- Updater: el manifiesto `latest.json` no va firmado. El zip se valida antes
-  de extraer, la `.app` por firma + Team ID y su versión (del `Info.plist`
-  sellado) debe ser mayor que la instalada (ADR-013, addenda 2026-10-18).
-  Queda el *freeze* (un Release comprometido que no ofrece actualizaciones).
-  Cada protección del updater solo actúa a partir de la versión que la
-  incluye: ≤ v1.2.1 sin validación del zip; ≤ v1.2.2 sin anti-downgrade.
+- Updater: `latest.json` va firmado (Ed25519, `latest.json.sig`, rama
+  `feat/signed-manifest`); el zip se valida antes de extraer, la `.app` por
+  firma + Team ID y su versión (del `Info.plist` sellado) debe ser mayor que
+  la instalada (ADR-013, addenda 2026-10-18). Queda el *freeze* (replay de un
+  manifiesto firmado antiguo). Cada protección del updater solo actúa a
+  partir de la versión que la incluye: ≤ v1.2.1 sin validación del zip;
+  ≤ v1.2.2 sin anti-downgrade; ≤ v1.2.3 sin firma del manifiesto.
+- La clave privada de `UPDATE_SIGNING_KEY` no tiene respaldo en el repo: si
+  se pierde, las versiones que verifican la firma no reciben más
+  actualizaciones sin reinstalación manual.
 - `app.js` sigue usando sus `let` de nivel superior internamente (`summary.js` ya
   solo lee vía `App.*`); cualquier refactor mayor (módulos ES) debe respetar el
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-10-18 — **Firma de `latest.json`** (rama `feat/signed-manifest`):
+  `fetch_manifest` exige `latest.json.sig` (Ed25519 sobre
+  `MANIFEST_SIG_CONTEXT + bytes`) y la verifica contra `UPDATE_PUBLIC_KEYS`
+  antes de parsear; *fail closed* (sin firma ≠ "no hay versión").
+  `macos/sign_manifest.py` (`keygen`/`check`/`sign`); `build_app.sh` exige
+  `UPDATE_SIGNING_KEY`, comprueba la clave antes de compilar y publica la
+  `.sig`. `cryptography` explícita en `requirements.txt`. +14 tests, 209/209.
+  Clave real generada en el Mac y pública embebida; `VERSION` 1.2.4.
+  Pendiente: Release v1.2.4 y §9 «Manifiesto firmado» desde v1.2.4 → siguiente.
 
 - 2026-10-18 — **Release v1.2.3 publicado** (tag en `3eb70df`, PR #6:
   anti-downgrade). Actualización 1.2.2 → 1.2.3 verificada en el Mac (§9);
@@ -215,11 +229,14 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 testeo humano 37/37. `v1.2.2` (`b250f0a`) y `v1.2.3` son los primeros tags que
 coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en `fe55367`.
 
-Sin trabajo bloqueante. Próxima Release: mismo flujo (subir `VERSION`,
+Firma de `latest.json` (rama `feat/signed-manifest`, UPD-07): clave generada
+en el Mac (`~/.config/gestor-correos/update_signing.pem`, pública `39a60417…`
+embebida en `updater.UPDATE_PUBLIC_KEYS`), `VERSION` 1.2.4. Falta:
+`UPDATE_SIGNING_KEY` en `macos/build.env`, merge, Release v1.2.4 con
+`latest.json.sig` (1.2.3 → 1.2.4 sigue sin verificar firma) y después §9
+«Manifiesto firmado» con v1.2.4 → siguiente Release. Próxima Release: mismo flujo (subir `VERSION`,
 `build_app.sh`, el `gh release create … --target <commit>` que imprime).
 
 Otros pendientes:
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
 - Sparkle (appcast + deltas) como alternativa futura al updater en Python.
-- Firmar `latest.json` (p. ej. EdDSA): ya solo defensa en profundidad; el
-  downgrade lo cierra `_check_not_downgrade` (ADR-013).
