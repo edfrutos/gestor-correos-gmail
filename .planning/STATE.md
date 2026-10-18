@@ -230,7 +230,7 @@ testeo humano 37/37. `v1.2.2` (`b250f0a`) y `v1.2.3` son los primeros tags que
 coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en `fe55367`.
 
 Firma de `latest.json` (rama `feat/signed-manifest`, UPD-07): en el Mac,
-`python3 macos/sign_manifest.py keygen ~/.config/gestor-correos/update_signing.pem`,
+`build-venv/bin/python macos/sign_manifest.py keygen ~/.config/gestor-correos/update_signing.pem`,
 pegar la pública en `updater.UPDATE_PUBLIC_KEYS`, `UPDATE_SIGNING_KEY` en
 `macos/build.env`, y Release v1.2.4 con `latest.json.sig`. El build no arranca
 mientras la tupla esté vacía. Próxima Release: mismo flujo (subir `VERSION`,

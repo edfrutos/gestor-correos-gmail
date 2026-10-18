@@ -1,9 +1,10 @@
 """Clave Ed25519 que firma `latest.json` (ADR-013, addendum firma del manifiesto).
 
-  python3 macos/sign_manifest.py keygen  RUTA.pem   # una vez; imprime la clave pública
-  python3 macos/sign_manifest.py check   RUTA.pem   # ¿coincide con updater.UPDATE_PUBLIC_KEYS?
-  python3 macos/sign_manifest.py sign    RUTA.pem dist/latest.json   # -> dist/latest.json.sig
+  build-venv/bin/python macos/sign_manifest.py keygen  RUTA.pem   # una vez; imprime la clave pública
+  build-venv/bin/python macos/sign_manifest.py check   RUTA.pem   # ¿coincide con updater.UPDATE_PUBLIC_KEYS?
+  build-venv/bin/python macos/sign_manifest.py sign    RUTA.pem dist/latest.json   # -> dist/latest.json.sig
 
+`build-venv` lo crea `build_app.sh` (lleva `cryptography`, como la app).
 La clave privada es un PEM PKCS#8 sin cifrar con permisos 600, fuera del repo.
 Guárdala con copia de seguridad: sin ella, las versiones que ya verifican la
 firma no pueden recibir más actualizaciones (habría que reinstalar a mano).
@@ -17,8 +18,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from cryptography.hazmat.primitives import serialization  # noqa: E402
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey  # noqa: E402
+try:
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+except ImportError:
+    raise SystemExit("Falta 'cryptography'. Usa el Python del entorno de build:\n"
+                     "  build-venv/bin/python macos/sign_manifest.py …\n"
+                     "(o: python3 -m pip install -r requirements.txt)")
 
 import updater  # noqa: E402
 

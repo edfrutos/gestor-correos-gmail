@@ -59,10 +59,11 @@ Las variables de entorno que consume `macos/build_app.sh`:
 #### Crear la clave de firma del manifiesto (una sola vez)
 
 ```bash
-python3 macos/sign_manifest.py keygen ~/.config/gestor-correos/update_signing.pem
+build-venv/bin/python macos/sign_manifest.py keygen ~/.config/gestor-correos/update_signing.pem
 ```
 
-Imprime la clave pública: va en `UPDATE_PUBLIC_KEYS` de `updater.py` (commit).
+(`build-venv` lo deja `build_app.sh`; si aún no existe, vale cualquier Python con
+`pip install cryptography`.) Imprime la clave pública: va en `UPDATE_PUBLIC_KEYS` de `updater.py` (commit).
 El build comprueba antes de compilar que la clave privada corresponde a la
 embebida. **Haz copia de seguridad de la privada** (p. ej. en el llavero o en
 un gestor de contraseñas): si se pierde, las versiones que verifican la firma

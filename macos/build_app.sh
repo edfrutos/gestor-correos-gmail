@@ -31,7 +31,7 @@ UPDATE_ZIP="dist/GestorDeCorreos-${VERSION}.zip"
 #   AC_PROFILE="gestor-notary"
 #   UPDATE_SIGNING_KEY="$HOME/.config/gestor-correos/update_signing.pem"
 #     (clave Ed25519 que firma latest.json; se crea una vez con
-#      python3 macos/sign_manifest.py keygen <ruta>)
+#      build-venv/bin/python macos/sign_manifest.py keygen <ruta>)
 [ -f macos/build.env ] && . macos/build.env
 
 require() { [ -n "${!1:-}" ] || { echo "Falta la variable: $1 (exporta o ponla en macos/build.env)" >&2; exit 1; }; }
