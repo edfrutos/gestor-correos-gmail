@@ -52,7 +52,9 @@ DEFAULT_MANIFEST_URL = (
 # no está en el repo: la usa `macos/sign_manifest.py` desde `build_app.sh`.
 # Se admite más de una para poder rotar: un Release firmado con la clave vieja
 # puede traer ya la nueva en esta tupla.
-UPDATE_PUBLIC_KEYS = ()
+UPDATE_PUBLIC_KEYS = (
+    "39a604179dc5b892e40bce062513c09faa5e0ac584b8be52461ec021312a3035",
+)
 # Separación de dominio: la firma solo vale para este manifiesto.
 MANIFEST_SIG_CONTEXT = b"gestor-correos/latest.json/v1\n"
 _UA = "GestorDeCorreos-Updater"

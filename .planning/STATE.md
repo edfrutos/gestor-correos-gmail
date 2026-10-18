@@ -60,7 +60,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `208 tests` · **208 verdes**.
+- **Suite automatizada:** `209 tests` · **209 verdes**.
 - **Testeo humano:** `TESTING_HUMANO.md` 37/38 (pendiente §9 «Manifiesto firmado»; 2026-10-18: §7 `odoc` y §9
   validación del zip verificados en el Mac; §2–§6 repasados tras Stage C).
 
@@ -128,9 +128,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   antes de parsear; *fail closed* (sin firma ≠ "no hay versión").
   `macos/sign_manifest.py` (`keygen`/`check`/`sign`); `build_app.sh` exige
   `UPDATE_SIGNING_KEY`, comprueba la clave antes de compilar y publica la
-  `.sig`. `cryptography` explícita en `requirements.txt`. +13 tests, 208/208.
-  Pendiente: generar la clave real en el Mac, embeber la pública, Release
-  v1.2.4 y verificar §9 «Manifiesto firmado» desde v1.2.4 → siguiente.
+  `.sig`. `cryptography` explícita en `requirements.txt`. +14 tests, 209/209.
+  Clave real generada en el Mac y pública embebida; `VERSION` 1.2.4.
+  Pendiente: Release v1.2.4 y §9 «Manifiesto firmado» desde v1.2.4 → siguiente.
 
 - 2026-10-18 — **Release v1.2.3 publicado** (tag en `3eb70df`, PR #6:
   anti-downgrade). Actualización 1.2.2 → 1.2.3 verificada en el Mac (§9);
@@ -229,11 +229,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 testeo humano 37/37. `v1.2.2` (`b250f0a`) y `v1.2.3` son los primeros tags que
 coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en `fe55367`.
 
-Firma de `latest.json` (rama `feat/signed-manifest`, UPD-07): en el Mac,
-`build-venv/bin/python macos/sign_manifest.py keygen ~/.config/gestor-correos/update_signing.pem`,
-pegar la pública en `updater.UPDATE_PUBLIC_KEYS`, `UPDATE_SIGNING_KEY` en
-`macos/build.env`, y Release v1.2.4 con `latest.json.sig`. El build no arranca
-mientras la tupla esté vacía. Próxima Release: mismo flujo (subir `VERSION`,
+Firma de `latest.json` (rama `feat/signed-manifest`, UPD-07): clave generada
+en el Mac (`~/.config/gestor-correos/update_signing.pem`, pública `39a60417…`
+embebida en `updater.UPDATE_PUBLIC_KEYS`), `VERSION` 1.2.4. Falta:
+`UPDATE_SIGNING_KEY` en `macos/build.env`, merge, Release v1.2.4 con
+`latest.json.sig` (1.2.3 → 1.2.4 sigue sin verificar firma) y después §9
+«Manifiesto firmado» con v1.2.4 → siguiente Release. Próxima Release: mismo flujo (subir `VERSION`,
 `build_app.sh`, el `gh release create … --target <commit>` que imprime).
 
 Otros pendientes:

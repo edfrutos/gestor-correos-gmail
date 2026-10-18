@@ -55,3 +55,11 @@ def test_load_key_refuses_readable_by_others(tmp_path, capsys):
     os.chmod(key, 0o644)
     with pytest.raises(SystemExit, match="chmod 600"):
         sign_manifest.load_key(key)
+
+
+def test_app_embeds_a_valid_public_key():
+    # Con la tupla vacía la app rechazaría todo manifiesto (y el build no arranca).
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    assert updater.UPDATE_PUBLIC_KEYS
+    for key in updater.UPDATE_PUBLIC_KEYS:
+        Ed25519PublicKey.from_public_bytes(bytes.fromhex(key))
