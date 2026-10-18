@@ -157,10 +157,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v10 cerrado.** Queda mergear `feat/auto-update` a `main` (la rama tiene 4
-commits por delante de lo que se mergeó en el PR #1: `0a6afbb`, `6075f74`,
-`72a119f`, `c1400e1` — el tag `v1.2.0` en `main` apunta a un commit anterior a
-estos fixes, así que `main` todavía no los tiene).
+**v10 cerrado.** Queda mergear `feat/auto-update` a `main` (PR #2). La rama
+tiene 7 commits por delante de lo que se mergeó en el PR #1 (`fe55367`):
+`5ac2b30`, `0a6afbb`, `6075f74`, `72a119f`, `c1400e1`, `aa34c1a`, `64bd082`.
+Los tags `v1.2.0` y `v1.2.1` apuntan ambos a `fe55367`, anterior a estos fixes,
+así que `main` todavía no los tiene.
 
 Pendientes menores:
 - AppleEvent `odoc` para abrir un `.eml` con la app **ya abierta**.
