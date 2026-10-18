@@ -117,6 +117,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-18 — Preparación de v1.2.2 (rama `release/1.2.2`): `VERSION` 1.2.2;
+  `build_app.sh` autocomprueba el zip con `updater._check_zip_entries` antes
+  de publicar y el comando de Release lleva `--target <commit compilado>`
+  (avisa si hay cambios sin commitear). PR #2 (`524c015`) y PR #3 (`ff54b40`)
+  mergeados a `main`.
+
 - 2026-10-18 — `/api/read-eml` limitado a `.eml` (rama `feat/macos-odoc`):
   antes `?path=` leía cualquier fichero local. Ahora resuelve la ruta (sigue
   symlinks) y exige sufijo `.eml` + fichero regular, tanto para `path` como para
@@ -200,14 +206,22 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 extracción; el código que se construyó para esas Releases no coincide con
 ningún tag.
 
-Siguiente:
-1. Mergear el PR #3 (Stage C, `odoc`, `read-eml` solo `.eml`).
-2. `VERSION` → 1.2.2, `build_app.sh`, publicar el Release con tag sobre `main`
-   e instalarlo (desde v1.2.1 la actualización usa todavía `ditto`; con un zip
-   legítimo es seguro). Desde v1.2.2, repetir §9 contra un Release posterior.
+PR #3 mergeado (`ff54b40`). `VERSION` = 1.2.2 (rama `release/1.2.2`).
 
-Pendientes en el Mac:
-- Verificar en el Mac el `odoc` (abrir `.eml` desde el Finder con la app cerrada y abierta, `TESTING_HUMANO.md` §7).
-- Smoke manual de Fase 32 Stage C (plan humano §2–§6: resumen periódico, tendencias, resumen IA) en el Mac.
+Siguiente, **en el Mac** (necesita las claves de Developer ID):
+1. `git pull` en `main` y `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`
+   (aborta si el zip no pasa la validación del updater).
+2. `git push origin HEAD` + el `gh release create v1.2.2 … --target <commit>`
+   que imprime el script (el tag queda en el commit compilado).
+3. Desde la v1.2.1 instalada, **Buscar actualizaciones** → 1.2.2 (esa
+   extracción aún la hace `ditto`, el updater viejo; con un zip legítimo es
+   seguro). La validación nueva protege a partir de las actualizaciones
+   que reciba la 1.2.2.
+4. `TESTING_HUMANO.md`: §7 (`odoc`), §2–§6 (Stage C) y §9 (validación del zip,
+   contra el siguiente Release después de 1.2.2).
+
+Otros pendientes:
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
 - Sparkle (appcast + deltas) como alternativa futura al updater en Python.
+- Firmar `latest.json` (p. ej. EdDSA) para cerrar el downgrade a una `.app`
+  antigua legítima (ADR-013).

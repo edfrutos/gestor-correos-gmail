@@ -164,20 +164,28 @@ cualquier modo (ver `paths.py`).
 
 La app trae **Buscar actualizaciones** (menú nativo + botón en la UI). Consulta
 `latest.json` en el último GitHub Release, y si hay versión nueva descarga el
-`.zip`, verifica **sha256 + `codesign`/`spctl` + TeamIdentifier `V29BTBRY6G`**,
-pide permiso y se auto-reinstala.
+`.zip`, verifica **sha256**, valida el índice del zip y lo extrae con el mismo
+código (`_check_zip_entries` + `_extract_zip`: una sola `.app`, nada fuera de
+ella), verifica **`codesign`/`spctl` + TeamIdentifier `V29BTBRY6G`**, pide
+permiso y se auto-reinstala.
 
 Para sacar una versión nueva:
 
-1. Sube la versión en el archivo `VERSION` de la raíz (p. ej. `1.1.0`) y commitea.
+1. Sube la versión en el archivo `VERSION` de la raíz (p. ej. `1.2.2`),
+   commitea y construye **desde ese commit** (en `main`, sin cambios locales).
 2. `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`
    — genera `dist/GestorDeCorreos-<VERSION>.zip`, `dist/latest.json` (con el
-   sha256) y el `dist/GestorDeCorreos.dmg`.
-3. Publica el Release con el tag **`v<VERSION>`** y esos 3 assets:
+   sha256) y el `dist/GestorDeCorreos.dmg`, y comprueba que el zip pasa la
+   validación del auto-updater (si no, aborta).
+3. Publica el Release con el tag **`v<VERSION>`** sobre el commit compilado
+   (`--target`; sin él, GitHub crea el tag sobre la punta de la rama por
+   defecto, que es como `v1.2.0`/`v1.2.1` acabaron en otro commit). El script
+   imprime el comando exacto:
    ```bash
-   gh release create v1.1.0 \
-       "dist/GestorDeCorreos-1.1.0.zip" dist/latest.json dist/GestorDeCorreos.dmg \
-       --title v1.1.0 --notes "Cambios…"
+   git push origin HEAD
+   gh release create v1.2.2 \
+       "dist/GestorDeCorreos-1.2.2.zip" dist/latest.json dist/GestorDeCorreos.dmg \
+       --target <commit-compilado> --title v1.2.2 --notes "Cambios…"
    ```
    El nombre del `.zip` y el tag deben coincidir con lo que `latest.json` apunta
    (lo genera el script, no lo edites a mano).
@@ -190,6 +198,7 @@ la instalación automática está desactivada.
 de la app **ya instalada** (la vieja), nunca el de la versión nueva que se
 está descargando. Si una instancia tiene un updater con un bug de extracción
 (p. ej. el de `zipfile` anterior a `0a6afbb`, que no reconstruye symlinks),
+o le falta una protección (la validación del zip llega en v1.2.2),
 auto-actualizar **no la repara** — hay que reinstalarla manualmente una vez
 para que quede en una versión con el updater corregido; a partir de ahí las
 siguientes actualizaciones sí funcionan solas.

@@ -35,6 +35,13 @@ require() { [ -n "${!1:-}" ] || { echo "Falta la variable: $1 (exporta o ponla e
 require DEV_ID_APP
 require AC_PROFILE
 
+# El tag del Release debe apuntar al commit que se compila (v1.2.0/v1.2.1 se
+# crearon sin --target y quedaron sobre otro commit de main).
+BUILD_COMMIT="$(git rev-parse HEAD)"
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  echo "AVISO: hay cambios sin commitear; el build no corresponderá a ${BUILD_COMMIT:0:7}." >&2
+fi
+
 echo "==> 1/9  Entorno de build  (PYTHON=${PYTHON})"
 "${PYTHON}" -c 'import sysconfig,sys; sys.exit(0 if sysconfig.get_config_var("PYTHONFRAMEWORK") else 1)' \
     || echo "AVISO: ${PYTHON} no parece un framework build; py2app puede fallar. Ver cabecera." >&2
@@ -122,6 +129,11 @@ cat > dist/latest.json <<JSON
 }
 JSON
 
+echo "==> Autocomprobación: el zip pasa la validación del auto-updater"
+# Mismo código que ejecutará la app instalada antes de extraer la actualización
+# (updater._check_zip_entries): si no pasa aquí, fallaría en los Macs.
+build-venv/bin/python -c 'import sys, updater; print("    OK, raíz:", updater._check_zip_entries(sys.argv[1]))' "${UPDATE_ZIP}"
+
 echo
 echo "Listo:"
 echo "  ${DMG}            (distribución manual)"
@@ -129,7 +141,8 @@ echo "  ${UPDATE_ZIP}     (asset del Release para el auto-updater)"
 echo "  dist/latest.json  (asset del Release; el updater lo consulta)"
 echo
 echo "Publicar la actualización:"
-echo "  gh release create v${VERSION} \"${UPDATE_ZIP}\" dist/latest.json \"${DMG}\" --title v${VERSION} --notes '...'"
+echo "  git push origin HEAD   # el commit ${BUILD_COMMIT:0:7} debe estar en GitHub"
+echo "  gh release create v${VERSION} \"${UPDATE_ZIP}\" dist/latest.json \"${DMG}\" --target ${BUILD_COMMIT} --title v${VERSION} --notes '...'"
 echo
 echo "Verifica en otro Mac:  spctl -a -vvv -t install \"${DMG}\""
 echo "                       spctl -a -vvv \"${BUNDLE}\""
