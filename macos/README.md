@@ -102,7 +102,8 @@ bash macos/build_app.sh
 
 El script hace, en orden: venv de build → `py2app` → `codesign` con Hardened
 Runtime y `macos/entitlements.plist` → `notarytool submit --wait` → `stapler
-staple` → DMG → firma + notarización + staple del DMG.
+staple` → DMG (con acceso directo a `/Applications` para arrastrar el icono)
+→ firma + notarización + staple del DMG.
 
 Salida: **`dist/GestorDeCorreos.dmg`** (firmado, notarizado, *stapled*).
 
@@ -184,6 +185,14 @@ Para sacar una versión nueva:
 Las instancias con una versión anterior verán la actualización al pulsar
 **Buscar actualizaciones**. Desde el código fuente la comprobación informa pero
 la instalación automática está desactivada.
+
+**Importante:** la extracción del `.zip` la ejecuta siempre el `updater.py`
+de la app **ya instalada** (la vieja), nunca el de la versión nueva que se
+está descargando. Si una instancia tiene un updater con un bug de extracción
+(p. ej. el de `zipfile` anterior a `0a6afbb`, que no reconstruye symlinks),
+auto-actualizar **no la repara** — hay que reinstalarla manualmente una vez
+para que quede en una versión con el updater corregido; a partir de ahí las
+siguientes actualizaciones sí funcionan solas.
 
 ## Icono
 

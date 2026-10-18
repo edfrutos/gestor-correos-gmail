@@ -207,7 +207,8 @@ tocar la lógica.
 ## ADR-013 — Auto-actualización vía GitHub Releases (updater en Python)
 
 **Date:** 2026-09-09
-**Status:** Accepted (Fase 36, rama `feat/auto-update`)
+**Status:** Accepted y verificado en el Mac (2026-09-11, Fase 36, rama
+`feat/auto-update`)
 
 La app comprueba/descarga/instala actualizaciones con un **updater propio en
 Python** (`updater.py` + endpoints `/api/update/*` + menú `pywebview`), no con
@@ -227,6 +228,8 @@ ID + notarización de Apple para la autenticidad.
 3. `.app` verificado con `codesign --verify --strict`, `spctl -a` (notarizada) y
    `TeamIdentifier == V29BTBRY6G` (autenticidad). Un atacante no puede producir
    un build firmado por ese team y notarizado por Apple.
+4. Índice del `.zip` validado **antes de extraer** (`_check_zip_entries`, ver
+   addendum 2026-10-18).
 
 **Consecuencias:**
 - `/api/update/install` **re-consulta el manifiesto en el servidor** y usa su
@@ -239,3 +242,58 @@ ID + notarización de Apple para la autenticidad.
 - `VERSION` (raíz) es la fuente única de versión: la leen `macos/setup.py`
   (`CFBundle*Version`) y `updater.py` (fallback fuera del bundle).
 - Migrar a Sparkle (appcast + deltas) queda como opción futura.
+
+**Addendum (2026-09-11):** la extracción del `.zip` descargado usaba
+`zipfile`, que no reconstruye symlinks — corrompía `Versions/Current` del
+framework de Python embebido y `codesign --verify --strict` fallaba tras
+instalar. Fix: `ditto -x -k` (simétrico de `ditto -c -k` en
+`build_app.sh`), con un reintento si `ditto` falla puntual creando algún
+symlink. Como la extracción la ejecuta siempre el código ya cargado del
+proceso en marcha (nunca el de la nueva versión descargada), una instancia
+con el updater anterior a este fix no se autorepara actualizando — necesita
+una reinstalación manual una vez para quedar en una versión con el fix.
+Verificado en el Mac con Releases reales v1.1.0 → v1.2.0 → v1.2.1.
+
+**Addendum (2026-10-18, revisión de seguridad del PR #2):** `ditto -x -k`
+recrea los symlinks del archivo y se ejecutaba antes de cualquier
+comprobación; la firma de (3) solo cubre la `.app`, y `latest.json` no va
+firmado (el sha256 solo ata el zip al manifiesto del mismo Release). Quien
+pudiera publicar assets en el Release (p. ej. con un token de GitHub, sin las
+claves de Developer ID) podría envolver una `.app` legítima con entradas extra
+(`../`, rutas absolutas o symlinks) que escribieran fuera del directorio
+temporal durante la extracción. Fix, en dos barreras:
+- `_check_zip_entries` (antes de `ditto`): una única raíz `*.app` (más
+  `__MACOSX/` sin symlinks), sin rutas absolutas, `..`, `\` ni caracteres de
+  control; cada symlink y el directorio padre de cada entrada se resuelven
+  sobre un árbol virtual del propio zip (`_virtual_realpath`, sigue cadenas de
+  symlinks como `realpath`) y deben quedar dentro de la `.app`.
+- `_check_extracted_links` (tras `ditto`, antes de `codesign`): `realpath` de
+  cada symlink real dentro de la `.app`.
+- La `.app` a instalar es la raíz validada, no la primera que devuelva
+  `glob`/`rglob`.
+- (2ª revisión) Nombres **duplicados** rechazados: `ditto` aplica las entradas
+  en orden, así que un symlink que sale, un fichero escrito a través de él y
+  otro symlink inocuo con el mismo nombre al final burlaban un validador que
+  solo mira el árbol final. Toda comparación usa la forma canónica de APFS
+  (`_fs_key`: sin mayúsculas, NFD), porque `la`/`LA` o `é` NFC/NFD son la
+  misma ruta en disco.
+
+- (3ª revisión) **`ditto` fuera de la extracción.** Validar con `zipfile` y
+  extraer con `ditto` deja un hueco en cada diferencia de interpretación del
+  formato (p. ej. `zipfile` aplica el extra Info-ZIP Unicode Path `0x7075`,
+  `ditto` puede usar el nombre de la cabecera local). Ahora `_extract_zip`
+  extrae con el mismo parser y exactamente las rutas validadas: ficheros con
+  `O_EXCL|O_NOFOLLOW`, symlinks creados al final (ninguna escritura los
+  atraviesa; ninguna entrada puede colgar de uno), permisos sin
+  setuid/setgid, `__MACOSX/` ignorado, tope de 2 GiB descomprimido. Revierte
+  el addendum anterior (`ditto` en vez de `zipfile`) sin volver a su bug:
+  los symlinks se recrean explícitamente.
+
+Comprobado contra el zip real de v1.2.1 (1664 entradas, 4 symlinks internos
+del framework de Python y `site.pyc`): valida y se extrae idéntico, entrada
+por entrada (contenido, permisos y destino de cada symlink). Mismo matiz que el addendum
+anterior: la protección la aplica el updater **ya instalado**, así que solo
+cubre las actualizaciones posteriores a instalar una versión que la incluya.
+Riesgo residual: un manifiesto firmado (p. ej. EdDSA, como Sparkle) cerraría
+también la sustitución del zip por otra `.app` antigua firmada del mismo team
+(downgrade); queda como mejora futura.
