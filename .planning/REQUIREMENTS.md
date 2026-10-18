@@ -158,6 +158,7 @@
 - [x] **UPD-04**: La instalación requiere permiso explícito del usuario y luego sustituye la `.app` y relanza (helper *detached*; admin si hace falta). — Phase 36
 - [x] **UPD-05**: `/api/update/install` re-verifica el manifiesto en el servidor y nunca instala una URL provista por el cliente; desde el código fuente la instalación automática está desactivada. — Phase 36
 - [x] **UPD-06**: Flujo real verificado en el Mac (Release de prueba → actualización desde versión anterior). — Phase 36 (verificado 2026-09-11: v1.1.0 → v1.2.0 → v1.2.1)
+- [ ] **UPD-07**: `latest.json` va firmado (Ed25519, `latest.json.sig`); la app rechaza un manifiesto sin firma o con firma que no verifique con la clave embebida. — Phase 36 (código y tests 2026-10-18; falta la clave real y un Release firmado verificado en el Mac)
 
 ## Out of Scope
 
@@ -251,7 +252,8 @@
 | UPD-03 | Phase 36 | Done |
 | UPD-04 | Phase 36 | Done |
 | UPD-05 | Phase 36 | Done |
-| UPD-06 | Phase 36 | Pending (verificación en Mac) |
+| UPD-06 | Phase 36 | Done |
+| UPD-07 | Phase 36 | Pending (clave real + Release firmado) |
 
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.
@@ -259,7 +261,7 @@
 - v8 (UX-*, MNT-*): 5 requisitos — 5 Done (Fases 30–33). MNT-02 incluye Stage C
   (Fase 32, 2026-10-18).
 - v9 (MAC-*): 5 requisitos — 5 Done (Fase 34; DMG firmado + notarizado verificado 2026-09-09).
-- v10 (UPD-*): 6 requisitos — 6 Done (Fase 36; verificación real en Mac 2026-09-11).
+- v10 (UPD-*): 7 requisitos — 6 Done, UPD-07 pendiente de Release (Fase 36; verificación real en Mac 2026-09-11).
 - Unmapped: 0.
 
 ---

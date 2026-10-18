@@ -1,7 +1,10 @@
+import base64
 import json
 import sys
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 import updater
 
@@ -24,9 +27,32 @@ def test_manifest_url_env_override(monkeypatch):
     assert updater.manifest_url() == "https://example.test/latest.json"
 
 
-def _fake_http(manifest):
+@pytest.fixture(autouse=True)
+def signing_key(monkeypatch):
+    """Clave de prueba: la app solo acepta `latest.json` firmado con ella."""
+    key = Ed25519PrivateKey.generate()
+    monkeypatch.setattr(updater, "UPDATE_PUBLIC_KEYS", (_public_hex(key),))
+    monkeypatch.setattr(_fake_http, "key", key, raising=False)
+    return key
+
+
+def _public_hex(key):
+    return key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw).hex()
+
+
+def _sign(key, raw):
+    return base64.b64encode(key.sign(updater.MANIFEST_SIG_CONTEXT + raw)).decode("ascii")
+
+
+def _fake_http(manifest, key=None, signature=None):
+    """Sirve `latest.json` y su `.sig` (firmado con `key` o con `signature` literal)."""
+    raw = json.dumps(manifest).encode("utf-8")
+
     def _get(url, binary=False):
-        return json.dumps(manifest)
+        if url.endswith(".sig"):
+            sig = signature if signature is not None else _sign(key or _fake_http.key, raw)
+            return sig
+        return raw if binary else raw.decode("utf-8")
     return _get
 
 
@@ -83,6 +109,70 @@ def test_fetch_manifest_rejects_incomplete_json(monkeypatch):
     monkeypatch.setattr(updater, "_http_get", _fake_http({"version": "1.0.0"}))
     with pytest.raises(ValueError):
         updater.fetch_manifest()
+
+
+# ── Firma Ed25519 de latest.json ──
+
+_MANIFEST = {"version": "9.0.0", "url": "https://example.test/evil.zip", "sha256": "e" * 64}
+
+
+def test_check_for_update_rejects_tampered_manifest(monkeypatch, signing_key):
+    # Firma válida de un manifiesto, servida junto a otro distinto.
+    genuine = json.dumps({**_MANIFEST, "version": "1.0.1"}).encode()
+    monkeypatch.setattr(updater, "current_version", lambda: "1.0.0")
+    monkeypatch.setattr(updater, "_http_get", _fake_http(_MANIFEST, signature=_sign(signing_key, genuine)))
+    result = updater.check_for_update()
+    assert "update_available" not in result
+    assert "firma" in result["error"]
+
+
+def test_check_for_update_rejects_manifest_signed_with_other_key(monkeypatch):
+    monkeypatch.setattr(updater, "current_version", lambda: "1.0.0")
+    monkeypatch.setattr(updater, "_http_get", _fake_http(_MANIFEST, key=Ed25519PrivateKey.generate()))
+    result = updater.check_for_update()
+    assert "update_available" not in result
+    assert "firma" in result["error"]
+
+
+def test_check_for_update_rejects_missing_signature_not_as_no_feed(monkeypatch):
+    from urllib.error import HTTPError
+
+    def get(url, binary=False):
+        if url.endswith(".sig"):
+            raise HTTPError(url, 404, "Not Found", {}, None)
+        return json.dumps(_MANIFEST).encode()
+
+    monkeypatch.setattr(updater, "current_version", lambda: "1.0.0")
+    monkeypatch.setattr(updater, "_http_get", get)
+    result = updater.check_for_update()
+    assert "no_feed" not in result and "update_available" not in result
+    assert "firma" in result["error"] and "404" in result["error"]
+
+
+@pytest.mark.parametrize("signature", ["", "no-es-base64!!", base64.b64encode(b"x" * 63).decode()])
+def test_verify_manifest_signature_rejects_malformed(signature):
+    with pytest.raises(RuntimeError, match="firma"):
+        updater.verify_manifest_signature(b"{}", signature)
+
+
+def test_verify_manifest_signature_fails_closed_without_keys(monkeypatch, signing_key):
+    monkeypatch.setattr(updater, "UPDATE_PUBLIC_KEYS", ())
+    with pytest.raises(RuntimeError, match="clave pública"):
+        updater.verify_manifest_signature(b"{}", _sign(signing_key, b"{}"))
+
+
+def test_verify_manifest_signature_accepts_any_listed_key_for_rotation(monkeypatch, signing_key):
+    new_key = Ed25519PrivateKey.generate()
+    monkeypatch.setattr(updater, "UPDATE_PUBLIC_KEYS", (_public_hex(signing_key), _public_hex(new_key)))
+    updater.verify_manifest_signature(b"{}", _sign(new_key, b"{}"))
+
+
+def test_verify_manifest_signature_is_bound_to_context(signing_key):
+    # Una firma Ed25519 de los mismos bytes sin el contexto no vale.
+    raw = b"{}"
+    bare = base64.b64encode(signing_key.sign(raw)).decode()
+    with pytest.raises(RuntimeError, match="firma"):
+        updater.verify_manifest_signature(raw, bare)
 
 
 def test_install_and_relaunch_refuses_when_not_bundled(monkeypatch):

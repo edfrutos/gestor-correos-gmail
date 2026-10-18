@@ -48,12 +48,27 @@ del proyecto**, como siempre. Coloca ahí `credentials.json`.
 - **Certificado *Developer ID Application*** instalado en el llavero.
 - **Perfil de notarytool** guardado una vez (ver abajo).
 
-Las dos variables de entorno que consume `macos/build_app.sh`:
+Las variables de entorno que consume `macos/build_app.sh`:
 
 | Variable | Qué es | De dónde sale |
 |---|---|---|
 | `DEV_ID_APP` | Nombre completo del certificado de firma | `security find-identity -v -p codesigning` → copia la línea `"Developer ID Application: Tu Nombre (TEAMID)"` **entre comillas**. Si no aparece: developer.apple.com → *Certificates* → **+** → *Developer ID Application* → descarga el `.cer` y doble clic para instalarlo en el llavero. |
 | `AC_PROFILE` | **Nombre que eliges tú** para la entrada de credenciales de notarización guardada en el llavero | No se "obtiene": lo creas con `xcrun notarytool store-credentials "<nombre>"` (abajo). Puede ser `gestor-notary`, `mi-perfil`, lo que quieras; solo debe coincidir con lo que exportas. |
+| `UPDATE_SIGNING_KEY` | Ruta a la clave privada Ed25519 que firma `latest.json` | La creas tú una vez (abajo). Fuera del repo, permisos `600`. |
+
+#### Crear la clave de firma del manifiesto (una sola vez)
+
+```bash
+python3 macos/sign_manifest.py keygen ~/.config/gestor-correos/update_signing.pem
+```
+
+Imprime la clave pública: va en `UPDATE_PUBLIC_KEYS` de `updater.py` (commit).
+El build comprueba antes de compilar que la clave privada corresponde a la
+embebida. **Haz copia de seguridad de la privada** (p. ej. en el llavero o en
+un gestor de contraseñas): si se pierde, las versiones que verifican la firma
+ya no aceptan ningún `latest.json` nuevo y hay que reinstalar a mano. Para
+rotarla, añade la pública nueva a la tupla en un Release firmado aún con la
+vieja; cuando todos tengan esa versión, retira la vieja.
 
 #### Crear el perfil de notarytool (una sola vez)
 
@@ -97,6 +112,7 @@ Desde la raíz del repositorio:
 ```bash
 export DEV_ID_APP="Developer ID Application: Nombre Apellidos (TEAMID)"
 export AC_PROFILE="gestor-notary"   # el mismo nombre que usaste en store-credentials
+export UPDATE_SIGNING_KEY="$HOME/.config/gestor-correos/update_signing.pem"
 bash macos/build_app.sh
 ```
 
@@ -163,8 +179,9 @@ cualquier modo (ver `paths.py`).
 ## Publicar una actualización (auto-updater)
 
 La app trae **Buscar actualizaciones** (menú nativo + botón en la UI). Consulta
-`latest.json` en el último GitHub Release, y si hay versión nueva descarga el
-`.zip`, verifica **sha256**, valida el índice del zip y lo extrae con el mismo
+`latest.json` en el último GitHub Release, verifica su **firma Ed25519**
+(`latest.json.sig`, clave pública embebida en `updater.py`) y, si hay versión
+nueva, descarga el `.zip`, verifica **sha256**, valida el índice del zip y lo extrae con el mismo
 código (`_check_zip_entries` + `_extract_zip`: una sola `.app`, nada fuera de
 ella), verifica **`codesign`/`spctl` + TeamIdentifier `V29BTBRY6G`**, pide
 permiso y se auto-reinstala.
@@ -175,7 +192,7 @@ Para sacar una versión nueva:
    commitea y construye **desde ese commit** (en `main`, sin cambios locales).
 2. `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`
    — genera `dist/GestorDeCorreos-<VERSION>.zip`, `dist/latest.json` (con el
-   sha256) y el `dist/GestorDeCorreos.dmg`, y comprueba que el zip pasa la
+   sha256), su firma `dist/latest.json.sig` y el `dist/GestorDeCorreos.dmg`, y comprueba que el zip pasa la
    validación del auto-updater (si no, aborta).
 3. Publica el Release con el tag **`v<VERSION>`** sobre el commit compilado
    (`--target`; sin él, GitHub crea el tag sobre la punta de la rama por
@@ -184,7 +201,7 @@ Para sacar una versión nueva:
    ```bash
    git push origin HEAD
    gh release create v1.2.2 \
-       "dist/GestorDeCorreos-1.2.2.zip" dist/latest.json dist/GestorDeCorreos.dmg \
+       "dist/GestorDeCorreos-1.2.2.zip" dist/latest.json dist/latest.json.sig dist/GestorDeCorreos.dmg \
        --target <commit-compilado> --title v1.2.2 --notes "Cambios…"
    ```
    El nombre del `.zip` y el tag deben coincidir con lo que `latest.json` apunta

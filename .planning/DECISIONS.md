@@ -314,3 +314,18 @@ también la sustitución del zip por otra `.app` antigua firmada del mismo team
   legítima más nueva, o no ofrecer ninguna (*freeze*, que el usuario ve como
   «estás en la última versión»). La firma del manifiesto queda solo como
   defensa en profundidad. Mismo matiz: protege desde la versión que la incluye.
+- (2026-10-18) **`latest.json` firmado (Ed25519).** `build_app.sh` firma los
+  bytes exactos del manifiesto con `macos/sign_manifest.py` y publica la firma
+  aparte como `latest.json.sig` (base64); `fetch_manifest` la descarga y la
+  verifica contra `UPDATE_PUBLIC_KEYS` antes de parsear el JSON. Firma
+  separada en vez de un campo dentro del JSON: no hay que canonicalizar, y las
+  versiones ≤ 1.2.3 (que solo leen `latest.json`) siguen actualizándose. La
+  firma cubre `MANIFEST_SIG_CONTEXT + bytes` (separación de dominio). Sin
+  firma, firma inválida o sin clave configurada → error, nunca "no hay
+  versión" (*fail closed*). `cryptography` ya iba en la `.app` como
+  dependencia de `google-auth`; ahora es explícita en `requirements.txt`.
+  La clave privada vive fuera del repo (`UPDATE_SIGNING_KEY`); el build
+  comprueba al empezar que corresponde a la embebida. Se admiten varias
+  públicas para poder rotar. Quien tenga solo acceso a los assets del Release
+  ya no puede ni cambiar la url/sha256 ni ofrecer una versión: queda el
+  *replay* de un manifiesto firmado antiguo, que equivale a un *freeze*.
