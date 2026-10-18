@@ -173,6 +173,12 @@ def main() -> int:
     return 0
 
 
+def _toast(window, msg: str, kind: str = "ok") -> None:
+    """Aviso informativo en la propia página: el único diálogo nativo de
+    pywebview es de confirmación y mostraría un 'Cancelar' sin sentido."""
+    window.evaluate_js(f"toast({json.dumps(msg)}, {json.dumps(kind)})")
+
+
 def _build_menu(webview, window):
     """Menú nativo con 'Buscar actualizaciones…'."""
     try:
@@ -184,12 +190,10 @@ def _build_menu(webview, window):
         import updater  # noqa: E402
         info = updater.check_for_update()
         if info.get("error"):
-            window.create_confirmation_dialog("Actualizaciones", info["error"])
+            _toast(window, info["error"], "ok" if info.get("no_feed") else "err")
             return
         if not info.get("update_available"):
-            window.create_confirmation_dialog(
-                "Actualizaciones", f"Ya tienes la última versión (v{info['current']})."
-            )
+            _toast(window, f"Estás en la última versión (v{info['current']})")
             return
         msg = (f"Versión {info['latest']} disponible (tienes v{info['current']}).\n\n"
                "¿Descargar e instalar ahora? La app se cerrará y volverá a abrirse.")
