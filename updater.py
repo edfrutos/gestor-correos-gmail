@@ -7,6 +7,11 @@ Modelo de confianza (cualquier fallo aborta la instalación):
      (notarización) y se comprueba que el `TeamIdentifier` es el nuestro
      (autenticidad). Sin (3), un manifiesto manipulado permitiría ejecutar
      código arbitrario.
+  4. Antes de extraer, el índice del zip se valida (`_check_zip_entries`):
+     una única `.app` raíz, sin rutas absolutas ni `..`, y todo symlink
+     resuelto dentro de esa `.app`. La firma de (3) solo cubre la `.app`;
+     sin (4), un zip con entradas extra podría escribir fuera del directorio
+     temporal durante la extracción, antes de verificar nada.
 
 La comprobación funciona también desde el código fuente; la instalación
 automática solo en la `.app` empaquetada (`paths.is_bundled()`).
@@ -18,10 +23,12 @@ import os
 import plistlib
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
+import zipfile
+from pathlib import Path, PurePosixPath
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -167,6 +174,100 @@ def _verify_app_signature(app_path):
         raise RuntimeError(f"TeamIdentifier inesperado en la actualización: {team!r}")
 
 
+_MAX_SYMLINK_DEPTH = 40
+# `ditto -c -k` puede guardar metadatos AppleDouble aquí; nunca se instala.
+_ZIP_METADATA_ROOT = "__MACOSX"
+
+
+def _virtual_realpath(parts, links, depth=0):
+    """Resuelve `parts` sobre el árbol del zip siguiendo sus symlinks.
+
+    Igual que `os.path.realpath`, pero sin tocar disco: así se sabe a dónde
+    apuntaría cada enlace *antes* de que `ditto` lo cree. Devuelve None si la
+    ruta sube por encima de la raíz del archivo.
+    """
+    if depth > _MAX_SYMLINK_DEPTH:
+        raise RuntimeError("Cadena de symlinks demasiado larga en la actualización")
+    resolved = []
+    for comp in parts:
+        if comp in ("", "."):
+            continue
+        if comp == "..":
+            if not resolved:
+                return None
+            resolved.pop()
+            continue
+        resolved.append(comp)
+        target = links.get("/".join(resolved))
+        if target is None:
+            continue
+        if target.startswith("/"):
+            return None
+        resolved = _virtual_realpath(resolved[:-1] + target.split("/"), links, depth + 1)
+        if resolved is None:
+            return None
+    return resolved
+
+
+def _check_zip_entries(zip_path):
+    """Valida el índice del zip antes de extraerlo; devuelve el nombre de la `.app`."""
+    try:
+        zf = zipfile.ZipFile(zip_path)
+    except zipfile.BadZipFile as exc:
+        raise RuntimeError(f"El paquete de actualización no es un zip válido: {exc}") from exc
+    with zf:
+        infos = zf.infolist()
+        entries, links = [], {}
+        for info in infos:
+            name = info.filename
+            if not name or "\\" in name or any(ord(c) < 32 for c in name):
+                raise RuntimeError(f"Entrada no válida en la actualización: {name!r}")
+            path = PurePosixPath(name)
+            if path.is_absolute() or ".." in path.parts:
+                raise RuntimeError(f"Ruta fuera del paquete en la actualización: {name!r}")
+            parts = [p for p in path.parts if p != "."]
+            if not parts:
+                continue
+            entries.append(parts)
+            if stat.S_ISLNK(info.external_attr >> 16):
+                if parts[0] == _ZIP_METADATA_ROOT:
+                    raise RuntimeError(f"Symlink no permitido en la actualización: {name!r}")
+                links["/".join(parts)] = zf.read(info).decode("utf-8", "strict")
+        roots = {parts[0] for parts in entries} - {_ZIP_METADATA_ROOT}
+        if len(roots) != 1 or not next(iter(roots)).endswith(".app"):
+            raise RuntimeError("El paquete de actualización debe contener una única .app en la raíz")
+        root = next(iter(roots))
+
+        def inside(parts):
+            return parts is not None and len(parts) >= 1 and parts[0] == root
+
+        for link, target in links.items():
+            link_parts = link.split("/")
+            if target.startswith("/") or not inside(_virtual_realpath(link_parts[:-1] + target.split("/"), links)):
+                raise RuntimeError(f"Symlink que sale de la .app en la actualización: {link!r} -> {target!r}")
+        for parts in entries:
+            # Una entrada se escribe en el directorio real de su padre: si el
+            # padre pasa por un symlink, debe seguir dentro de su raíz.
+            if parts[0] == _ZIP_METADATA_ROOT:
+                continue
+            parent = _virtual_realpath(parts[:-1], links)
+            if not inside(parent) and parts[:-1]:
+                raise RuntimeError(f"Entrada escrita fuera de la .app: {'/'.join(parts)!r}")
+    return root
+
+
+def _check_extracted_links(app_path):
+    """Segunda barrera tras extraer: ningún symlink real sale de la `.app`."""
+    root = os.path.realpath(app_path)
+    for dirpath, dirnames, filenames in os.walk(app_path):
+        for name in dirnames + filenames:
+            full = os.path.join(dirpath, name)
+            if os.path.islink(full):
+                real = os.path.realpath(full)
+                if real != root and not real.startswith(root + os.sep):
+                    raise RuntimeError(f"Symlink que sale de la .app tras extraer: {full}")
+
+
 def download_and_stage(url, sha256, workdir=None):
     """Descarga el zip, verifica sha256, extrae y valida firma.
 
@@ -178,6 +279,7 @@ def download_and_stage(url, sha256, workdir=None):
     got = _sha256(zip_path)
     if got.lower() != str(sha256).lower():
         raise RuntimeError(f"sha256 no coincide (esperado {sha256}, obtenido {got})")
+    app_name = _check_zip_entries(zip_path)
     extract_dir = tmp / "extracted"
     # `ditto`, no `zipfile`: el zip lo genera `build_app.sh` con
     # `ditto -c -k --keepParent`, que preserva symlinks (p.ej. el framework
@@ -204,10 +306,10 @@ def download_and_stage(url, sha256, workdir=None):
             extract_error = exc
     if extract_error is not None:
         raise extract_error
-    apps = list(extract_dir.glob("*.app")) or list(extract_dir.rglob("*.app"))
-    if not apps:
+    app_path = extract_dir / app_name
+    if app_path.is_symlink() or not app_path.is_dir():
         raise RuntimeError("El paquete de actualización no contiene ninguna .app")
-    app_path = apps[0]
+    _check_extracted_links(app_path)
     _verify_app_signature(app_path)
     return app_path
 

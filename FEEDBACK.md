@@ -1,7 +1,7 @@
 # Feedback Técnico y de Producto
 
 > Revisión viva sincronizada el 2026-09-11. Milestones v1 → v10 completados.
-> Suite: **157 pruebas, todas verdes**.
+> Suite: **170 pruebas, todas verdes**.
 > Estado canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## Sinopsis

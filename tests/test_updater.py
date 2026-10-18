@@ -95,3 +95,114 @@ def test_download_and_stage_rejects_sha_mismatch(monkeypatch, tmp_path):
     monkeypatch.setattr(updater, "_http_get", lambda url, binary=False: b"payload-bytes")
     with pytest.raises(RuntimeError, match="sha256 no coincide"):
         updater.download_and_stage("https://x/y.zip", "0" * 64, workdir=tmp_path)
+
+
+# ── Validación del índice del zip antes de extraer (hallazgo de seguridad PR #2) ──
+import hashlib
+import os
+import stat
+import zipfile
+
+APP = "Gestor de Correos.app"
+
+
+def build_zip(path, files=(), links=()):
+    """files: [(nombre, bytes)], links: [(nombre, destino)] como symlinks."""
+    with zipfile.ZipFile(path, "w") as zf:
+        for name, data in files:
+            zf.writestr(name, data)
+        for name, target in links:
+            info = zipfile.ZipInfo(name)
+            info.create_system = 3
+            info.external_attr = (stat.S_IFLNK | 0o755) << 16
+            zf.writestr(info, target)
+    return path
+
+
+FRAMEWORK = f"{APP}/Contents/Frameworks/Python.framework"
+LEGIT_FILES = [
+    (f"{APP}/Contents/Info.plist", b"plist"),
+    (f"{APP}/Contents/MacOS/Gestor", b"bin"),
+    (f"{FRAMEWORK}/Versions/3.12/Python", b"lib"),
+    ("__MACOSX/._Gestor de Correos.app", b"appledouble"),
+]
+LEGIT_LINKS = [
+    (f"{FRAMEWORK}/Versions/Current", "3.12"),
+    (f"{FRAMEWORK}/Python", "Versions/Current/Python"),
+    (f"{APP}/Contents/MacOS/python", "../Frameworks/Python.framework/Python"),
+]
+
+
+def test_check_zip_entries_accepts_real_bundle_layout(tmp_path):
+    z = build_zip(tmp_path / "u.zip", LEGIT_FILES, LEGIT_LINKS)
+    assert updater._check_zip_entries(z) == APP
+
+
+@pytest.mark.parametrize("files,links,match", [
+    ([(f"{APP}/x", b""), ("../../Library/LaunchAgents/evil.plist", b"")], [], "fuera del paquete"),
+    ([(f"{APP}/x", b""), ("/tmp/evil", b"")], [], "fuera del paquete"),
+    ([(f"{APP}/x", b""), ("Otra.app/x", b"")], [], "única .app"),
+    ([("payload/x", b"")], [], "única .app"),
+    # symlink directo fuera de la .app y escritura a través de él
+    ([(f"{APP}/x", b""), (f"{APP}/la/evil.plist", b"")], [(f"{APP}/la", "../../../Library/LaunchAgents")], "sale de la .app"),
+    ([(f"{APP}/x", b"")], [(f"{APP}/abs", "/Users/victima")], "sale de la .app"),
+    # cadena: cada destino parece interno textualmente, pero físicamente sale
+    ([(f"{APP}/x", b"")], [(f"{APP}/Contents/Frameworks/up", "../.."), (f"{APP}/esc", "Contents/Frameworks/up/..")], "sale de la .app"),
+    ([(f"{APP}/x", b"")], [("__MACOSX/l", "x")], "Symlink no permitido"),
+    ([(f"{APP}/x", b"")], [(f"{APP}/a", "b"), (f"{APP}/b", "a")], "demasiado larga"),
+])
+def test_check_zip_entries_rejects_escapes(tmp_path, files, links, match):
+    z = build_zip(tmp_path / "u.zip", files, links)
+    with pytest.raises(RuntimeError, match=match):
+        updater._check_zip_entries(z)
+
+
+def fake_ditto_extract(cmd):
+    """Sustituto de `ditto -x -k` para Linux/CI: extrae y recrea symlinks."""
+    zip_path, dest = cmd[-2], cmd[-1]
+    with zipfile.ZipFile(zip_path) as zf:
+        for info in zf.infolist():
+            out = os.path.join(dest, info.filename)
+            os.makedirs(os.path.dirname(out), exist_ok=True)
+            if stat.S_ISLNK(info.external_attr >> 16):
+                os.symlink(zf.read(info).decode(), out)
+            elif not info.filename.endswith("/"):
+                with open(out, "wb") as fh:
+                    fh.write(zf.read(info))
+
+
+def stage(monkeypatch, tmp_path, zip_bytes):
+    calls = []
+    (tmp_path / "work").mkdir()
+    monkeypatch.setattr(updater, "_http_get", lambda url, binary=False: zip_bytes)
+    monkeypatch.setattr(updater, "_run", lambda cmd: (calls.append(cmd), fake_ditto_extract(cmd)))
+    monkeypatch.setattr(updater, "_verify_app_signature", lambda p: calls.append(("verify", p)))
+    sha = hashlib.sha256(zip_bytes).hexdigest()
+    return calls, updater.download_and_stage("https://x/u.zip", sha, workdir=tmp_path / "work")
+
+
+def test_download_and_stage_validates_before_extracting(monkeypatch, tmp_path):
+    bad = build_zip(tmp_path / "bad.zip", [(f"{APP}/x", b""), ("../evil", b"")]).read_bytes()
+    calls = []
+    (tmp_path / "w").mkdir()
+    monkeypatch.setattr(updater, "_http_get", lambda url, binary=False: bad)
+    monkeypatch.setattr(updater, "_run", lambda cmd: calls.append(cmd))
+    with pytest.raises(RuntimeError, match="fuera del paquete"):
+        updater.download_and_stage("https://x/u.zip", hashlib.sha256(bad).hexdigest(), workdir=tmp_path / "w")
+    assert calls == []  # ditto nunca llega a ejecutarse
+
+
+def test_download_and_stage_happy_path_returns_root_app(monkeypatch, tmp_path):
+    good = build_zip(tmp_path / "good.zip", LEGIT_FILES, LEGIT_LINKS).read_bytes()
+    calls, app_path = stage(monkeypatch, tmp_path, good)
+    assert app_path == tmp_path / "work" / "extracted" / APP
+    assert calls[0][0] == "/usr/bin/ditto"
+    assert calls[-1] == ("verify", app_path)
+
+
+def test_check_extracted_links_catches_escape_on_disk(tmp_path):
+    app = tmp_path / APP
+    app.mkdir()
+    os.symlink(str(tmp_path), app / "fuera")
+    with pytest.raises(RuntimeError, match="tras extraer"):
+        updater._check_extracted_links(app)

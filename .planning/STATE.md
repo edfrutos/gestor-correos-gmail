@@ -56,7 +56,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `157 tests` · **157 verdes**.
+- **Suite automatizada:** `170 tests` · **170 verdes**.
 - **Testeo humano:** `TESTING_HUMANO.md` 35/35 ✅ (v7.5 + sección 9 de
   auto-actualización, v10).
 
@@ -102,10 +102,23 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   mantiene su frontera destructiva adicional.
 - Las sugerencias/resúmenes de IA envían metadatos (asunto/remitente) a un
   proveedor externo solo si el usuario lo habilita y confirma.
+- Updater: el manifiesto `latest.json` no va firmado. El zip se valida antes
+  de extraer y la `.app` por firma + Team ID (ADR-013, addendum 2026-10-18),
+  pero un Release comprometido podría servir una `.app` **antigua** legítima
+  (downgrade). Instalaciones ≤ v1.2.1 no tienen la validación del zip hasta
+  actualizar a una versión que la incluya.
 - `static/*.js` comparte estado mediante variables globales; refactor a encapsular
   con cuidado para no romper el contrato del frontend (`test_frontend_contract.py`).
 
 ## Last Activity
+
+- 2026-10-18 — Hallazgo de seguridad (Cursor) en PR #2, severidad media:
+  `ditto -x -k` extraía el zip de actualización antes de validar nada.
+  Fix en `updater.py`: `_check_zip_entries` valida el índice del zip (una
+  sola `.app` raíz, sin `..`/absolutas, symlinks resueltos dentro de la
+  `.app` siguiendo cadenas) antes de `ditto`, y `_check_extracted_links`
+  re-comprueba con `realpath` tras extraer. Probado contra el zip real de
+  v1.2.1. +13 tests, 170/170. Pendiente: Release nuevo y repetir §9 en el Mac.
 
 - 2026-09-11 — v10 / Fase 36 cerrado: fix de extracción (`ditto` en vez de
   `zipfile`, preserva symlinks del framework de Python — `0a6afbb`) +
