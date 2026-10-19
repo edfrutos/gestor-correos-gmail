@@ -5,6 +5,7 @@ token.json
 delete_token.json
 delete_token.revoked
 app_state.json
+settings.json
 
 # Python generated files
 .venv/

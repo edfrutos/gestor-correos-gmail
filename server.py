@@ -23,6 +23,7 @@ import time
 import webbrowser
 import zipfile
 import mimetypes
+import shutil
 import email
 from email import policy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -33,6 +34,7 @@ import updater
 from ai_client import ai_status, suggest_rules, summarize
 from classifier import get_base_config
 from paths import data_dir, data_path, is_bundled, resource_dir
+from settings import load_settings, public_settings, save_settings
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
 from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
 from storage import load_state, record_delete_results, save_user_state
@@ -171,6 +173,9 @@ class H(BaseHTTPRequestHandler):
         if p.path == '/api/exports':
             return self.handle_get_exports()
 
+        if p.path == '/api/settings':
+            return self.j({'status': 'ok', 'settings': public_settings(), 'ai': ai_status()})
+
         if p.path == '/api/read-eml':
             return self.handle_read_eml(p.query)
 
@@ -186,6 +191,9 @@ class H(BaseHTTPRequestHandler):
 
         if p.path == '/api/state':
             return self.handle_post_state()
+
+        if p.path == '/api/settings':
+            return self.handle_post_settings()
 
         if p.path == '/api/ai-summary':
             return self.handle_ai_summary()
@@ -396,6 +404,30 @@ class H(BaseHTTPRequestHandler):
             return self.err(e.status, str(e), e.detail)
         return self.j({'status': 'ok', 'state': state})
 
+    def handle_post_settings(self):
+        try:
+            save_settings(self.read_json_body())
+        except ApiError as e:
+            return self.err(e.status, str(e), e.detail)
+        return self.j({'status': 'ok', 'settings': public_settings(), 'ai': ai_status()})
+
+    def backup_export(self, filepath):
+        """Copia una exportación a la carpeta de respaldo, si hay una configurada.
+
+        Devuelve (ruta_copia, error). Un fallo del respaldo no invalida la
+        exportación principal, que ya está en EXPORTS_DIR.
+        """
+        backup_dir = load_settings().get('backup_dir')
+        if not backup_dir:
+            return None, None
+        try:
+            target = Path(backup_dir) / filepath.name
+            shutil.copy2(filepath, target)
+            return str(target), None
+        except OSError as exc:
+            print(f'[Export] Respaldo fallido en {backup_dir}: {exc}')
+            return None, f'No se pudo copiar a la carpeta de respaldo: {exc}'
+
     def handle_ai_summary(self):
         try:
             payload = self.read_json_body()
@@ -570,12 +602,15 @@ class H(BaseHTTPRequestHandler):
                 filename = f"{mid}.eml"
                 filepath = EXPORTS_DIR / filename
                 filepath.write_bytes(data)
-                
+                backup, backup_error = self.backup_export(filepath)
+
                 return self.j({
                     'status': 'ok',
                     'file': filename,
                     'path': str(filepath.absolute()),
-                    'type': 'eml'
+                    'type': 'eml',
+                    'backup': backup,
+                    'backup_error': backup_error,
                 })
 
             # Múltiples mensajes -> ZIP
@@ -594,12 +629,15 @@ class H(BaseHTTPRequestHandler):
             
             if not zip_path.exists() or zip_path.stat().st_size == 0:
                  return self.err(500, 'Error de exportación', 'No se pudo generar el archivo ZIP local')
+            backup, backup_error = self.backup_export(zip_path)
 
             return self.j({
                 'status': 'ok',
                 'file': zip_filename,
                 'path': str(zip_path.absolute()),
-                'type': 'zip'
+                'type': 'zip',
+                'backup': backup,
+                'backup_error': backup_error,
             })
 
         except Exception as e:
@@ -747,6 +785,8 @@ class H(BaseHTTPRequestHandler):
         try:
             result = suggest_rules(payload)
             return self.j({'status': 'ok', **result})
+        except ApiError as e:
+            return self.err(e.status, str(e), e.detail)
         except Exception as e:
             print(f'[AI Suggest API] Error: {e}')
             return self.err(502, 'Error generando sugerencias', str(e))
@@ -762,7 +802,8 @@ class H(BaseHTTPRequestHandler):
                     'mtime': f.stat().st_mtime,
                     'type': f.suffix.lstrip('.').lower() or 'unknown'
                 })
-            return self.j({'status': 'ok', 'files': files})
+            return self.j({'status': 'ok', 'files': files, 'dir': str(EXPORTS_DIR.resolve()),
+                           'backup_dir': load_settings().get('backup_dir') or None})
         except Exception as e:
             return self.err(500, 'Error listando exportaciones', str(e))
 

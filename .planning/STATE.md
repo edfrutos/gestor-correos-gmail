@@ -122,6 +122,22 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-19 — **Panel Configuración** (rama `feat/settings-ai-backup`):
+  la IA (URL base, modelo, clave) se configura desde la UI y se guarda en
+  `settings.json` (carpeta de datos, permisos 600; la clave nunca vuelve al
+  frontend y tiene prioridad sobre `.env`). Motivo: en el `.app` no había
+  forma práctica de configurarla (solo `.env` en Application Support) y
+  «Sugerir reglas» daba «AI no configurada». Carpeta de respaldo opcional:
+  cada `.eml`/`.zip` exportado se copia también allí (un fallo de la copia no
+  invalida la exportación). Exportaciones muestra la ruta real (en el `.app`,
+  `~/Library/Application Support/GestorDeCorreos/exports`, no `exports/` del
+  repo). Selector de carpeta nativo vía `js_api` de pywebview. +16 tests, 225/225.
+
+- 2026-10-19 — **Release v1.2.5 publicado** (tag en `f39b5c7`, PR #11).
+  Casos negativos del manifiesto (versión alterada / sin `.sig`) y
+  actualización 1.2.4 → 1.2.5 verificados en el Mac: primera actualización que
+  verifica `latest.json.sig`. UPD-07 cerrado; testeo humano 38/38.
+
 - 2026-10-18 — **Release v1.2.4 publicado** (tag en `4b05863`, PR #9: firma
   de `latest.json`). Assets: zip, DMG, `latest.json` y `latest.json.sig`.
   Comprobado contra GitHub con `updater`: la firma verifica con la clave
@@ -232,13 +248,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.2.4 publicado** (tag `v1.2.4` en `4b05863`) con `latest.json` firmado,
-e instalado en el Mac desde 1.2.3. Testeo humano 37/38. `v1.2.2`–`v1.2.4`
+**v1.2.5 publicado** (tag `v1.2.5` en `f39b5c7`) e instalado en el Mac desde
+1.2.4 verificando la firma del manifiesto. Testeo humano 38/41 (las 3 nuevas, del panel Configuración). `v1.2.2`–`v1.2.5`
 coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en `fe55367`.
 
-Para cerrar UPD-07 falta §9 «Manifiesto firmado»: la primera actualización
-que verifica la firma, desde la 1.2.4 instalada hacia el siguiente Release
-(v1.2.5, con `latest.json.sig`). Clave privada en
+Siguiente: probar en el Mac el panel Configuración (IA + carpeta de respaldo)
+y publicarlo como v1.2.6. Clave privada en
 `~/.config/gestor-correos/update_signing.pem` (`UPDATE_SIGNING_KEY` en
 `macos/build.env`), pública `39a60417…` en `updater.UPDATE_PUBLIC_KEYS`.
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el

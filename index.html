@@ -82,7 +82,36 @@
     <div id="exp-local-list" class="hidden-list" style="display:block; max-height:200px;">
       <div class="empty">No hay archivos exportados todavía.</div>
     </div>
-    <p class="hint">Los archivos se guardan en la carpeta <code>/exports</code> del proyecto.</p>
+    <p class="hint" id="exp-dir-hint">Los archivos se guardan en la carpeta <code>exports</code> de los datos de la app.</p>
+  </div>
+</div>
+
+<!-- ③b CONFIGURACIÓN -->
+<div class="panel col" id="p-cfg">
+  <div class="ph" data-panel="p-cfg">
+    <div class="pt">🛠 Configuración <span class="ptag" id="cfg-tag">—</span></div>
+    <span class="pc">▾</span>
+  </div>
+  <div class="pb">
+    <div class="cfg-head">Inteligencia artificial <span class="hint" id="cfg-ai-state" style="margin:0"></span></div>
+    <div class="cfg-form">
+      <label class="rule-field wide"><span>URL base (OpenAI o compatible, sin /chat/completions)</span><input id="cfg-ai-url" maxlength="500" placeholder="https://api.openai.com/v1" autocomplete="off" spellcheck="false"></label>
+      <label class="rule-field"><span>Modelo</span><input id="cfg-ai-model" maxlength="200" placeholder="gpt-4o-mini" autocomplete="off" spellcheck="false"></label>
+      <label class="rule-field"><span>Clave API</span><input id="cfg-ai-key" type="password" maxlength="500" placeholder="sk-…" autocomplete="off"></label>
+    </div>
+    <label class="cfg-check"><input type="checkbox" id="cfg-ai-key-clear"> Borrar la clave guardada</label>
+    <p class="hint">Para Ollama local: <code>http://localhost:11434/v1</code>, modelo <code>llama3</code>, clave <code>ollama</code>. La clave solo se guarda en este equipo (<code>settings.json</code>, permisos 600) y nunca vuelve a la interfaz. Lo guardado aquí tiene prioridad sobre <code>.env</code>.</p>
+
+    <div class="cfg-head" style="margin-top:14px">Carpeta de respaldo de exportaciones</div>
+    <div class="cfg-form">
+      <label class="rule-field wide"><span>Ruta absoluta (vacío = sin respaldo)</span><input id="cfg-backup-dir" maxlength="1000" placeholder="/Users/tu-usuario/Documents/Correos" autocomplete="off" spellcheck="false"></label>
+      <button class="addbtn" type="button" id="cfg-backup-pick" style="display:none">📁 Elegir…</button>
+    </div>
+    <p class="hint">Cada <code>.eml</code> o <code>.zip</code> exportado se copia también a esta carpeta. Si no está disponible (p. ej. un disco desmontado), la exportación se guarda igual y se avisa.</p>
+
+    <div class="arow" style="justify-content:flex-end;margin-top:10px">
+      <button class="addbtn" type="button" id="cfg-save">Guardar configuración</button>
+    </div>
   </div>
 </div>
 

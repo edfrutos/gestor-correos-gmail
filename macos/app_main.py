@@ -101,6 +101,28 @@ class EmlOpener:
         self._run_async(lambda: self.window.evaluate_js(js))
 
 
+class JsApi:
+    """Funciones nativas expuestas a la página como `window.pywebview.api`.
+
+    La ventana va en un atributo privado: pywebview recorre los atributos
+    públicos del objeto para exponerlos a JS.
+    """
+
+    def __init__(self):
+        self._window = None
+
+    def pick_folder(self):
+        """Selector de carpeta nativo (panel Configuración → respaldo)."""
+        if self._window is None:
+            return None
+        import webview  # noqa: E402
+        folder_dialog = getattr(getattr(webview, "FileDialog", None), "FOLDER", None)
+        if folder_dialog is None:
+            folder_dialog = webview.FOLDER_DIALOG
+        result = self._window.create_file_dialog(folder_dialog)
+        return result[0] if result else None
+
+
 def _install_open_files_handler(opener: EmlOpener) -> bool:
     """Añade `application:openFiles:` al AppDelegate de pywebview (Cocoa).
 
@@ -161,7 +183,9 @@ def main() -> int:
         httpd.shutdown()
         return 1
 
-    window = webview.create_window(APP_TITLE, start_url, width=1180, height=820, min_size=(900, 600))
+    js_api = JsApi()
+    window = webview.create_window(APP_TITLE, start_url, width=1180, height=820, min_size=(900, 600), js_api=js_api)
+    js_api._window = window
     opener = EmlOpener(window)
     window.events.loaded += opener.on_loaded
     _install_open_files_handler(opener)

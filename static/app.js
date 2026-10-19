@@ -1537,13 +1537,13 @@ async function exportEml(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({message_ids:ids})
     });
-    const d=await r.json();
+    const d=await r.json().catch(()=>({error:'Error HTTP '+r.status}));
     if(!r.ok){
-      const errBody=await r.json().catch(()=>({error:'Error HTTP '+r.status}));
-      throw new Error(errBody.detail||errBody.error||`Error HTTP ${r.status}`);
+      throw new Error(d.detail||d.error||`Error HTTP ${r.status}`);
     }
-    
-    toast(`📦 Guardado en /exports: ${d.file}`,'ok');
+
+    if(d.backup_error) toast(`📦 Guardado ${d.file}, pero ${d.backup_error}`,'err');
+    else toast(`📦 Guardado ${d.file}${d.backup?' (y copiado a la carpeta de respaldo)':''}`,'ok');
     loadLocalExports();
   }catch(e){
     toast('Error exportando: '+e.message,'err');
@@ -1788,11 +1788,18 @@ document.getElementById('lbl-ok').addEventListener('click',applySelectedLabel);
 
 // ── EXPORTACIONES LOCALES Y LECTOR ──────────────────────
 let localExports=[];
+let exportsDir='';
 async function loadLocalExports(){
   try{
     const r=await fetch(`${API}/api/exports`);
     const d=await r.json();
     localExports=d.files||[];
+    exportsDir=d.dir||'';
+    const hint=document.getElementById('exp-dir-hint');
+    if(exportsDir){
+      hint.innerHTML=`Los archivos se guardan en <code>${esc(exportsDir)}</code>`+
+        (d.backup_dir?` y se copian a <code>${esc(d.backup_dir)}</code>.`:'. Puedes añadir una carpeta de respaldo en <b>Configuración</b>.');
+    }
     renderLocalExports();
   }catch(e){console.error('Error cargando exportaciones:', e);}
 }
@@ -1815,11 +1822,84 @@ function renderLocalExports(){
     </div>`;
     d.onclick=()=>{
       if(f.type==='eml') openEmlReader(f.name);
-      else toast('Los archivos .zip deben abrirse desde la carpeta /exports','err');
+      else toast(`Los .zip se abren desde el Finder: ${exportsDir||'carpeta exports'}`,'err');
     };
     list.appendChild(d);
   });
 }
+
+// ── CONFIGURACIÓN (IA + RESPALDO) ────────────────────────
+function renderAiSettingsState(s){
+  const el=document.getElementById('cfg-ai-state');
+  const tag=document.getElementById('cfg-tag');
+  if(aiStatus.configured){
+    const origin=s.ai_source==='env'?' · desde .env':'';
+    el.textContent=`✓ Activa · ${aiStatus.model}${aiStatus.remote?' · remota':' · local'}${origin}`;
+    tag.textContent='IA ✓';
+  }else{
+    el.textContent='⚠ Sin configurar: los resúmenes y las sugerencias IA están desactivados';
+    tag.textContent='IA —';
+  }
+  const keyInp=document.getElementById('cfg-ai-key');
+  keyInp.value='';
+  keyInp.placeholder=s.ai_api_key_set?'•••• guardada (deja vacío para conservarla)':(s.ai_env_api_key_set?'(usa la de .env)':'sk-…');
+  document.getElementById('cfg-ai-key-clear').checked=false;
+  document.getElementById('cfg-ai-key-clear').parentElement.style.display=s.ai_api_key_set?'flex':'none';
+}
+function applySettings(d){
+  const s=d.settings||{};
+  if(d.ai)aiStatus=d.ai;
+  document.getElementById('cfg-ai-url').value=s.ai_base_url||'';
+  document.getElementById('cfg-ai-model').value=s.ai_model||'';
+  document.getElementById('cfg-backup-dir').value=s.backup_dir||'';
+  renderAiSettingsState(s);
+}
+async function loadSettings(){
+  try{
+    const r=await fetch(`${API}/api/settings`);
+    const d=await r.json();
+    if(r.ok)applySettings(d);
+  }catch(e){console.error('Error cargando configuración:',e);}
+}
+async function saveSettings(){
+  const btn=document.getElementById('cfg-save');
+  btn.disabled=true;
+  try{
+    const r=await fetch(`${API}/api/settings`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        ai_base_url:document.getElementById('cfg-ai-url').value,
+        ai_model:document.getElementById('cfg-ai-model').value,
+        ai_api_key:document.getElementById('cfg-ai-key').value,
+        ai_api_key_clear:document.getElementById('cfg-ai-key-clear').checked,
+        backup_dir:document.getElementById('cfg-backup-dir').value,
+      })
+    });
+    const d=await r.json().catch(()=>({error:'Error HTTP '+r.status}));
+    if(!r.ok)throw new Error(d.detail||d.error||`Error HTTP ${r.status}`);
+    applySettings(d);
+    loadLocalExports();
+    toast('Configuración guardada','ok');
+  }catch(e){
+    toast('Configuración: '+e.message,'err');
+  }finally{
+    btn.disabled=false;
+  }
+}
+document.getElementById('cfg-save').addEventListener('click',saveSettings);
+// Selector de carpeta nativo: solo existe en la app de escritorio (pywebview).
+function enableFolderPicker(){
+  if(!window.pywebview?.api?.pick_folder)return;
+  const btn=document.getElementById('cfg-backup-pick');
+  btn.style.display='';
+  btn.onclick=async()=>{
+    const folder=await window.pywebview.api.pick_folder();
+    if(folder)document.getElementById('cfg-backup-dir').value=folder;
+  };
+}
+window.addEventListener('pywebviewready',enableFolderPicker);
+enableFolderPicker();
 
 // Convierte los adjuntos EML (con data base64) en chips descargables
 function buildEmlAttachmentChips(attachments, container){
@@ -1986,6 +2066,7 @@ async function init(){
   renderCats();
   render();
   const status=await checkStatus();
+  await loadSettings();
   if(status&&status.token){
     await refreshSourcesFromGmail();
     // Cargar etiquetas de Gmail al arrancar para que el selector de reglas esté listo

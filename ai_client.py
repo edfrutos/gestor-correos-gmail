@@ -1,9 +1,9 @@
 import json
-import os
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
+from settings import ai_config
 from validators import ApiError
 
 
@@ -11,8 +11,7 @@ MAX_PROMPT_LENGTH = 20000
 
 
 def ai_status():
-    base_url = os.environ.get('AI_BASE_URL', '').strip()
-    model = os.environ.get('AI_MODEL', '').strip()
+    base_url, model, _ = ai_config()
     return {
         'configured': bool(base_url and model),
         'model': model or None,
@@ -31,14 +30,12 @@ def summarize(prompt):
     if len(prompt) > MAX_PROMPT_LENGTH:
         raise ApiError('Contenido AI demasiado grande', status=413, detail=f'El contenido supera {MAX_PROMPT_LENGTH} caracteres')
 
-    base_url = os.environ.get('AI_BASE_URL', '').strip()
-    model = os.environ.get('AI_MODEL', '').strip()
-    api_key = os.environ.get('AI_API_KEY', '').strip()
+    base_url, model, api_key = ai_config()
     if not base_url or not model:
         raise ApiError(
             'Integración AI no configurada',
             status=503,
-            detail='Configura AI_BASE_URL y AI_MODEL antes de usar el resumen AI',
+            detail='Configura la URL base y el modelo en Configuración (o AI_BASE_URL y AI_MODEL en .env)',
         )
     parsed = urlparse(base_url)
     if parsed.scheme not in {'http', 'https'} or not parsed.netloc:
@@ -82,12 +79,10 @@ def suggest_rules(emails_metadata):
     if not emails_metadata:
         return {'suggestions': []}
 
-    base_url = os.environ.get('AI_BASE_URL', '').strip()
-    model = os.environ.get('AI_MODEL', '').strip()
-    api_key = os.environ.get('AI_API_KEY', '').strip()
+    base_url, model, api_key = ai_config()
     
     if not base_url or not model:
-        raise ApiError('AI no configurada', status=503)
+        raise ApiError('AI no configurada', status=503, detail='Configura la URL base y el modelo en el panel Configuración')
 
     # Preparar resumen de metadatos para el prompt
     summary = "\n".join([f"- De: {e.get('from')} | Asunto: {e.get('sub')}" for e in emails_metadata[:30]])
