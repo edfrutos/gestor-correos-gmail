@@ -68,6 +68,13 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 desde 1.2.3 por el auto-updater; esa actualización aún no verifica la firma
 (la hace el updater de la 1.2.3). «Manifiesto firmado» queda para 1.2.4 → 1.2.5.
 
+2026-10-19: parte opcional de «Manifiesto firmado» verificada en el Mac con
+v1.2.4 y `GESTOR_UPDATE_MANIFEST_URL=file://…`: un `latest.json` con la versión
+alterada (9.9.9) y la firma original da «La firma del manifiesto de
+actualización no es válida»; sin `latest.json.sig` da «No se pudo consultar
+actualizaciones…». En ningún caso ofrece la versión falsa. Falta la parte
+principal (actualización real 1.2.4 → 1.2.5).
+
 Verificado en el Mac el 2026-10-18 con v1.2.2 → v1.2.3 (primera
 actualización extraída por `_extract_zip`, con anti-downgrade en la versión
 recibida). §2–§7 repasados tras Fase 32 Stage C y `odoc`: sin regresiones.
