@@ -28,6 +28,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Regla Auto-Archive:** Crea una regla con "Archivar automáticamente". Busca el remitente y verifica que los correos no llegan a aparecer en la bandeja de la app (van directos a ocultos).
 
 ## 5. Sugerencias IA (Opcional)
+- [ ] **Configuración IA desde la app (v1.2.6):** En el panel "🛠 Configuración" rellena URL base, modelo y clave y pulsa "Guardar configuración". Verifica que el estado pasa a "✓ Activa · <modelo>", que el campo de clave queda vacío con "•••• guardada" y que tras reiniciar la app sigue configurada.
 - [x] **Activación:** Activa el toggle de IA en el panel de reglas.
 - [x] **Aprendizaje:** Oculta 5 correos de un remitente nuevo.
 - [x] **Sugerencia:** Pulsa "Sugerir reglas ahora". Verifica que la IA propone una regla coherente.
@@ -41,6 +42,8 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
     - [x] Verifica que se abre el visor interno (sin abrir Apple Mail).
     - [x] Comprueba que se ve el remitente, fecha, asunto y el cuerpo (HTML/Texto).
 - [x] **Exportación ZIP:** Selecciona 3 correos y exporta. Verifica que el `.zip` se crea en `/exports`.
+- [ ] **Ruta real (v1.2.6):** En la app de escritorio, el texto bajo "📦 Exportaciones locales" muestra `~/Library/Application Support/GestorDeCorreos/exports` (desde fuente, la carpeta `exports` del proyecto).
+- [ ] **Carpeta de respaldo (v1.2.6):** En "🛠 Configuración" elige una carpeta con "📁 Elegir…" (o escribe la ruta) y guarda. Exporta un `.eml` y un `.zip`: ambos aparecen también en esa carpeta y el aviso dice "copiado a la carpeta de respaldo". Con una ruta que no existe, guardar da error claro.
 
 ## 7. Integración con el Sistema (Servicios)
 - [x] **Abrir archivo externo:** Desde la terminal, ejecuta:
@@ -62,7 +65,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Sin actualización:** Con la última versión ya instalada, pulsa **Buscar actualizaciones** de nuevo y verifica que informa de que ya tienes la versión más reciente.
 - [x] **Sin Release publicado:** Si `latest.json` no existe todavía (HTTP 404), verifica el mensaje claro de "aún no hay ninguna versión publicada" en vez de un error genérico.
 - [x] **Validación del zip (2026-10-18):** publica un Release nuevo construido con el `updater.py` que valida el zip antes de extraerlo, instálalo y desde esa versión repite **Detección** y **Descarga e instalación** contra el siguiente Release. Debe actualizar igual que antes (el zip legítimo pasa la validación).
-- [ ] **Manifiesto firmado:** con una versión que ya verifica la firma de `latest.json` instalada, repite **Detección** y **Descarga e instalación** contra el siguiente Release (con `latest.json.sig`). Debe actualizar igual. Opcional: con `GESTOR_UPDATE_MANIFEST_URL` apuntando a un `latest.json` sin `.sig` (o con la firma de otro), **Buscar actualizaciones** debe dar un error de firma, no "estás en la última versión".
+- [x] **Manifiesto firmado:** con una versión que ya verifica la firma de `latest.json` instalada, repite **Detección** y **Descarga e instalación** contra el siguiente Release (con `latest.json.sig`). Debe actualizar igual. Opcional: con `GESTOR_UPDATE_MANIFEST_URL` apuntando a un `latest.json` sin `.sig` (o con la firma de otro), **Buscar actualizaciones** debe dar un error de firma, no "estás en la última versión".
 
 2026-10-18: v1.2.4 (primer Release con `latest.json.sig`) instalado en el Mac
 desde 1.2.3 por el auto-updater; esa actualización aún no verifica la firma
@@ -72,8 +75,11 @@ desde 1.2.3 por el auto-updater; esa actualización aún no verifica la firma
 v1.2.4 y `GESTOR_UPDATE_MANIFEST_URL=file://…`: un `latest.json` con la versión
 alterada (9.9.9) y la firma original da «La firma del manifiesto de
 actualización no es válida»; sin `latest.json.sig` da «No se pudo consultar
-actualizaciones…». En ningún caso ofrece la versión falsa. Falta la parte
-principal (actualización real 1.2.4 → 1.2.5).
+actualizaciones…». En ningún caso ofrece la versión falsa.
+
+2026-10-19: Release v1.2.5 (tag en `f39b5c7`) instalado en el Mac desde 1.2.4
+por el auto-updater, primera actualización que verifica `latest.json.sig`;
+«Acerca de» muestra 1.2.5. «Manifiesto firmado» completo.
 
 Verificado en el Mac el 2026-10-18 con v1.2.2 → v1.2.3 (primera
 actualización extraída por `_extract_zip`, con anti-downgrade en la versión
