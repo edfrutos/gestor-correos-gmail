@@ -158,7 +158,7 @@
 - [x] **UPD-04**: La instalación requiere permiso explícito del usuario y luego sustituye la `.app` y relanza (helper *detached*; admin si hace falta). — Phase 36
 - [x] **UPD-05**: `/api/update/install` re-verifica el manifiesto en el servidor y nunca instala una URL provista por el cliente; desde el código fuente la instalación automática está desactivada. — Phase 36
 - [x] **UPD-06**: Flujo real verificado en el Mac (Release de prueba → actualización desde versión anterior). — Phase 36 (verificado 2026-09-11: v1.1.0 → v1.2.0 → v1.2.1)
-- [ ] **UPD-07**: `latest.json` va firmado (Ed25519, `latest.json.sig`); la app rechaza un manifiesto sin firma o con firma que no verifique con la clave embebida. — Phase 36 (Release v1.2.4 firmado y verificado contra GitHub 2026-10-18; falta la primera actualización que verifica la firma, 1.2.4 → 1.2.5, en el Mac)
+- [x] **UPD-07**: `latest.json` va firmado (Ed25519, `latest.json.sig`); la app rechaza un manifiesto sin firma o con firma que no verifique con la clave embebida. — Phase 36 (Release v1.2.4 firmado y verificado contra GitHub 2026-10-18; actualización 1.2.4 → 1.2.5 que verifica la firma comprobada en el Mac 2026-10-19)
 
 ## Out of Scope
 
@@ -253,7 +253,7 @@
 | UPD-04 | Phase 36 | Done |
 | UPD-05 | Phase 36 | Done |
 | UPD-06 | Phase 36 | Done |
-| UPD-07 | Phase 36 | Pending (1.2.4 → 1.2.5 en el Mac) |
+| UPD-07 | Phase 36 | Complete |
 
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.

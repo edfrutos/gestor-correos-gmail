@@ -225,6 +225,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1) 
 .rule-form{display:grid;grid-template-columns:minmax(120px,1.1fr) minmax(120px,1fr) minmax(180px,1.5fr) repeat(3,minmax(110px,.8fr));gap:6px;align-items:end;min-width:0;}
 .rule-field{display:flex;flex-direction:column;gap:4px;color:var(--mut);min-width:0;}
 .rule-field input,.rule-field select{min-height:36px;background:var(--surf);border:1px solid var(--bdr);border-radius:7px;color:var(--txt);padding:7px 8px;font:inherit;width:100%;min-width:0;}
+.cfg-head{color:var(--txt);font-weight:600;margin-bottom:8px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;}
+.cfg-form{display:grid;grid-template-columns:minmax(220px,2fr) minmax(140px,1fr) minmax(140px,1fr);gap:6px;align-items:end;min-width:0;}
+.cfg-form .addbtn{min-height:36px;}
+.cfg-check{display:flex;gap:6px;align-items:center;color:var(--mut);margin-top:8px;cursor:pointer;}
+.cfg-check input{width:auto;margin:0;}
 #rule-add{grid-column:1/-1;justify-self:end;max-width:100%;}
 .rule-list{display:grid;gap:5px;margin-top:10px;}
 .rule-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 9px;border:1px solid var(--bdr);border-radius:8px;background:#ffffff04;}
@@ -278,6 +283,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(-
   .sw{flex-basis:100%;}
   .fbtn{flex:1 1 auto;}
   .rule-form{grid-template-columns:1fr 1fr;}
+  .cfg-form{grid-template-columns:1fr;}
   .rule-field.wide,#rule-add{grid-column:1/-1;}
   #rule-add{width:100%;justify-content:center;}
   .abr{width:100%;}

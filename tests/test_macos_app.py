@@ -77,3 +77,19 @@ def test_update_menu_info_uses_page_toast_with_escaped_text():
     window = FakeWindow()
     app_main._toast(window, 'Sin "feed"\ny más', 'err')
     assert window.calls == ['toast("Sin \\"feed\\"\\ny m\\u00e1s", "err")']
+
+
+def test_py2app_includes_every_project_module():
+    # Un módulo plano que falte en PROJECT_MODULES no entra en el .app y la app
+    # no arranca (ImportError), aunque los tests desde fuente pasen.
+    import ast
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    tree = ast.parse((root / 'macos' / 'setup.py').read_text(encoding='utf-8'))
+    declared = next(
+        ast.literal_eval(node.value) for node in tree.body
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], 'id', '') == 'PROJECT_MODULES'
+    )
+    modules = {p.stem for p in root.glob('*.py')}
+    assert modules <= set(declared), sorted(modules - set(declared))

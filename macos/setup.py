@@ -30,7 +30,7 @@ DATA_FILES = [
 # Módulos planos del proyecto (no son paquetes): se fuerzan como includes.
 PROJECT_MODULES = [
     "server", "gmail_client", "destructive_gmail", "storage",
-    "validators", "classifier", "ai_client", "paths", "updater",
+    "validators", "classifier", "ai_client", "paths", "updater", "settings",
 ]
 
 OPTIONS = {
