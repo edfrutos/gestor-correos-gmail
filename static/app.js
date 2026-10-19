@@ -678,6 +678,7 @@ async function suggestAiRules(){
   }
 
   if(!hiddenEmails.length){toast('Oculta algunos correos primero para que la IA aprenda','err');return;}
+  if(aiStatus.remote&&!confirm(`Se enviarán remitentes y asuntos de ${hiddenEmails.length} correos ocultos al proveedor AI remoto (${aiStatus.model}). ¿Continuar?`))return;
 
   const btn=document.getElementById('ai-sugg-btn');
   const box=document.getElementById('ai-sugg-box');
@@ -1834,7 +1835,8 @@ function renderAiSettingsState(s){
   const tag=document.getElementById('cfg-tag');
   if(aiStatus.configured){
     const origin=s.ai_source==='env'?' · desde .env':'';
-    el.textContent=`✓ Activa · ${aiStatus.model}${aiStatus.remote?' · remota':' · local'}${origin}`;
+    const cloud=aiStatus.remote&&/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])[:/]/i.test(s.ai_base_url||'');
+    el.textContent=`✓ Activa · ${aiStatus.model}${aiStatus.remote?(cloud?' · remota (modelo cloud de Ollama: los datos salen del equipo)':' · remota'):' · local'}${origin}`;
     tag.textContent='IA ✓';
   }else{
     el.textContent='⚠ Sin configurar: los resúmenes y las sugerencias IA están desactivados';
