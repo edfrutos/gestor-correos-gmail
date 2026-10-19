@@ -122,6 +122,15 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-19 — **v1.2.7 preparada** (rama `feat/ai-think-cloud`): las
+  respuestas AI se limpian de `<think>…</think>` (qwen3, deepseek-r1) antes de
+  usarlas, así que el JSON de «Sugerir reglas» no se rompe; los modelos
+  `…:cloud`/`…-cloud` de Ollama cuentan como **remotos** aunque la URL sea
+  `localhost` (se ejecutan en ollama.com); «Sugerir reglas» pide confirmación
+  con proveedor remoto, como ya hacía el resumen. +13 tests, 238/238.
+  v1.2.6 publicada (tag en `274c402`) e IA verificada en el Mac con Ollama
+  local `qwen3:8b`.
+
 - 2026-10-19 — **Panel Configuración** (rama `feat/settings-ai-backup`):
   la IA (URL base, modelo, clave) se configura desde la UI y se guarda en
   `settings.json` (carpeta de datos, permisos 600; la clave nunca vuelve al

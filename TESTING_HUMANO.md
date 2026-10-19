@@ -29,6 +29,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 
 ## 5. Sugerencias IA (Opcional)
 - [ ] **Configuración IA desde la app (v1.2.6):** En el panel "🛠 Configuración" rellena URL base, modelo y clave y pulsa "Guardar configuración". Verifica que el estado pasa a "✓ Activa · <modelo>", que el campo de clave queda vacío con "•••• guardada" y que tras reiniciar la app sigue configurada.
+- [ ] **Modelo con razonamiento y modelo cloud (v1.2.7):** Con `qwen3:8b` (Ollama local), "Sugerir reglas ahora" propone reglas sin error de JSON. Con un modelo `…:cloud` el estado dice "remota (modelo cloud de Ollama…)" y sugerir reglas o el resumen IA piden confirmación antes de enviar.
 - [x] **Activación:** Activa el toggle de IA en el panel de reglas.
 - [x] **Aprendizaje:** Oculta 5 correos de un remitente nuevo.
 - [x] **Sugerencia:** Pulsa "Sugerir reglas ahora". Verifica que la IA propone una regla coherente.

@@ -1,4 +1,5 @@
 import json
+import re
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -8,6 +9,30 @@ from validators import ApiError
 
 
 MAX_PROMPT_LENGTH = 20000
+_THINK_BLOCK = re.compile(r'<think>.*?</think>', re.DOTALL | re.IGNORECASE)
+# Ollama sirve en localhost modelos que se ejecutan en ollama.com
+# (`kimi-k2.5:cloud`, `gpt-oss:20b-cloud`): los datos salen del equipo.
+_CLOUD_MODEL = re.compile(r'(^|[:\-])cloud$', re.IGNORECASE)
+
+
+def strip_reasoning(text):
+    """Quita el razonamiento `<think>…</think>` de modelos como qwen3/deepseek-r1.
+
+    Un `</think>` sin apertura (la plantilla ya abrió el bloque) también corta
+    todo lo anterior.
+    """
+    text = _THINK_BLOCK.sub('', text)
+    if '</think>' in text.lower():
+        text = re.split(r'</think>', text, flags=re.IGNORECASE)[-1]
+    return text.strip()
+
+
+def is_remote(base_url, model):
+    if not base_url:
+        return False
+    if urlparse(base_url).hostname not in {'localhost', '127.0.0.1', '::1'}:
+        return True
+    return bool(_CLOUD_MODEL.search(model or ''))
 
 
 def ai_status():
@@ -15,7 +40,7 @@ def ai_status():
     return {
         'configured': bool(base_url and model),
         'model': model or None,
-        'remote': bool(base_url and urlparse(base_url).hostname not in {'localhost', '127.0.0.1', '::1'}),
+        'remote': is_remote(base_url, model),
     }
 
 
@@ -67,7 +92,7 @@ def summarize(prompt):
     except (URLError, TimeoutError, json.JSONDecodeError) as exc:
         raise ApiError('Error conectando con AI', status=502, detail=str(exc)) from exc
     try:
-        text = result['choices'][0]['message']['content'].strip()
+        text = strip_reasoning(result['choices'][0]['message']['content'])
     except (KeyError, IndexError, TypeError, AttributeError) as exc:
         raise ApiError('Respuesta AI inválida', status=502, detail='El proveedor no devolvió un resumen válido') from exc
     if not text:
@@ -113,7 +138,7 @@ def suggest_rules(emails_metadata):
     try:
         with urlopen(request, timeout=30) as response:
             result = json.load(response)
-            text = result['choices'][0]['message']['content'].strip()
+            text = strip_reasoning(result['choices'][0]['message']['content'])
             # Limpiar posibles bloques de código markdown
             if text.startswith('```'):
                 text = text.split('\n', 1)[1].rsplit('\n', 1)[0].strip()
