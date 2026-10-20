@@ -122,6 +122,13 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-20 — **Sandbox de la Mac App Store probado en el Mac** (`MAS_LOCAL=1`):
+  §10 pasa salvo TestFlight. La primera build fallaba al arrancar porque
+  `_cffi_backend` (lo carga cryptography) no iba en el bundle; también le
+  faltaba a la app de Developer ID 1.3.1, que solo arrancaba con el cffi del
+  Python del usuario. Arreglado en `macos/setup.py`; `macos/check_bundle.sh`
+  para los dos builds si falta. Testeo humano 51/53.
+
 - 2026-10-20 — **Mac App Store** (rama `feat/mac-app-store`, ADR-015, Fase 35,
   v1.4.0): variante `macos/build_mas.sh` (App Sandbox, Apple Distribution,
   `.pkg`; `MAS_LOCAL=1` para probar el sandbox), sin actualizaciones propias,
@@ -129,7 +136,7 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   Developer ID, que con HEADLESS=1 no lo abría), «Importar credentials.json…»,
   cliente OAuth opcional en la build y bookmarks para la carpeta de respaldo.
   Guía `docs/MAC_APP_STORE.md` y política `docs/PRIVACY.md`. +33 tests.
-  Testeo humano 44/53.
+  Testeo humano 44/53 (en ese momento).
 
 - 2026-10-20 — **Deltas de Sparkle** (rama `feat/sparkle-deltas`, Fase 38,
   v1.3.2): `macos/delta_base.py` descarga y verifica el zip publicado,
@@ -301,7 +308,8 @@ Deltas preparados como v1.3.2 (rama `feat/sparkle-deltas`): compilar, publicar
 (con el `.delta`) y verificar 1.3.1 → 1.3.2. Después, v1.4.0 (rama
 `feat/mac-app-store`): Release de Developer ID como siempre y, para la tienda,
 `docs/MAC_APP_STORE.md` (§0 prueba local del sandbox, luego Apple, Google,
-TestFlight y revisión). Testeo humano 44/53.
+TestFlight y revisión). Sandbox local ya verificado (§10 salvo TestFlight).
+Testeo humano 51/53.
 `v1.2.2`–`v1.3.1` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 

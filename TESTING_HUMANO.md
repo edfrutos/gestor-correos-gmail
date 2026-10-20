@@ -70,19 +70,27 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 
 - [x] **Puente a Sparkle (v1.3.0):** Desde la 1.2.7, **Buscar actualizaciones** instala la 1.3.0 con el updater de siempre. En la 1.3.0, `ls "/Applications/Gestor de Correos.app/Contents/Frameworks"` muestra `Sparkle.framework`.
 - [x] **Sparkle (v1.3.0 → siguiente):** En la 1.3.0, **Buscar actualizaciones** (menú y botón ⟳) abre el diálogo de Sparkle: "estás al día" sin Release nuevo; con el siguiente Release, muestra la versión y las notas, descarga, instala y relanza la app en la versión nueva. _(2026-10-20: verificado 1.3.0 → 1.3.1: descarga, instala y relanza.)_
-- [ ] **Delta de Sparkle (v1.3.1 → v1.3.2):** El build de la 1.3.2 muestra `OK, dist/GestorDeCorreos-1.3.2-from-1.3.1.delta` y el Release lleva ese `.delta`. Desde la 1.3.1, **Buscar actualizaciones** instala la 1.3.2 y la app se relanza en la 1.3.2. En `log show --last 10m --predicate 'subsystem BEGINSWITH "org.sparkle-project"' --info` aparece la descarga del `.delta` (no la del `.zip`).
+- [x] **Delta de Sparkle (v1.3.1 → v1.3.2):** El build de la 1.3.2 muestra `OK, dist/GestorDeCorreos-1.3.2-from-1.3.1.delta` y el Release lleva ese `.delta`. Desde la 1.3.1, **Buscar actualizaciones** instala la 1.3.2 y la app se relanza en la 1.3.2. En `log show --last 10m --predicate 'subsystem BEGINSWITH "org.sparkle-project"' --info` aparece la descarga del `.delta` (no la del `.zip`).
 
 
 ## 10. Mac App Store (Fase 35, v1.4.0)
 Guía completa: `docs/MAC_APP_STORE.md`. Primero con la prueba local del sandbox (`MAS_LOCAL=1 … bash macos/build_mas.sh`, cerrando antes la app de Developer ID) y después con la build instalada desde TestFlight.
-- [ ] **Login en la app de Developer ID (v1.4.0):** Sin `token.json`, una búsqueda abre el login de Google en el navegador del sistema y, al aceptar, la app queda conectada.
-- [ ] **Arranque en sandbox:** La app abre y `codesign -d --entitlements - "dist-mas/Gestor de Correos.app"` muestra `com.apple.security.app-sandbox`. Los datos aparecen en `~/Library/Containers/com.edefrutos.gestorcorreos/Data/Library/Application Support/GestorDeCorreos/`. No hay menú «Actualizaciones» ni botón ⟳.
-- [ ] **Importar credentials.json:** En 🛠 Configuración → **📄 Importar credentials.json…**, elige tu `credentials.json`: aviso de éxito y el estado pasa a pedir autorización. Un JSON que no sea un cliente de escritorio da un error claro.
-- [ ] **OAuth en sandbox:** Una búsqueda abre el login de Google en el navegador. Al aceptar, la app queda conectada y la búsqueda devuelve resultados.
-- [ ] **Exportar y respaldo:** Con una carpeta elegida con **📁 Elegir…** (p. ej. en Documentos), exporta un `.eml`: aparece en `exports/` del contenedor y en la carpeta elegida. Sal de la app, vuelve a abrirla y exporta otro: la copia de respaldo sigue llegando (bookmark).
-- [ ] **Abrir .eml desde el Finder:** Doble clic (o «Abrir con») en un `.eml` lo muestra en el visor.
-- [ ] **IA local en sandbox:** Con Ollama en el Mac, «Sugerir reglas» o el resumen funcionan igual que en la app de Developer ID.
+- [x] **Login en la app de Developer ID (v1.4.0):** Sin `token.json`, una búsqueda abre el login de Google en el navegador del sistema y, al aceptar, la app queda conectada.
+- [x] **Arranque en sandbox:** La app abre y `codesign -d --entitlements - "dist-mas/Gestor de Correos.app"` muestra `com.apple.security.app-sandbox`. Los datos aparecen en `~/Library/Containers/com.edefrutos.gestorcorreos/Data/Library/Application Support/GestorDeCorreos/`. No hay menú «Actualizaciones» ni botón ⟳.
+- [x] **Importar credentials.json:** En 🛠 Configuración → **📄 Importar credentials.json…**, elige tu `credentials.json`: aviso de éxito y el estado pasa a pedir autorización. Un JSON que no sea un cliente de escritorio da un error claro.
+- [x] **OAuth en sandbox:** Una búsqueda abre el login de Google en el navegador. Al aceptar, la app queda conectada y la búsqueda devuelve resultados.
+- [x] **Exportar y respaldo:** Con una carpeta elegida con **📁 Elegir…** (p. ej. en Documentos), exporta un `.eml`: aparece en `exports/` del contenedor y en la carpeta elegida. Sal de la app, vuelve a abrirla y exporta otro: la copia de respaldo sigue llegando (bookmark).
+- [x] **Abrir .eml desde el Finder:** Doble clic (o «Abrir con») en un `.eml` lo muestra en el visor.
+- [x] **IA local en sandbox:** Con Ollama en el Mac, «Sugerir reglas» o el resumen funcionan igual que en la app de Developer ID.
 - [ ] **TestFlight:** La build subida con `build_mas.sh` se instala desde TestFlight y pasa las pruebas anteriores (con el cliente OAuth incluido si se usó `MAS_OAUTH_CLIENT`).
+
+2026-10-20: §10 verificado en el Mac con la prueba local del sandbox
+(`MAS_LOCAL=1`, v1.4.0): arranque aislado, importar `credentials.json`, login
+OAuth en el navegador y búsqueda, exportar con respaldo recordado tras
+reiniciar (bookmark), abrir `.eml` desde el Finder e IA local. La primera
+build no arrancaba (`ModuleNotFoundError: _cffi_backend`, faltaba en el
+bundle; arreglado en `macos/setup.py` + `macos/check_bundle.sh`). Pendiente
+solo TestFlight (necesita certificados, perfil y ficha en App Store Connect).
 
 2026-10-18: v1.2.4 (primer Release con `latest.json.sig`) instalado en el Mac
 desde 1.2.3 por el auto-updater; esa actualización aún no verifica la firma
