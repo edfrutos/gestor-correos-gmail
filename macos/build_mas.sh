@@ -94,6 +94,7 @@ echo "==> 3/8  py2app (variante Mac App Store, CFBundleVersion ${BUNDLE_VERSION}
 rm -rf build "${DIST}"
 GESTOR_DISTRIBUTION=mas GESTOR_BUNDLE_VERSION="${BUNDLE_VERSION}" \
     build-venv/bin/python macos/setup.py py2app --dist-dir "${DIST}"
+bash macos/check_bundle.sh "${BUNDLE}"
 
 echo "==> 4/8  Recursos de la variante"
 RES="${BUNDLE}/Contents/Resources"

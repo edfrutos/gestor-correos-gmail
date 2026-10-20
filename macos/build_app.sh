@@ -80,6 +80,7 @@ fi
 echo "==> 3/9  py2app"
 rm -rf build dist
 build-venv/bin/python macos/setup.py py2app
+bash macos/check_bundle.sh "dist/${APP_NAME}.app"
 
 echo "==> 3b/9 Sparkle.framework ${SPARKLE_VERSION} -> Contents/Frameworks"
 if [ ! -d "${SPARKLE_CACHE}/Sparkle.framework" ] || [ ! -x "${BINARY_DELTA}" ]; then
