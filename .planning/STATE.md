@@ -122,6 +122,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-20 — **Release v1.3.0 publicado** (tag en `71150c5`, PR #16).
+  Verificado en el Mac: 1.2.7 → 1.3.0 con el updater en Python,
+  `Sparkle.framework` en el bundle y el diálogo de Sparkle («estás al día»)
+  desde el menú y el botón ⟳. VERSION 1.3.1 para probar la instalación con
+  Sparkle. Testeo humano 43/44.
+
 - 2026-10-20 — **Sparkle 2** (rama `feat/sparkle`, ADR-014, Fase 37, v1.3.0):
   `Sparkle.framework` 2.9.6 embebido y firmado por `build_app.sh`,
   `appcast.xml` generado por `macos/make_appcast.py` con la misma clave Ed25519,
@@ -269,10 +275,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.2.7 publicado** (tag `v1.2.7` en `64d1198`). Sparkle preparado como
-v1.3.0 (rama `feat/sparkle`): compilar, publicar y verificar en el Mac
-1.2.7 → 1.3.0 (updater en Python) y 1.3.0 → 1.3.1 (Sparkle). Testeo humano 42/44.
-`v1.2.2`–`v1.2.7` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
+**v1.3.0 publicado** (tag `v1.3.0` en `71150c5`), Sparkle carga en el Mac.
+Siguiente: compilar y publicar la 1.3.1 y verificar 1.3.0 → 1.3.1 con
+Sparkle (descarga, instala y relanza). Testeo humano 43/44.
+`v1.2.2`–`v1.3.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 
 Clave privada en
@@ -283,4 +289,4 @@ Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 
 Otros pendientes:
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
-- Sparkle (appcast + deltas) como alternativa futura al updater en Python.
+- Deltas de Sparkle (`BinaryDelta`), fuera de alcance de la Fase 37.
