@@ -133,6 +133,12 @@ xcrun stapler validate "/Applications/Gestor de Correos.app"
 
 ---
 
+## Mac App Store
+
+La variante de la Mac App Store (App Sandbox, sin Sparkle, `.pkg` para App Store
+Connect) se compila con `macos/build_mas.sh`. Pasos completos, incluida la
+prueba local del sandbox (`MAS_LOCAL=1`), en `docs/MAC_APP_STORE.md`.
+
 ## Dónde viven los datos en la `.app` instalada
 
 El bundle es de solo lectura y firmado, así que **todo el estado escribible** va a:
@@ -153,6 +159,9 @@ Primer uso:
 mkdir -p ~/Library/Application\ Support/GestorDeCorreos
 cp /ruta/a/credentials.json ~/Library/Application\ Support/GestorDeCorreos/
 ```
+
+O desde la app: 🛠 Configuración → **📄 Importar credentials.json…** (desde la
+v1.4.0). La primera búsqueda abre el login de Google en el navegador.
 
 Override para pruebas: `GESTOR_DATA_DIR=/otra/carpeta` fuerza esa carpeta en
 cualquier modo (ver `paths.py`).
@@ -186,6 +195,16 @@ misma clave Ed25519 que `latest.json` (`UPDATE_SIGNING_KEY`). Sparkle comprueba
 una vez al día y con **Buscar actualizaciones** (menú o botón); muestra su
 diálogo estándar, descarga, verifica la firma EdDSA y la identidad Developer ID,
 y reinstala la app.
+
+**Deltas (v1.3.2+, Fase 38):** `build_app.sh` descarga el zip del último
+Release, lo verifica con su firma del appcast publicado (`macos/delta_base.py`)
+y crea con `BinaryDelta` un `dist/GestorDeCorreos-<VERSION>-from-<ANTERIOR>.delta`.
+Antes de aceptarlo lo aplica sobre esa base y exige que la `.app` resultante
+pase `codesign --verify` con el mismo CDHash que la compilada. Quien tenga
+exactamente la versión anterior descarga solo el delta; los demás, el zip. Si
+no hay base (primer Release, sin red) o el delta no verifica, avisa y publica
+sin delta; si el Release publicado no casa con su firma, se detiene. El
+`.delta` va en el `gh release create` que imprime el script.
 
 Las 1.2.x no tienen Sparkle: siguen usando el updater en Python con
 `latest.json`, que por eso **se sigue publicando** en cada Release (es el puente

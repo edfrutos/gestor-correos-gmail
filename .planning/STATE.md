@@ -122,6 +122,21 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-20 — **Mac App Store** (rama `feat/mac-app-store`, ADR-015, Fase 35,
+  v1.4.0): variante `macos/build_mas.sh` (App Sandbox, Apple Distribution,
+  `.pkg`; `MAS_LOCAL=1` para probar el sandbox), sin actualizaciones propias,
+  login OAuth en el navegador con NSWorkspace (también arregla la app de
+  Developer ID, que con HEADLESS=1 no lo abría), «Importar credentials.json…»,
+  cliente OAuth opcional en la build y bookmarks para la carpeta de respaldo.
+  Guía `docs/MAC_APP_STORE.md` y política `docs/PRIVACY.md`. +33 tests.
+  Testeo humano 44/53.
+
+- 2026-10-20 — **Deltas de Sparkle** (rama `feat/sparkle-deltas`, Fase 38,
+  v1.3.2): `macos/delta_base.py` descarga y verifica el zip publicado,
+  `build_app.sh` crea el `.delta` con `BinaryDelta`, lo comprueba aplicándolo
+  (codesign + CDHash) y `make_appcast.py` lo añade en `<sparkle:deltas>`. +9
+  tests. Pendiente: verificar 1.3.1 → 1.3.2 en el Mac. Testeo humano 44/45.
+
 - 2026-10-20 — **Release v1.3.1 publicado** (tag en `fb9d695`, PR #17).
   Verificado en el Mac 1.3.0 → 1.3.1 con Sparkle (diálogo, descarga,
   instalación y relanzamiento). Fase 37 completada. Testeo humano 44/44.
@@ -281,7 +296,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 **v1.3.1 publicado** (tag `v1.3.1` en `fb9d695`). Las actualizaciones de la
 1.3.0 en adelante las gestiona Sparkle (`appcast.xml`); `latest.json` se sigue
-publicando para que las 1.2.x puedan actualizar. Testeo humano 44/44.
+publicando para que las 1.2.x puedan actualizar.
+Deltas preparados como v1.3.2 (rama `feat/sparkle-deltas`): compilar, publicar
+(con el `.delta`) y verificar 1.3.1 → 1.3.2. Después, v1.4.0 (rama
+`feat/mac-app-store`): Release de Developer ID como siempre y, para la tienda,
+`docs/MAC_APP_STORE.md` (§0 prueba local del sandbox, luego Apple, Google,
+TestFlight y revisión). Testeo humano 44/53.
 `v1.2.2`–`v1.3.1` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 
@@ -291,6 +311,4 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Otros pendientes:
-- Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
-- Deltas de Sparkle (`BinaryDelta`), fuera de alcance de la Fase 37.
+Otros pendientes: ninguno fuera de la Fase 35 (MAS-01 … MAS-05).

@@ -8,17 +8,24 @@ ventana WKWebView vía pywebview. Al cerrar la ventana, detiene el servidor.
 La app web y la CLI siguen funcionando exactamente igual: este módulo no las
 toca, solo reutiliza el mismo backend.
 
+En la build de la Mac App Store (`paths.is_app_store()`, Fase 35) corre en App
+Sandbox: sin Sparkle ni menú de actualizaciones, el login OAuth abre el
+navegador con NSWorkspace y la carpeta de respaldo se recuerda con un
+*security-scoped bookmark*.
+
 Prueba en el Mac sin empaquetar:
     python3 -m pip install -r requirements.txt -r requirements-macos.txt
     python3 macos/app_main.py [ruta/opcional/al/archivo.eml]
 """
 
+import base64
 import json
 import os
 import socket
 import sys
 import threading
 import time
+import webbrowser
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import quote
@@ -31,6 +38,133 @@ if str(_PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(_PROJECT_DIR))
 
 APP_TITLE = "Gestor de Correos"
+OAUTH_BROWSER = "gestor-nsworkspace"
+BUNDLED_OAUTH_CLIENT = "oauth_client.json"  # lo añade build_mas.sh (MAS_OAUTH_CLIENT)
+BUNDLED_MARK = "gestor_bundled"
+BOOKMARKS_FILE = "bookmarks.json"
+# NSURLBookmarkCreationWithSecurityScope / NSURLBookmarkResolutionWithSecurityScope
+_BOOKMARK_CREATE_SECURITY_SCOPE = 1 << 11
+_BOOKMARK_RESOLVE_SECURITY_SCOPE = 1 << 10
+
+
+class WorkspaceBrowser(webbrowser.BaseBrowser):
+    """Abre URLs con NSWorkspace. El controlador por defecto de `webbrowser`
+    en macOS lanza `osascript`, que App Sandbox no deja enviar AppleEvents."""
+
+    def open(self, url, new=0, autoraise=True):
+        from AppKit import NSWorkspace  # noqa: E402
+        from Foundation import NSURL  # noqa: E402
+        return bool(NSWorkspace.sharedWorkspace().openURL_(NSURL.URLWithString_(url)))
+
+
+def register_oauth_browser() -> bool:
+    """`gmail_client.run_oauth_flow` abre el login de Google con este
+    controlador (también con HEADLESS=1, que solo evita abrir la UI fuera)."""
+    try:
+        import AppKit  # noqa: F401,E402
+    except ImportError:
+        return False
+    webbrowser.register(OAUTH_BROWSER, None, WorkspaceBrowser(OAUTH_BROWSER))
+    os.environ["GESTOR_OAUTH_BROWSER"] = OAUTH_BROWSER
+    return True
+
+
+def install_bundled_oauth_client(resource_dir: Path, creds_path: Path) -> bool:
+    """Copia el cliente OAuth que lleva la build de la Mac App Store a la
+    carpeta de datos si el usuario no ha importado uno propio.
+
+    La copia lleva `gestor_bundled: true`: así una versión nueva puede
+    sustituirla, y un `credentials.json` del usuario (sin la marca) nunca se toca.
+    """
+    src = Path(resource_dir) / BUNDLED_OAUTH_CLIENT
+    if not src.is_file():
+        return False
+    if creds_path.exists():
+        try:
+            current = json.loads(creds_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        if not (isinstance(current, dict) and current.get(BUNDLED_MARK)):
+            return False
+    data = json.loads(src.read_text(encoding="utf-8"))
+    data[BUNDLED_MARK] = True
+    text = json.dumps(data, indent=2) + "\n"
+    if creds_path.exists() and creds_path.read_text(encoding="utf-8") == text:
+        return False
+    tmp = creds_path.with_name(creds_path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.chmod(0o600)
+    tmp.replace(creds_path)
+    return True
+
+
+class FolderBookmarks:
+    """Carpetas elegidas por el usuario que siguen accesibles tras reiniciar.
+
+    En App Sandbox, lo elegido en un NSOpenPanel solo es accesible durante esa
+    sesión; para la carpeta de respaldo se guarda un *security-scoped
+    bookmark* (`bookmarks.json`, ruta → bookmark en base64) y al arrancar se
+    resuelve y se activa con `startAccessingSecurityScopedResource`.
+    """
+
+    def __init__(self, store_path: Path):
+        self.store_path = Path(store_path)
+        self._active = []  # NSURL con acceso abierto: viven lo que el proceso
+
+    def _load(self):
+        try:
+            data = json.loads(self.store_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    def _save(self, data):
+        tmp = self.store_path.with_name(self.store_path.name + ".tmp")
+        tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+        tmp.chmod(0o600)
+        tmp.replace(self.store_path)
+
+    def remember(self, path: str) -> bool:
+        from Foundation import NSURL  # noqa: E402
+        url = NSURL.fileURLWithPath_(path)
+        bookmark, error = url.bookmarkDataWithOptions_includingResourceValuesForKeys_relativeToURL_error_(
+            _BOOKMARK_CREATE_SECURITY_SCOPE, None, None, None)
+        if bookmark is None:
+            print(f"[bookmarks] No se pudo guardar el acceso a {path}: {error}", file=sys.stderr)
+            return False
+        data = self._load()
+        data[path] = base64.b64encode(bytes(bookmark)).decode("ascii")
+        self._save(data)
+        return True
+
+    def restore(self) -> list:
+        """Activa el acceso a cada carpeta guardada; devuelve las rutas activas."""
+        from Foundation import NSURL, NSData  # noqa: E402
+        data, restored, changed = self._load(), [], False
+        for path, encoded in list(data.items()):
+            try:
+                raw = base64.b64decode(encoded)
+            except ValueError:
+                raw = b""
+            url, stale, error = NSURL.URLByResolvingBookmarkData_options_relativeToURL_bookmarkDataIsStale_error_(
+                NSData.dataWithBytes_length_(raw, len(raw)), _BOOKMARK_RESOLVE_SECURITY_SCOPE, None, None, None)
+            if url is None or not url.startAccessingSecurityScopedResource():
+                print(f"[bookmarks] Sin acceso a {path}: {error}", file=sys.stderr)
+                data.pop(path)
+                changed = True
+                continue
+            self._active.append(url)
+            restored.append(str(url.path()))
+            if stale:  # la carpeta se movió o renombró: se regenera el bookmark
+                bookmark, _ = url.bookmarkDataWithOptions_includingResourceValuesForKeys_relativeToURL_error_(
+                    _BOOKMARK_CREATE_SECURITY_SCOPE, None, None, None)
+                if bookmark is not None:
+                    data.pop(path)
+                    data[str(url.path())] = base64.b64encode(bytes(bookmark)).decode("ascii")
+                    changed = True
+        if changed:
+            self._save(data)
+        return restored
 
 
 class SparkleUpdater:
@@ -167,9 +301,10 @@ class JsApi:
     públicos del objeto para exponerlos a JS.
     """
 
-    def __init__(self, sparkle=None):
+    def __init__(self, sparkle=None, bookmarks=None):
         self._window = None
         self._sparkle = sparkle
+        self._bookmarks = bookmarks
 
     def check_updates(self):
         """Botón de la UI: con Sparkle abre su diálogo y devuelve True; si no,
@@ -185,7 +320,30 @@ class JsApi:
         if folder_dialog is None:
             folder_dialog = webview.FOLDER_DIALOG
         result = self._window.create_file_dialog(folder_dialog)
-        return result[0] if result else None
+        folder = result[0] if result else None
+        if folder and self._bookmarks is not None:
+            self._bookmarks.remember(folder)
+        return folder
+
+    def import_credentials(self):
+        """Botón «Importar credentials.json…»: selector nativo + validación.
+        En App Sandbox es la única forma de que el usuario aporte su cliente."""
+        if self._window is None:
+            return {"ok": False, "error": "La ventana aún no está lista"}
+        import webview  # noqa: E402
+        open_dialog = getattr(getattr(webview, "FileDialog", None), "OPEN", None)
+        if open_dialog is None:
+            open_dialog = webview.OPEN_DIALOG
+        result = self._window.create_file_dialog(open_dialog, file_types=("JSON (*.json)",))
+        if not result:
+            return {"ok": False, "cancelled": True}
+        path = result[0] if isinstance(result, (list, tuple)) else result
+        import gmail_client  # noqa: E402
+        try:
+            client_id = gmail_client.import_client_secrets(path)
+        except (OSError, ValueError) as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True, "client_id": client_id}
 
 
 def _install_open_files_handler(opener: EmlOpener) -> bool:
@@ -223,8 +381,22 @@ def main() -> int:
     os.environ["PORT"] = str(port)
     os.environ["HEADLESS"] = "1"  # nunca abrir el navegador del sistema
 
+    register_oauth_browser()
+
     # Importar DESPUÉS de fijar el entorno: server.py lee HOST/PORT al importarse.
     import server  # noqa: E402
+    import gmail_client  # noqa: E402
+    import paths  # noqa: E402
+
+    app_store = paths.is_app_store()
+    try:
+        if install_bundled_oauth_client(paths.resource_dir(), gmail_client.CREDS):
+            print("[OAuth] Cliente OAuth de la app instalado en la carpeta de datos", file=sys.stderr)
+    except (OSError, ValueError) as exc:
+        print(f"[OAuth] No se pudo instalar el cliente OAuth de la app: {exc}", file=sys.stderr)
+    bookmarks = FolderBookmarks(paths.data_path(BOOKMARKS_FILE)) if app_store else None
+    if bookmarks is not None:
+        bookmarks.restore()
 
     httpd = ThreadingHTTPServer((host, port), server.H)
     server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
@@ -248,8 +420,9 @@ def main() -> int:
         httpd.shutdown()
         return 1
 
-    sparkle = SparkleUpdater()
-    js_api = JsApi(sparkle)
+    # Mac App Store: sin Sparkle (no va en el bundle) ni updater propio.
+    sparkle = None if app_store else SparkleUpdater()
+    js_api = JsApi(sparkle, bookmarks)
     window = webview.create_window(APP_TITLE, start_url, width=1180, height=820, min_size=(900, 600), js_api=js_api)
     js_api._window = window
     opener = EmlOpener(window)
@@ -258,6 +431,8 @@ def main() -> int:
 
     def on_started():
         # webview.start(func) ejecuta func en otro hilo: Sparkle, en el principal.
+        if sparkle is None:
+            return
         try:
             from PyObjCTools.AppHelper import callAfter
         except Exception:  # noqa: BLE001
@@ -265,7 +440,7 @@ def main() -> int:
         callAfter(sparkle.start)
 
     try:
-        webview.start(on_started, menu=_build_menu(webview, window, sparkle))
+        webview.start(on_started, menu=[] if app_store else _build_menu(webview, window, sparkle))
     finally:
         httpd.shutdown()
         server_thread.join(timeout=5)

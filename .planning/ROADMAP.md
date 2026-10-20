@@ -622,12 +622,34 @@ Requisitos: MAC-01 … MAC-05 (todos Done).
 Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
 `spctl` accepted en el Mac.
 
-### Phase 35 — Mac App Store (futuro)
+### Phase 35 — Mac App Store (ADR-015)
 
-**Status:** Not started. Rama y milestone aparte.
+**Status:** Implementado (v1.4.0, rama `feat/mac-app-store`), pendiente de
+probar el sandbox en el Mac, configurar Apple/Google y pasar App Review.
 
-Shell nativo Swift/SwiftUI + WKWebView, App Sandbox, `server.py` como helper
-bundled o port parcial a Swift, cert *3rd Party Mac Developer*, App Review.
+Misma base py2app + pywebview con una variante de build (no el shell Swift
+que se planteó al principio; queda como plan B si App Review rechaza esta).
+
+Scope:
+- `paths.distribution()` / `is_app_store()`: archivo `DISTRIBUTION` en el bundle.
+- Sin actualizaciones propias en la tienda: `updater` no consulta ni instala,
+  `/api/update/install` → 403, sin Sparkle ni menú, botón ⟳ oculto.
+- OAuth: `gmail_client.run_oauth_flow` abre el navegador con NSWorkspace
+  (`app_main.WorkspaceBrowser`) aunque HEADLESS=1, con timeout de 300 s.
+- **📄 Importar credentials.json…** (`JsApi.import_credentials` →
+  `gmail_client.import_client_secrets`); cliente OAuth opcional dentro de la
+  build (`MAS_OAUTH_CLIENT`, `install_bundled_oauth_client`).
+- Carpeta de respaldo con *security-scoped bookmarks* (`FolderBookmarks`).
+- `macos/build_mas.sh` + `entitlements-mas(-inherit).plist`: App Sandbox,
+  perfil «Mac App Store Connect», Apple Distribution, `.pkg` firmado;
+  `MAS_LOCAL=1` para probar el sandbox con Developer ID.
+- `docs/MAC_APP_STORE.md` (pasos Apple y Google, ficha, revisión) y
+  `docs/PRIVACY.md` (política de privacidad).
+
+Requisitos: MAS-01 … MAS-05.
+
+Verification: `pytest` (290) · ensayo de `build_mas.sh` con stubs · en el Mac:
+`TESTING_HUMANO.md` §10 (sandbox local y TestFlight).
 
 ## Milestone 10: Auto-actualización
 
@@ -680,6 +702,20 @@ Scope:
 
 Verification: `pytest` (248) · en el Mac: 1.2.7 → 1.3.0 con el updater en
 Python y 1.3.0 → 1.3.1 con Sparkle.
+
+### Phase 38 — Deltas de Sparkle (ADR-014, addendum)
+
+**Status:** Implementado (v1.3.2), pendiente de verificar en el Mac.
+
+Scope:
+- `macos/delta_base.py`: descarga el zip del Release publicado y verifica
+  longitud, URL y `sparkle:edSignature` antes de usarlo como base.
+- `build_app.sh`: `BinaryDelta create` (del tarball de Sparkle) + comprobación
+  `apply` → `codesign --verify` + mismo CDHash; el `.delta` va en el
+  `gh release create` impreso. Sin base o sin verificar → sin delta.
+- `make_appcast.py`: `<sparkle:deltas>` firmado con la misma clave.
+
+Verification: `pytest` (257) · en el Mac: 1.3.1 → 1.3.2 descargando el delta.
 
 ## Product Backlog — Future Features
 

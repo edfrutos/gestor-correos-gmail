@@ -13,6 +13,12 @@ Distingue dos carpetas:
 
 Override explícito para ambos casos de datos: variable de entorno
 `GESTOR_DATA_DIR` (útil en tests y para usuarios avanzados).
+
+Distribución (`distribution`): `"mas"` en la build de la Mac App Store
+(`macos/build_mas.sh` deja un archivo `DISTRIBUTION` en `Contents/Resources`),
+`"direct"` en el resto (Developer ID + Sparkle, web, CLI). En la Mac App Store
+la app corre en App Sandbox (`Path.home()` ya es su contenedor) y no se
+actualiza sola: lo hace la tienda.
 """
 
 import os
@@ -20,6 +26,8 @@ import sys
 from pathlib import Path
 
 APP_SUPPORT_NAME = "GestorDeCorreos"
+DISTRIBUTION_FILE = "DISTRIBUTION"
+APP_STORE = "mas"
 _PROJECT_DIR = Path(__file__).resolve().parent
 
 
@@ -49,6 +57,24 @@ def resource_dir() -> Path:
     if is_bundled():
         return Path(sys.executable).resolve().parent.parent / "Resources"
     return _PROJECT_DIR
+
+
+def distribution() -> str:
+    """`"mas"` (Mac App Store) o `"direct"`. Override: `GESTOR_DISTRIBUTION`."""
+    override = os.environ.get("GESTOR_DISTRIBUTION", "").strip().lower()
+    if override:
+        return override
+    if not is_bundled():
+        return "direct"
+    try:
+        value = (resource_dir() / DISTRIBUTION_FILE).read_text(encoding="utf-8").strip().lower()
+    except OSError:
+        return "direct"
+    return value or "direct"
+
+
+def is_app_store() -> bool:
+    return distribution() == APP_STORE
 
 
 def data_path(name: str) -> Path:

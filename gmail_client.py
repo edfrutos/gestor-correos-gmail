@@ -7,7 +7,7 @@ from email.utils import parseaddr
 from pathlib import Path
 
 from classifier import classify_metadata
-from paths import data_path
+from paths import data_path, is_bundled
 
 try:
     from google.auth.transport.requests import Request
@@ -28,6 +28,10 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 # ~/Library/Application Support/GestorDeCorreos/ dentro del .app (ver paths.py).
 CREDS = data_path('credentials.json')
 TOKEN = data_path('token.json')
+# El login OAuth espera la vuelta del navegador como mucho este tiempo; sin
+# límite, una autorización abandonada dejaba la petición colgada para siempre.
+OAUTH_TIMEOUT_SECONDS = 300
+MAX_CLIENT_SECRETS_BYTES = 64 * 1024
 
 # Gmail acepta como máximo 1000 IDs por llamada a users.messages.batchModify.
 # Troceamos en lotes menores para acotar el tamaño de cada petición, permitir
@@ -49,6 +53,56 @@ def _write_token(payload):
 
 def _discard_token():
     TOKEN.unlink(missing_ok=True)
+
+
+def run_oauth_flow(flow):
+    """Login OAuth en el navegador del sistema con redirección a localhost.
+
+    La app de escritorio fija `GESTOR_OAUTH_BROWSER`: un controlador de
+    `webbrowser` que abre la URL con NSWorkspace (en App Sandbox no se puede
+    lanzar `osascript`, que es lo que usa `webbrowser` en macOS). Así abre el
+    navegador aunque corra con HEADLESS=1. Sin él, HEADLESS (servidor sin
+    pantalla) solo imprime la URL.
+    """
+    browser = os.getenv('GESTOR_OAUTH_BROWSER') or None
+    open_browser = bool(browser) or os.getenv('HEADLESS') != '1'
+    return flow.run_local_server(port=0, open_browser=open_browser, browser=browser,
+                                 timeout_seconds=OAUTH_TIMEOUT_SECONDS)
+
+
+def import_client_secrets(source):
+    """Copia un cliente OAuth de escritorio de Google (`credentials.json`) a
+    `CREDS`. Lo usa el botón «Importar credentials.json…» de la app: en App
+    Sandbox el usuario no puede dejarlo a mano en la carpeta de datos.
+
+    Si el cliente cambia, el token anterior (emitido para otro client_id) se
+    descarta para que el siguiente acceso pida autorizar de nuevo.
+    """
+    global _svc
+    source = Path(source)
+    if source.stat().st_size > MAX_CLIENT_SECRETS_BYTES:
+        raise ValueError('El archivo es demasiado grande para ser un credentials.json')
+    try:
+        data = json.loads(source.read_text(encoding='utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise ValueError('El archivo no es un JSON válido')
+    client = data.get('installed') if isinstance(data, dict) else None
+    if not isinstance(client, dict) or not client.get('client_id') or not client.get('client_secret'):
+        raise ValueError('No es un cliente OAuth de tipo «App de escritorio» de Google Cloud '
+                         '(falta "installed" con client_id y client_secret)')
+    with _svc_lock:
+        tmp = CREDS.with_name(CREDS.name + '.tmp')
+        tmp.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+        tmp.chmod(0o600)
+        tmp.replace(CREDS)
+        try:
+            token_client = json.loads(TOKEN.read_text(encoding='utf-8')).get('client_id')
+        except (OSError, ValueError, AttributeError):
+            token_client = None
+        if token_client != client['client_id']:
+            _discard_token()
+        _svc = None
+    return client['client_id']
 
 
 def gmail():
@@ -79,8 +133,7 @@ def gmail():
             if not CREDS.exists():
                 return None
             flow = InstalledAppFlow.from_client_secrets_file(str(CREDS), SCOPES)
-            headless = os.getenv('HEADLESS') == '1'
-            creds = flow.run_local_server(port=0, open_browser=not headless)
+            creds = run_oauth_flow(flow)
 
         _write_token(creds.to_json())
         _svc = build('gmail', 'v1', credentials=creds)
@@ -104,7 +157,8 @@ def gmail_status():
             'gmail_lib': True,
             'credentials': False,
             'token': TOKEN.exists(),
-            'msg': 'Necesitas credentials.json en la carpeta',
+            'msg': ('Importa credentials.json en 🛠 Configuración' if is_bundled()
+                    else 'Necesitas credentials.json en la carpeta'),
         }
     if not TOKEN.exists():
         return {

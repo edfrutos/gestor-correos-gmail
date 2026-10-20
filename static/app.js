@@ -95,6 +95,8 @@ async function checkStatus(){
     deleteStatus=d.permanent_delete||deleteStatus;
     if(d.app_version){document.getElementById('ver-pill').textContent='v'+d.app_version;}
     appBundled=d.bundled===true;
+    // Mac App Store: actualiza la tienda, no hay botón propio.
+    if(d.distribution==='mas')document.getElementById('upd-check').style.display='none';
     if(d.ok){
       led.className='sled ok';
       msg.textContent='✓ Gmail conectado — búsqueda en tiempo real disponible';
@@ -129,7 +131,7 @@ async function checkForUpdates(){
   try{
     const r=await fetch(`${API}/api/update/check`,{signal:AbortSignal.timeout(20000)});
     const d=await r.json();
-    if(d.error){toast(d.error,d.no_feed?'ok':'err');return;}
+    if(d.error){toast(d.error,d.no_feed||d.app_store?'ok':'err');return;}
     if(!d.update_available){toast(`Estás en la última versión (v${d.current})`,'ok');return;}
     if(!d.can_auto_install){
       toast(`v${d.latest} disponible. La instalación automática solo funciona en la app de escritorio.`,'err');
@@ -1906,6 +1908,27 @@ function enableFolderPicker(){
 }
 window.addEventListener('pywebviewready',enableFolderPicker);
 enableFolderPicker();
+// Importar credentials.json con el selector nativo (app de escritorio): en la
+// Mac App Store, con App Sandbox, no se puede dejar a mano en la carpeta de datos.
+function enableCredentialsImport(){
+  if(!window.pywebview?.api?.import_credentials)return;
+  document.getElementById('cfg-google').style.display='';
+  const btn=document.getElementById('cfg-creds-import');
+  btn.onclick=async()=>{
+    btn.disabled=true;
+    try{
+      const r=await window.pywebview.api.import_credentials();
+      if(r?.cancelled)return;
+      if(!r?.ok){toast('credentials.json: '+(r?.error||'no se pudo importar'),'err');return;}
+      toast('credentials.json importado. La próxima búsqueda abrirá el login de Google en el navegador.','ok');
+      checkStatus();
+    }finally{
+      btn.disabled=false;
+    }
+  };
+}
+window.addEventListener('pywebviewready',enableCredentialsImport);
+enableCredentialsImport();
 
 // Convierte los adjuntos EML (con data base64) en chips descargables
 function buildEmlAttachmentChips(attachments, container){

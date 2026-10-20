@@ -335,7 +335,7 @@ también la sustitución del zip por otra `.app` antigua firmada del mismo team
 ## ADR-014 — Sparkle 2 como updater de la app macOS (supera el updater en Python del ADR-013)
 
 **Date:** 2026-10-20
-**Status:** Accepted, pendiente de verificar en el Mac (v1.3.0, rama `feat/sparkle`)
+**Status:** Accepted. Verificado en el Mac (v1.3.0 → v1.3.1)
 
 Desde la v1.3.0 la `.app` lleva **Sparkle 2.9.6** (`Contents/Frameworks/Sparkle.framework`)
 y lo arranca desde `macos/app_main.py` vía PyObjC (`SPUStandardUpdaterController`).
@@ -366,3 +366,72 @@ resuelto: el manifiesto firmado de la v1.2.4 usa Ed25519.
   `SparkleUpdater.available` es False y menú y botón usan `updater.py`.
 - Deltas (`BinaryDelta`) quedan fuera: exigen conservar la `.app` anterior en
   cada build. Pueden añadirse sin tocar la app.
+
+**Addendum (2026-10-20, Fase 38 — deltas, v1.3.2):** en vez de conservar la
+`.app` anterior, `build_app.sh` descarga el zip del último Release
+(`macos/delta_base.py`) y solo lo usa si su longitud y su `sparkle:edSignature`
+del appcast publicado casan con la clave embebida (y la URL es un asset del
+propio repo y tag); así el delta parte exactamente de lo que tienen instalado
+los usuarios. `BinaryDelta` (del mismo tarball de Sparkle, sha256 fijado) crea
+`GestorDeCorreos-<v>-from-<anterior>.delta`; antes de publicarlo se aplica a la
+base y la `.app` resultante debe pasar `codesign --verify --deep --strict` y
+tener el mismo CDHash que la compilada. El delta se firma con la misma clave y
+va en `<sparkle:deltas>` (`sparkle:deltaFrom`). Un solo delta, desde la versión
+inmediatamente anterior; el resto descarga el zip completo. Sin base (primer
+Release, red) o si el delta no verifica, se publica sin delta; si la base
+publicada no casa con su firma, el build se detiene.
+
+## ADR-015 — Mac App Store como variante de build sobre py2app (Fase 35)
+
+**Date:** 2026-10-20
+**Status:** Accepted, pendiente de verificar en el Mac y en App Review (v1.4.0, rama `feat/mac-app-store`)
+
+La versión de la Mac App Store sale del mismo código y del mismo bundle py2app +
+pywebview que la de Developer ID, con otra receta de build
+(`macos/build_mas.sh`), en vez del shell nativo en Swift que planteaba el
+ADR-012.
+
+**Rationale:** un shell en Swift duplicaría la app (ventana, menú, apertura de
+`.eml`, selector de carpetas) para seguir lanzando el mismo backend en Python,
+que es lo que App Review evalúa. App Sandbox no impide nada de lo que hace la
+app: el servidor local va con `network.server`, Gmail/OAuth/IA con
+`network.client`, y lo que el usuario elige en un panel nativo queda accesible.
+Lo único incompatible con la tienda es actualizarse sola, y eso se desactiva.
+
+**Decisiones:**
+- `paths.distribution()`: `"mas"` si el bundle trae `Contents/Resources/DISTRIBUTION`
+  (lo escribe `build_mas.sh`); `"direct"` en el resto. Override `GESTOR_DISTRIBUTION`.
+- **Sin actualizaciones propias** (guía 2.4.5): `setup.py` no pone las claves de
+  Sparkle, `build_mas.sh` comprueba que no va `Sparkle.framework`, la app no crea
+  `SparkleUpdater` ni el menú, `updater` no consulta ni instala y
+  `/api/update/install` responde 403. La UI oculta ⟳ con `distribution === 'mas'`.
+- **OAuth en el navegador del sistema** (las dos variantes): `webbrowser` usa
+  `osascript` en macOS, que el sandbox bloquea, y la app corría con HEADLESS=1,
+  que no abría el navegador. `app_main` registra un controlador de `webbrowser`
+  con NSWorkspace y `gmail_client.run_oauth_flow` lo usa también para el permiso
+  de borrado; timeout de 300 s para no dejar peticiones colgadas.
+- **credentials.json desde la app**: «📄 Importar credentials.json…» valida un
+  cliente de escritorio (`installed` con `client_id`/`client_secret`), lo copia
+  con permisos 600 y descarta el token si era de otro cliente. La build de la
+  tienda puede llevar su propio cliente (`MAS_OAUTH_CLIENT` →
+  `Resources/oauth_client.json`), que se copia a la carpeta de datos marcado con
+  `gestor_bundled`; un `credentials.json` del usuario nunca se sobrescribe.
+- **Carpeta de respaldo**: en la tienda, `JsApi.pick_folder` guarda un
+  *security-scoped bookmark* (`bookmarks.json`) y la app lo reactiva al arrancar.
+- **Firma**: sin Hardened Runtime (la tienda no lo pide, así que sobran los
+  `cs.*`); ejecutables anidados con `app-sandbox` + `inherit`; bundle con
+  `entitlements-mas.plist`, cuyo `application-identifier` se comprueba contra el
+  perfil antes de firmar. Se quita el `Python.app` anidado de `Python.framework`.
+  `MAS_LOCAL=1` firma con Developer ID y sin las claves del perfil para probar el
+  sandbox sin App Store Connect.
+- Mismo bundle ID que la variante de Developer ID; los datos no migran (otro
+  contenedor).
+
+**Consecuencias / riesgos:**
+- La publicación depende de pasos fuera del repo: certificados y perfil de
+  Apple, ficha en App Store Connect, y en Google la pantalla de consentimiento.
+  `gmail.modify` es un permiso restringido: para salir de *Testing* (100
+  usuarios, tokens de 7 días) Google exige verificación y una evaluación CASA
+  anual. Detalle en `docs/MAC_APP_STORE.md`.
+- Riesgo de rechazo por la guía 4.2 (interfaz HTML). Plan B: el shell Swift del
+  ADR-012 lanzando el mismo backend.
