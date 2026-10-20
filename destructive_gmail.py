@@ -3,6 +3,7 @@ import os
 import threading
 from pathlib import Path
 
+from gmail_client import run_oauth_flow
 from paths import data_path
 from validators import ApiError
 
@@ -148,7 +149,7 @@ def destructive_gmail(allow_authorize=False):
                     detail='Autoriza explícitamente el token destructivo antes de borrar'
                 )
             flow = InstalledAppFlow.from_client_secrets_file(str(CREDS), DELETE_SCOPES)
-            creds = flow.run_local_server(port=0)
+            creds = run_oauth_flow(flow)
 
         _write_delete_token(creds.to_json())
         _clear_delete_revoked()

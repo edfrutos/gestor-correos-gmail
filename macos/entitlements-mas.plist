@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Entitlements de la build de la Mac App Store (Fase 35, ADR-015). Los usa
+  macos/build_mas.sh para el bundle principal. Notas por clave en
+  docs/MAC_APP_STORE.md.
+  - app-sandbox: obligatorio en la Mac App Store.
+  - network.client: Gmail API, Google OAuth, proveedor de IA.
+  - network.server: servidor local 127.0.0.1 (UI) y la redirección OAuth a localhost.
+  - files.user-selected.read-write: selector de carpeta de respaldo e importar credentials.json.
+  - files.bookmarks.app-scope: recordar la carpeta de respaldo entre arranques.
+  - application-identifier / team-identifier: deben coincidir con el perfil
+    de aprovisionamiento (build_mas.sh lo comprueba). En MAS_LOCAL=1 se quitan.
+  Sin Hardened Runtime (no lo exige la Mac App Store), así que no hacen falta
+  los cs.* del plist de Developer ID.
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <key>com.apple.security.network.server</key>
+    <true/>
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <key>com.apple.security.files.bookmarks.app-scope</key>
+    <true/>
+    <key>com.apple.application-identifier</key>
+    <string>V29BTBRY6G.com.edefrutos.gestorcorreos</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>V29BTBRY6G</string>
+</dict>
+</plist>

@@ -110,7 +110,7 @@ def test_gmail_reauthorizes_after_revoked_refresh_token(monkeypatch, tmp_path):
             return '{"token": "fresh"}'
 
     class FakeFlow:
-        def run_local_server(self, port, open_browser=True):
+        def run_local_server(self, port, open_browser=True, **kwargs):
             assert port == 0
             return FreshCredentials()
     token = tmp_path / 'token.json'

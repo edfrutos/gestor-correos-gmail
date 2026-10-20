@@ -133,6 +133,12 @@ xcrun stapler validate "/Applications/Gestor de Correos.app"
 
 ---
 
+## Mac App Store
+
+La variante de la Mac App Store (App Sandbox, sin Sparkle, `.pkg` para App Store
+Connect) se compila con `macos/build_mas.sh`. Pasos completos, incluida la
+prueba local del sandbox (`MAS_LOCAL=1`), en `docs/MAC_APP_STORE.md`.
+
 ## Dónde viven los datos en la `.app` instalada
 
 El bundle es de solo lectura y firmado, así que **todo el estado escribible** va a:
@@ -153,6 +159,9 @@ Primer uso:
 mkdir -p ~/Library/Application\ Support/GestorDeCorreos
 cp /ruta/a/credentials.json ~/Library/Application\ Support/GestorDeCorreos/
 ```
+
+O desde la app: 🛠 Configuración → **📄 Importar credentials.json…** (desde la
+v1.4.0). La primera búsqueda abre el login de Google en el navegador.
 
 Override para pruebas: `GESTOR_DATA_DIR=/otra/carpeta` fuerza esa carpeta en
 cualquier modo (ver `paths.py`).

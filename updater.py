@@ -18,7 +18,9 @@ Modelo de confianza (cualquier fallo aborta la instalación):
      del directorio temporal durante la extracción, antes de verificar nada.
 
 La comprobación funciona también desde el código fuente; la instalación
-automática solo en la `.app` empaquetada (`paths.is_bundled()`).
+automática solo en la `.app` empaquetada (`paths.is_bundled()`). En la build de
+la Mac App Store (`paths.is_app_store()`) no se comprueba ni se instala nada:
+actualiza la tienda (guía 2.4.5 de App Review).
 """
 
 import hashlib
@@ -172,8 +174,19 @@ def fetch_manifest():
     }
 
 
+APP_STORE_MESSAGE = "Esta copia se actualiza desde la Mac App Store."
+
+
+def _refuse_in_app_store():
+    if paths.is_app_store():
+        raise RuntimeError(APP_STORE_MESSAGE)
+
+
 def check_for_update():
     current = current_version()
+    if paths.is_app_store():
+        return {"current": current, "update_available": False, "app_store": True,
+                "error": APP_STORE_MESSAGE}
     try:
         manifest = fetch_manifest()
     except HTTPError as exc:
@@ -440,6 +453,7 @@ def download_and_stage(url, sha256, workdir=None):
 
     Devuelve la ruta del `.app` extraído listo para instalar.
     """
+    _refuse_in_app_store()
     tmp = Path(workdir or tempfile.mkdtemp(prefix="gestor-update-"))
     zip_path = tmp / "update.zip"
     zip_path.write_bytes(_http_get(url, binary=True))
@@ -479,6 +493,7 @@ def install_and_relaunch(new_app_path):
 
     El llamador debe salir del proceso justo después.
     """
+    _refuse_in_app_store()
     if not paths.is_bundled():
         raise RuntimeError("La instalación automática solo funciona en la app empaquetada")
     current_app = bundle_path()

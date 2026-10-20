@@ -7,8 +7,14 @@ Ejecutar desde la raíz del repositorio, dentro de un venv con
 
 Produce `dist/Gestor de Correos.app`. La firma, notarización y el DMG los hace
 `macos/build_app.sh` a partir de ese `.app`.
+
+Con `GESTOR_DISTRIBUTION=mas` (lo fija `macos/build_mas.sh`) genera la variante
+de la Mac App Store: sin las claves de Sparkle. `GESTOR_BUNDLE_VERSION` fija
+`CFBundleVersion` (App Store Connect exige un número de build nuevo en cada
+subida de la misma versión); por defecto es `VERSION`.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -23,6 +29,8 @@ import updater  # noqa: E402  (feed y clave pública de Sparkle)
 APP = [str(ROOT / "macos" / "app_main.py")]
 ICON = ROOT / "macos" / "AppIcon.icns"  # generado por macos/make_icon.py
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()  # fuente única de versión
+APP_STORE = os.environ.get("GESTOR_DISTRIBUTION", "").strip().lower() == "mas"
+BUNDLE_VERSION = os.environ.get("GESTOR_BUNDLE_VERSION", "").strip() or VERSION
 
 DATA_FILES = [
     ("", [str(ROOT / "index.html"), str(ROOT / "VERSION")]),
@@ -39,7 +47,7 @@ OPTIONS = {
     "argv_emulation": False,  # incompatible con algunas versiones de macOS/pyobjc
     "iconfile": str(ICON),
     "includes": PROJECT_MODULES + [
-        "webview", "Foundation", "PyObjCTools.AppHelper",
+        "webview", "Foundation", "AppKit", "PyObjCTools.AppHelper",
         "google.auth.transport.requests", "google.oauth2.credentials",
         "google_auth_oauthlib.flow", "google_auth_httplib2",
         "googleapiclient.discovery", "googleapiclient.errors",
@@ -59,17 +67,15 @@ OPTIONS = {
         "CFBundleDisplayName": "Gestor de Correos",
         "CFBundleIdentifier": "com.edefrutos.gestorcorreos",
         "CFBundleShortVersionString": VERSION,
-        "CFBundleVersion": VERSION,
+        "CFBundleVersion": BUNDLE_VERSION,
         "LSMinimumSystemVersion": "12.0",
         "LSUIElement": False,
         "NSHighResolutionCapable": True,
         "NSHumanReadableCopyright": "© EDF Developer",
-        # Sparkle (ADR-014): build_app.sh copia Sparkle.framework a
-        # Contents/Frameworks; app_main.SparkleUpdater lo arranca.
-        "SUFeedURL": updater.SPARKLE_FEED_URL,
-        "SUPublicEDKey": updater.sparkle_public_key(),
-        "SUEnableAutomaticChecks": True,
-        "SUScheduledCheckInterval": 86400,
+        # Obligatoria en la Mac App Store; inocua fuera.
+        "LSApplicationCategoryType": "public.app-category.productivity",
+        # Solo HTTPS/TLS del sistema: cifrado exento de documentación de exportación.
+        "ITSAppUsesNonExemptEncryption": False,
         "CFBundleDocumentTypes": [
             {
                 "CFBundleTypeName": "Correo electrónico (.eml)",
@@ -80,6 +86,16 @@ OPTIONS = {
         ],
     },
 }
+
+if not APP_STORE:
+    # Sparkle (ADR-014): build_app.sh copia Sparkle.framework a
+    # Contents/Frameworks; app_main.SparkleUpdater lo arranca.
+    OPTIONS["plist"].update({
+        "SUFeedURL": updater.SPARKLE_FEED_URL,
+        "SUPublicEDKey": updater.sparkle_public_key(),
+        "SUEnableAutomaticChecks": True,
+        "SUScheduledCheckInterval": 86400,
+    })
 
 if not ICON.exists():
     OPTIONS.pop("iconfile", None)  # sin icono si aún no se ha generado

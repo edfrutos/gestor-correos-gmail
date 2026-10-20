@@ -622,12 +622,34 @@ Requisitos: MAC-01 … MAC-05 (todos Done).
 Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
 `spctl` accepted en el Mac.
 
-### Phase 35 — Mac App Store (futuro)
+### Phase 35 — Mac App Store (ADR-015)
 
-**Status:** Not started. Rama y milestone aparte.
+**Status:** Implementado (v1.4.0, rama `feat/mac-app-store`), pendiente de
+probar el sandbox en el Mac, configurar Apple/Google y pasar App Review.
 
-Shell nativo Swift/SwiftUI + WKWebView, App Sandbox, `server.py` como helper
-bundled o port parcial a Swift, cert *3rd Party Mac Developer*, App Review.
+Misma base py2app + pywebview con una variante de build (no el shell Swift
+que se planteó al principio; queda como plan B si App Review rechaza esta).
+
+Scope:
+- `paths.distribution()` / `is_app_store()`: archivo `DISTRIBUTION` en el bundle.
+- Sin actualizaciones propias en la tienda: `updater` no consulta ni instala,
+  `/api/update/install` → 403, sin Sparkle ni menú, botón ⟳ oculto.
+- OAuth: `gmail_client.run_oauth_flow` abre el navegador con NSWorkspace
+  (`app_main.WorkspaceBrowser`) aunque HEADLESS=1, con timeout de 300 s.
+- **📄 Importar credentials.json…** (`JsApi.import_credentials` →
+  `gmail_client.import_client_secrets`); cliente OAuth opcional dentro de la
+  build (`MAS_OAUTH_CLIENT`, `install_bundled_oauth_client`).
+- Carpeta de respaldo con *security-scoped bookmarks* (`FolderBookmarks`).
+- `macos/build_mas.sh` + `entitlements-mas(-inherit).plist`: App Sandbox,
+  perfil «Mac App Store Connect», Apple Distribution, `.pkg` firmado;
+  `MAS_LOCAL=1` para probar el sandbox con Developer ID.
+- `docs/MAC_APP_STORE.md` (pasos Apple y Google, ficha, revisión) y
+  `docs/PRIVACY.md` (política de privacidad).
+
+Requisitos: MAS-01 … MAS-05.
+
+Verification: `pytest` (290) · ensayo de `build_mas.sh` con stubs · en el Mac:
+`TESTING_HUMANO.md` §10 (sandbox local y TestFlight).
 
 ## Milestone 10: Auto-actualización
 
