@@ -60,9 +60,9 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `209 tests` · **209 verdes**.
-- **Testeo humano:** `TESTING_HUMANO.md` 37/38 (pendiente §9 «Manifiesto firmado»; 2026-10-18: §7 `odoc` y §9
-  validación del zip verificados en el Mac; §2–§6 repasados tras Stage C).
+- **Suite automatizada:** `238 tests` · **238 verdes**.
+- **Testeo humano:** `TESTING_HUMANO.md` 42/42 (2026-10-19: §9 «Manifiesto firmado»
+  1.2.4 → 1.2.5 y las pruebas nuevas de §5–§6 del panel Configuración, v1.2.6/v1.2.7).
 
 ## Milestone v10 — Fases (rama `feat/auto-update`)
 
@@ -121,6 +121,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-10-19 — **Release v1.2.7 publicado** (tag en `64d1198`, PR #14) y
+  **v1.2.6** (tag en `274c402`, PR #12/#13). IA verificada en el Mac con
+  Ollama local `qwen3:8b`; panel Configuración, ruta real de exportaciones y
+  carpeta de respaldo marcados en `TESTING_HUMANO.md` §5–§6. Testeo humano 42/42.
 
 - 2026-10-19 — **v1.2.7 preparada** (rama `feat/ai-think-cloud`): las
   respuestas AI se limpian de `<think>…</think>` (qwen3, deepseek-r1) antes de
@@ -257,12 +262,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.2.5 publicado** (tag `v1.2.5` en `f39b5c7`) e instalado en el Mac desde
-1.2.4 verificando la firma del manifiesto. Testeo humano 38/41 (las 3 nuevas, del panel Configuración). `v1.2.2`–`v1.2.5`
-coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en `fe55367`.
+**v1.2.7 publicado** (tag `v1.2.7` en `64d1198`). Testeo humano 42/42.
+`v1.2.2`–`v1.2.7` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
+`fe55367`.
 
-Siguiente: probar en el Mac el panel Configuración (IA + carpeta de respaldo)
-y publicarlo como v1.2.6. Clave privada en
+Clave privada en
 `~/.config/gestor-correos/update_signing.pem` (`UPDATE_SIGNING_KEY` en
 `macos/build.env`), pública `39a60417…` en `updater.UPDATE_PUBLIC_KEYS`.
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
