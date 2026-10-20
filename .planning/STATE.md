@@ -122,6 +122,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-20 — **Release v1.3.1 publicado** (tag en `fb9d695`, PR #17).
+  Verificado en el Mac 1.3.0 → 1.3.1 con Sparkle (diálogo, descarga,
+  instalación y relanzamiento). Fase 37 completada. Testeo humano 44/44.
+
 - 2026-10-20 — **Release v1.3.0 publicado** (tag en `71150c5`, PR #16).
   Verificado en el Mac: 1.2.7 → 1.3.0 con el updater en Python,
   `Sparkle.framework` en el bundle y el diálogo de Sparkle («estás al día»)
@@ -275,10 +279,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.3.0 publicado** (tag `v1.3.0` en `71150c5`), Sparkle carga en el Mac.
-Siguiente: compilar y publicar la 1.3.1 y verificar 1.3.0 → 1.3.1 con
-Sparkle (descarga, instala y relanza). Testeo humano 43/44.
-`v1.2.2`–`v1.3.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
+**v1.3.1 publicado** (tag `v1.3.1` en `fb9d695`). Las actualizaciones de la
+1.3.0 en adelante las gestiona Sparkle (`appcast.xml`); `latest.json` se sigue
+publicando para que las 1.2.x puedan actualizar. Testeo humano 44/44.
+`v1.2.2`–`v1.3.1` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 
 Clave privada en

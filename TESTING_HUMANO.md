@@ -69,7 +69,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Manifiesto firmado:** con una versión que ya verifica la firma de `latest.json` instalada, repite **Detección** y **Descarga e instalación** contra el siguiente Release (con `latest.json.sig`). Debe actualizar igual. Opcional: con `GESTOR_UPDATE_MANIFEST_URL` apuntando a un `latest.json` sin `.sig` (o con la firma de otro), **Buscar actualizaciones** debe dar un error de firma, no "estás en la última versión".
 
 - [x] **Puente a Sparkle (v1.3.0):** Desde la 1.2.7, **Buscar actualizaciones** instala la 1.3.0 con el updater de siempre. En la 1.3.0, `ls "/Applications/Gestor de Correos.app/Contents/Frameworks"` muestra `Sparkle.framework`.
-- [ ] **Sparkle (v1.3.0 → siguiente):** En la 1.3.0, **Buscar actualizaciones** (menú y botón ⟳) abre el diálogo de Sparkle: "estás al día" sin Release nuevo; con el siguiente Release, muestra la versión y las notas, descarga, instala y relanza la app en la versión nueva. _(2026-10-20: «estás al día» verificado en la 1.3.0; falta la instalación 1.3.0 → 1.3.1.)_
+- [x] **Sparkle (v1.3.0 → siguiente):** En la 1.3.0, **Buscar actualizaciones** (menú y botón ⟳) abre el diálogo de Sparkle: "estás al día" sin Release nuevo; con el siguiente Release, muestra la versión y las notas, descarga, instala y relanza la app en la versión nueva. _(2026-10-20: verificado 1.3.0 → 1.3.1: descarga, instala y relanza.)_
 
 2026-10-18: v1.2.4 (primer Release con `latest.json.sig`) instalado en el Mac
 desde 1.2.3 por el auto-updater; esa actualización aún no verifica la firma
