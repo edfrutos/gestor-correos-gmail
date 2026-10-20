@@ -33,7 +33,7 @@ from urllib.parse import parse_qs, urlparse
 import updater
 from ai_client import ai_status, suggest_rules, summarize
 from classifier import get_base_config
-from paths import data_dir, data_path, is_bundled, resource_dir
+from paths import data_dir, data_path, distribution, is_app_store, is_bundled, resource_dir
 from settings import load_settings, public_settings, save_settings
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
 from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
@@ -147,7 +147,8 @@ class H(BaseHTTPRequestHandler):
 
         if p.path == '/api/status':
             return self.j({'status': 'ok', **gmail_status(), 'ai': ai_status(), 'permanent_delete': delete_status(),
-                           'app_version': updater.current_version(), 'bundled': is_bundled()})
+                           'app_version': updater.current_version(), 'bundled': is_bundled(),
+                           'distribution': distribution()})
 
         if p.path == '/api/update/check':
             return self.j({'status': 'ok', **updater.check_for_update()})
@@ -848,6 +849,8 @@ class H(BaseHTTPRequestHandler):
     def handle_update_install(self):
         # El servidor vuelve a consultar el manifiesto y usa SU url/sha256:
         # nunca instala una URL que venga del cliente.
+        if is_app_store():
+            return self.err(403, 'No disponible', updater.APP_STORE_MESSAGE)
         if not is_bundled():
             return self.err(400, 'No disponible', 'La instalación automática solo funciona en la app .app')
         try:

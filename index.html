@@ -93,6 +93,14 @@
     <span class="pc">▾</span>
   </div>
   <div class="pb">
+    <div id="cfg-google" style="display:none">
+      <div class="cfg-head">Cuenta de Google</div>
+      <div class="cfg-form">
+        <button class="addbtn" type="button" id="cfg-creds-import">📄 Importar credentials.json…</button>
+      </div>
+      <p class="hint">Cliente OAuth de tipo «App de escritorio» descargado de Google Cloud Console (Gmail API activada). Al buscar, el login de Google se abre en el navegador.</p>
+    </div>
+
     <div class="cfg-head">Inteligencia artificial <span class="hint" id="cfg-ai-state" style="margin:0"></span></div>
     <div class="cfg-form">
       <label class="rule-field wide"><span>URL base (OpenAI o compatible, sin /chat/completions)</span><input id="cfg-ai-url" maxlength="500" placeholder="https://api.openai.com/v1" autocomplete="off" spellcheck="false"></label>

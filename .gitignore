@@ -16,6 +16,7 @@ __pycache__/
 # macOS app build artifacts (py2app / firma / notarización)
 build/
 dist/
+dist-mas/
 build-venv/
 *.app/
 *.dmg
