@@ -705,7 +705,7 @@ Python y 1.3.0 → 1.3.1 con Sparkle.
 
 ### Phase 38 — Deltas de Sparkle (ADR-014, addendum)
 
-**Status:** Implementado (v1.3.2), pendiente de verificar en el Mac.
+**Status:** Completada (publicada en v1.4.0; 1.3.1 → 1.4.0 verificado en el Mac el 2026-10-20).
 
 Scope:
 - `macos/delta_base.py`: descarga el zip del Release publicado y verifica
@@ -715,7 +715,7 @@ Scope:
   `gh release create` impreso. Sin base o sin verificar → sin delta.
 - `make_appcast.py`: `<sparkle:deltas>` firmado con la misma clave.
 
-Verification: `pytest` (257) · en el Mac: 1.3.1 → 1.3.2 descargando el delta.
+Verification: `pytest` (257) · en el Mac: 1.3.1 → 1.4.0 descargando el delta (1 descarga del `.delta`, 0 del `.zip`).
 
 ## Product Backlog — Future Features
 
