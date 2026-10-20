@@ -40,6 +40,10 @@ OPTIONS = {
     "iconfile": str(ICON),
     "includes": PROJECT_MODULES + [
         "webview", "Foundation", "PyObjCTools.AppHelper",
+        # cryptography (updater) carga _cffi_backend desde su extensión en Rust:
+        # modulegraph no ve ese import y, sin esto, la app solo arrancaba si el
+        # usuario tenía cffi en su propio site-packages (fuera del sandbox).
+        "_cffi_backend",
         "google.auth.transport.requests", "google.oauth2.credentials",
         "google_auth_oauthlib.flow", "google_auth_httplib2",
         "googleapiclient.discovery", "googleapiclient.errors",
