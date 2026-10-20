@@ -23,6 +23,7 @@ def _load(name):
 
 
 make_appcast = _load('make_appcast')
+delta_base = _load('delta_base')
 app_main = _load('app_main')
 SPARKLE_NS = '{http://www.andymatuschak.org/xml-namespaces/sparkle}'
 
@@ -144,3 +145,108 @@ def test_build_script_pins_sparkle_and_publishes_appcast():
     assert 'SPARKLE_SHA256="' in script and 'shasum -a 256 -c -' in script
     assert 'make_appcast.py' in script
     assert 'dist/latest.json dist/latest.json.sig dist/appcast.xml' in script
+
+
+# --- Deltas (Fase 38) ---
+
+def _signing(path):
+    from sign_manifest import load_key
+    return load_key(path)
+
+
+def test_make_appcast_adds_signed_delta(tmp_path, signing_key):
+    archive = tmp_path / 'GestorDeCorreos-1.3.2.zip'
+    archive.write_bytes(b'PK\x03\x04 zip completo')
+    delta = tmp_path / 'GestorDeCorreos-1.3.2-from-1.3.1.delta'
+    delta.write_bytes(b'SPDA delta')
+    out = tmp_path / 'appcast.xml'
+
+    make_appcast.main(['make_appcast.py', str(signing_key), str(archive), '1.3.2', str(out), str(delta), '1.3.1'])
+
+    item = ET.parse(out).getroot().find('channel/item')
+    assert item.find('enclosure').get('url').endswith('/v1.3.2/GestorDeCorreos-1.3.2.zip')
+    deltas = item.findall(f'{SPARKLE_NS}deltas/enclosure')
+    assert len(deltas) == 1
+    assert deltas[0].get(f'{SPARKLE_NS}deltaFrom') == '1.3.1'
+    assert deltas[0].get('url') == ('https://github.com/edfrutos/gestor-correos-gmail/releases/download/'
+                                    'v1.3.2/GestorDeCorreos-1.3.2-from-1.3.1.delta')
+    assert deltas[0].get('length') == str(delta.stat().st_size)
+    public = Ed25519PublicKey.from_public_bytes(base64.b64decode(updater.sparkle_public_key()))
+    public.verify(base64.b64decode(deltas[0].get(f'{SPARKLE_NS}edSignature')), delta.read_bytes())
+
+
+def test_make_appcast_without_delta_has_no_deltas_element():
+    xml = make_appcast.build_appcast('1.3.2', 'a.zip', 10, 'c2ln')
+    assert 'sparkle:deltas' not in xml
+
+
+def _published(tmp_path, signing_key, version='1.3.1', data=b'PK\x03\x04 zip publicado', **overrides):
+    url = overrides.pop('url', f'{make_appcast.REPO_URL}/releases/download/v{version}/GestorDeCorreos-{version}.zip')
+    signature = make_appcast.sign_archive(_signing(signing_key), data)
+    feed = make_appcast.build_appcast(version, url.rsplit('/', 1)[1], overrides.pop('length', len(data)),
+                                      overrides.pop('signature', signature))
+    feed = feed.replace(f'{make_appcast.REPO_URL}/releases/download/v{version}/{url.rsplit("/", 1)[1]}', url)
+    files = {updater.SPARKLE_FEED_URL: feed.encode(), url: data}
+
+    def http_get(u, binary=False):
+        if u not in files:
+            raise OSError(f'404 {u}')
+        return files[u]
+    return http_get, data
+
+
+def test_delta_base_downloads_and_verifies_previous_release(tmp_path, signing_key, capsys):
+    http_get, data = _published(tmp_path, signing_key)
+    out = tmp_path / 'base.zip'
+
+    assert delta_base.main(['delta_base.py', '1.3.2', str(out)], http_get=http_get) == 0
+
+    assert out.read_bytes() == data
+    assert capsys.readouterr().out.strip() == '1.3.1'
+
+
+def test_delta_base_skips_when_published_is_not_older(tmp_path, signing_key):
+    http_get, _ = _published(tmp_path, signing_key, version='1.3.2')
+    out = tmp_path / 'base.zip'
+
+    assert delta_base.main(['delta_base.py', '1.3.2', str(out)], http_get=http_get) == delta_base.NO_BASE
+    assert not out.exists()
+
+
+def test_delta_base_skips_when_offline(tmp_path):
+    def offline(url, binary=False):
+        raise OSError('sin red')
+
+    assert delta_base.main(['delta_base.py', '1.3.2', str(tmp_path / 'b.zip')], http_get=offline) == delta_base.NO_BASE
+
+
+def test_delta_base_rejects_bad_signature(tmp_path, signing_key):
+    http_get, _ = _published(tmp_path, signing_key, signature=base64.b64encode(b'\0' * 64).decode())
+    out = tmp_path / 'base.zip'
+
+    with pytest.raises(SystemExit, match='firma'):
+        delta_base.main(['delta_base.py', '1.3.2', str(out)], http_get=http_get)
+    assert not out.exists()
+
+
+def test_delta_base_rejects_wrong_length(tmp_path, signing_key):
+    http_get, _ = _published(tmp_path, signing_key, length=3)
+
+    with pytest.raises(SystemExit, match='mide'):
+        delta_base.main(['delta_base.py', '1.3.2', str(tmp_path / 'b.zip')], http_get=http_get)
+
+
+def test_delta_base_only_downloads_from_own_release(tmp_path, signing_key):
+    http_get, _ = _published(tmp_path, signing_key, url='https://evil.example/GestorDeCorreos-1.3.1.zip')
+
+    with pytest.raises(SystemExit, match='URL inesperada'):
+        delta_base.main(['delta_base.py', '1.3.2', str(tmp_path / 'b.zip')], http_get=http_get)
+
+
+def test_build_script_builds_verifies_and_publishes_delta():
+    script = (MACOS / 'build_app.sh').read_text(encoding='utf-8')
+    assert './Sparkle.framework ./bin/BinaryDelta' in script
+    assert 'macos/delta_base.py' in script
+    assert '"${BINARY_DELTA}" create' in script and '"${BINARY_DELTA}" apply' in script
+    assert 'cdhash "${applied}"' in script
+    assert '${DELTA_FILE:+' in script  # el delta va en el gh release create impreso
