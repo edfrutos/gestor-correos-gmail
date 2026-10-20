@@ -25,6 +25,10 @@ PYTHON="${PYTHON:-python3}"
 VERSION="$(cat VERSION)"
 GH_REPO="${GH_REPO:-edfrutos/gestor-correos-gmail}"   # para las URLs de latest.json
 UPDATE_ZIP="dist/GestorDeCorreos-${VERSION}.zip"
+# Sparkle (ADR-014): versión fijada y verificada por sha256 del tarball oficial.
+SPARKLE_VERSION="2.9.6"
+SPARKLE_SHA256="52bf9e88cdd972fc0c81501377a880e90d47031bd8ca5462488f843e2609e192"
+SPARKLE_CACHE="macos/.cache/sparkle-${SPARKLE_VERSION}"
 
 # Credenciales: variables de entorno, o un macos/build.env local (gitignoreado)
 #   DEV_ID_APP="Developer ID Application: Nombre (TEAMID)"
@@ -76,6 +80,22 @@ echo "==> 3/9  py2app"
 rm -rf build dist
 build-venv/bin/python macos/setup.py py2app
 
+echo "==> 3b/9 Sparkle.framework ${SPARKLE_VERSION} -> Contents/Frameworks"
+if [ ! -d "${SPARKLE_CACHE}/Sparkle.framework" ]; then
+  mkdir -p "${SPARKLE_CACHE}"
+  TARBALL="${SPARKLE_CACHE}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+  curl -fsSL -o "${TARBALL}" \
+    "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz"
+  echo "${SPARKLE_SHA256}  ${TARBALL}" | shasum -a 256 -c -
+  tar -xJf "${TARBALL}" -C "${SPARKLE_CACHE}" ./Sparkle.framework
+  rm -f "${TARBALL}"
+fi
+SPARKLE_FW="${BUNDLE}/Contents/Frameworks/Sparkle.framework"
+mkdir -p "${BUNDLE}/Contents/Frameworks"
+ditto "${SPARKLE_CACHE}/Sparkle.framework" "${SPARKLE_FW}"
+# Los XPC services solo los usa una app con App Sandbox; esta no lo tiene.
+rm -rf "${SPARKLE_FW}/Versions/B/XPCServices" "${SPARKLE_FW}/XPCServices"
+
 echo "==> 4/9  Firmar binarios anidados (inside-out, Hardened Runtime + timestamp)"
 sign_one() { codesign --force --options runtime --timestamp --sign "${DEV_ID_APP}" "$1"; }
 export -f sign_one
@@ -83,7 +103,10 @@ export DEV_ID_APP
 # .so y .dylib: los más numerosos, se firman todos.
 find "${BUNDLE}/Contents" -type f \( -name '*.so' -o -name '*.dylib' \) -print0 \
   | while IFS= read -r -d '' f; do sign_one "$f"; done
-# Frameworks embebidos (Python.framework y demás).
+# Sparkle: sus ejecutables internos antes que el framework (inside-out).
+sign_one "${SPARKLE_FW}/Versions/B/Autoupdate"
+sign_one "${SPARKLE_FW}/Versions/B/Updater.app"
+# Frameworks embebidos (Python.framework, Sparkle.framework y demás).
 find "${BUNDLE}/Contents" -type d -name '*.framework' -print0 \
   | while IFS= read -r -d '' fw; do sign_one "$fw"; done
 # Otros ejecutables Mach-O sueltos bajo MacOS/ (el principal se firma en 5/9).
@@ -136,6 +159,9 @@ cat > dist/latest.json <<JSON
 }
 JSON
 build-venv/bin/python macos/sign_manifest.py sign "${UPDATE_SIGNING_KEY}" dist/latest.json
+# Feed de Sparkle (v1.3.0+). latest.json se sigue publicando para las 1.2.x,
+# que solo conocen el updater en Python: así pueden llegar a la 1.3.0.
+build-venv/bin/python macos/make_appcast.py "${UPDATE_SIGNING_KEY}" "${UPDATE_ZIP}" "${VERSION}" dist/appcast.xml
 
 echo "==> Autocomprobación: el zip pasa la validación del auto-updater"
 # Mismo código que ejecutará la app instalada antes de extraer la actualización
@@ -148,10 +174,11 @@ echo "  ${DMG}            (distribución manual)"
 echo "  ${UPDATE_ZIP}     (asset del Release para el auto-updater)"
 echo "  dist/latest.json  (asset del Release; el updater lo consulta)"
 echo "  dist/latest.json.sig  (su firma Ed25519; sin ella la app rechaza el manifiesto)"
+echo "  dist/appcast.xml  (feed de Sparkle, v1.3.0+; firma Ed25519 del zip dentro)"
 echo
 echo "Publicar la actualización:"
 echo "  git push origin HEAD   # el commit ${BUILD_COMMIT:0:7} debe estar en GitHub"
-echo "  gh release create v${VERSION} \"${UPDATE_ZIP}\" dist/latest.json dist/latest.json.sig \"${DMG}\" --target ${BUILD_COMMIT} --title v${VERSION} --notes '...'"
+echo "  gh release create v${VERSION} \"${UPDATE_ZIP}\" dist/latest.json dist/latest.json.sig dist/appcast.xml \"${DMG}\" --target ${BUILD_COMMIT} --title v${VERSION} --notes '...'"
 echo
 echo "Verifica en otro Mac:  spctl -a -vvv -t install \"${DMG}\""
 echo "                       spctl -a -vvv \"${BUNDLE}\""

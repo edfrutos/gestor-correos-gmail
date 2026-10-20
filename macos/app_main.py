@@ -33,6 +33,65 @@ if str(_PROJECT_DIR) not in sys.path:
 APP_TITLE = "Gestor de Correos"
 
 
+class SparkleUpdater:
+    """Sparkle 2 (`Contents/Frameworks/Sparkle.framework`) vía PyObjC (ADR-014).
+
+    Sparkle lee `SUFeedURL`/`SUPublicEDKey` del Info.plist, programa las
+    comprobaciones automáticas y muestra su propio diálogo estándar. Todo lo
+    de AppKit va al hilo principal (`callAfter`). Si el framework no está
+    (desde fuente) o no carga, `available` queda en False y la app usa el
+    updater en Python (`updater.py`), como hasta la 1.2.x.
+    """
+
+    def __init__(self, framework_path=None, call_after=None):
+        self.controller = None
+        self.error = None
+        self._framework_path = framework_path
+        self._call_after = call_after
+
+    @property
+    def available(self) -> bool:
+        return self.controller is not None
+
+    def _default_framework_path(self):
+        from Foundation import NSBundle  # noqa: E402
+        frameworks = NSBundle.mainBundle().privateFrameworksPath()
+        return os.path.join(str(frameworks), "Sparkle.framework") if frameworks else ""
+
+    def start(self) -> bool:
+        """Carga el framework y arranca el updater. Llamar en el hilo principal."""
+        try:
+            import objc  # noqa: E402
+            from Foundation import NSBundle  # noqa: E402
+            path = self._framework_path or self._default_framework_path()
+            if not path or not os.path.isdir(path):
+                self.error = "Sparkle.framework no está en el bundle"
+                return False
+            bundle = NSBundle.bundleWithPath_(path)
+            if bundle is None or not bundle.load():
+                self.error = f"No se pudo cargar {path}"
+                return False
+            controller_cls = objc.lookUpClass("SPUStandardUpdaterController")
+            self.controller = controller_cls.alloc().initWithStartingUpdater_updaterDelegate_userDriverDelegate_(
+                True, None, None)
+        except Exception as exc:  # noqa: BLE001
+            self.controller = None
+            self.error = str(exc)
+            print(f"[Sparkle] No disponible, se usa el updater en Python: {exc}", file=sys.stderr)
+            return False
+        return True
+
+    def check_for_updates(self) -> bool:
+        """Abre el diálogo de Sparkle (busca, muestra notas, pide permiso, instala)."""
+        if self.controller is None:
+            return False
+        call_after = self._call_after
+        if call_after is None:
+            from PyObjCTools.AppHelper import callAfter as call_after  # noqa: E402
+        call_after(self.controller.checkForUpdates_, None)
+        return True
+
+
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
@@ -108,8 +167,14 @@ class JsApi:
     públicos del objeto para exponerlos a JS.
     """
 
-    def __init__(self):
+    def __init__(self, sparkle=None):
         self._window = None
+        self._sparkle = sparkle
+
+    def check_updates(self):
+        """Botón de la UI: con Sparkle abre su diálogo y devuelve True; si no,
+        False y la página sigue con su flujo vía /api/update/*."""
+        return bool(self._sparkle and self._sparkle.check_for_updates())
 
     def pick_folder(self):
         """Selector de carpeta nativo (panel Configuración → respaldo)."""
@@ -183,14 +248,24 @@ def main() -> int:
         httpd.shutdown()
         return 1
 
-    js_api = JsApi()
+    sparkle = SparkleUpdater()
+    js_api = JsApi(sparkle)
     window = webview.create_window(APP_TITLE, start_url, width=1180, height=820, min_size=(900, 600), js_api=js_api)
     js_api._window = window
     opener = EmlOpener(window)
     window.events.loaded += opener.on_loaded
     _install_open_files_handler(opener)
+
+    def on_started():
+        # webview.start(func) ejecuta func en otro hilo: Sparkle, en el principal.
+        try:
+            from PyObjCTools.AppHelper import callAfter
+        except Exception:  # noqa: BLE001
+            return
+        callAfter(sparkle.start)
+
     try:
-        webview.start(menu=_build_menu(webview, window))
+        webview.start(on_started, menu=_build_menu(webview, window, sparkle))
     finally:
         httpd.shutdown()
         server_thread.join(timeout=5)
@@ -203,14 +278,16 @@ def _toast(window, msg: str, kind: str = "ok") -> None:
     window.evaluate_js(f"toast({json.dumps(msg)}, {json.dumps(kind)})")
 
 
-def _build_menu(webview, window):
-    """Menú nativo con 'Buscar actualizaciones…'."""
+def _build_menu(webview, window, sparkle=None):
+    """Menú nativo con 'Buscar actualizaciones…' (Sparkle o, si no carga, updater.py)."""
     try:
         from webview.menu import Menu, MenuAction
     except Exception:
         return []
 
     def on_check_updates():
+        if sparkle is not None and sparkle.check_for_updates():
+            return
         import updater  # noqa: E402
         info = updater.check_for_update()
         if info.get("error"):

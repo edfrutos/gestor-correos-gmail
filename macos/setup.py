@@ -18,6 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 # Para que modulegraph resuelva server.py y los módulos planos del proyecto.
 sys.path.insert(0, str(ROOT))
 
+import updater  # noqa: E402  (feed y clave pública de Sparkle)
+
 APP = [str(ROOT / "macos" / "app_main.py")]
 ICON = ROOT / "macos" / "AppIcon.icns"  # generado por macos/make_icon.py
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()  # fuente única de versión
@@ -37,7 +39,7 @@ OPTIONS = {
     "argv_emulation": False,  # incompatible con algunas versiones de macOS/pyobjc
     "iconfile": str(ICON),
     "includes": PROJECT_MODULES + [
-        "webview",
+        "webview", "Foundation", "PyObjCTools.AppHelper",
         "google.auth.transport.requests", "google.oauth2.credentials",
         "google_auth_oauthlib.flow", "google_auth_httplib2",
         "googleapiclient.discovery", "googleapiclient.errors",
@@ -62,6 +64,12 @@ OPTIONS = {
         "LSUIElement": False,
         "NSHighResolutionCapable": True,
         "NSHumanReadableCopyright": "© EDF Developer",
+        # Sparkle (ADR-014): build_app.sh copia Sparkle.framework a
+        # Contents/Frameworks; app_main.SparkleUpdater lo arranca.
+        "SUFeedURL": updater.SPARKLE_FEED_URL,
+        "SUPublicEDKey": updater.sparkle_public_key(),
+        "SUEnableAutomaticChecks": True,
+        "SUScheduledCheckInterval": 86400,
         "CFBundleDocumentTypes": [
             {
                 "CFBundleTypeName": "Correo electrónico (.eml)",

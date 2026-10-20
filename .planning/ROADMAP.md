@@ -664,6 +664,23 @@ Verification: `pytest` (157/157) · `node --check` · flujo real en el Mac
 verificado (Releases v1.1.0 → v1.2.0 → v1.2.1: detecta, descarga, verifica
 firma y se auto-reinstala).
 
+### Phase 37 — Sparkle 2 (ADR-014)
+
+**Status:** Implementado (v1.3.0), pendiente de verificar en el Mac.
+
+Scope:
+- `build_app.sh`: Sparkle 2.9.6 (sha256 fijado) → `Contents/Frameworks`, sin
+  XPC services, firma inside-out; `dist/appcast.xml` con `macos/make_appcast.py`.
+- `macos/setup.py`: `SUFeedURL`, `SUPublicEDKey` (misma clave Ed25519 que
+  `latest.json`), comprobación automática diaria.
+- `macos/app_main.py`: `SparkleUpdater` (PyObjC, hilo principal) en el menú y en
+  el botón `#upd-check` vía `js_api.check_updates`; respaldo a `updater.py`.
+- Puente: `latest.json` se sigue publicando para que las 1.2.x lleguen a 1.3.0.
+- Fuera de alcance: deltas (`BinaryDelta`).
+
+Verification: `pytest` (248) · en el Mac: 1.2.7 → 1.3.0 con el updater en
+Python y 1.3.0 → 1.3.1 con Sparkle.
+
 ## Product Backlog — Future Features
 
 - **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.

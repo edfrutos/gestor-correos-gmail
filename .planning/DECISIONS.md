@@ -216,6 +216,8 @@ tocar la lógica.
 **Date:** 2026-09-09
 **Status:** Accepted y verificado en el Mac (2026-09-11, Fase 36, rama
 `feat/auto-update`)
+Superado por ADR-014 (Sparkle) desde la v1.3.0; sigue vigente como puente para
+las 1.2.x y como respaldo si Sparkle no carga.
 
 La app comprueba/descarga/instala actualizaciones con un **updater propio en
 Python** (`updater.py` + endpoints `/api/update/*` + menú `pywebview`), no con
@@ -329,3 +331,38 @@ también la sustitución del zip por otra `.app` antigua firmada del mismo team
   públicas para poder rotar. Quien tenga solo acceso a los assets del Release
   ya no puede ni cambiar la url/sha256 ni ofrecer una versión: queda el
   *replay* de un manifiesto firmado antiguo, que equivale a un *freeze*.
+
+## ADR-014 — Sparkle 2 como updater de la app macOS (supera el updater en Python del ADR-013)
+
+**Date:** 2026-10-20
+**Status:** Accepted, pendiente de verificar en el Mac (v1.3.0, rama `feat/sparkle`)
+
+Desde la v1.3.0 la `.app` lleva **Sparkle 2.9.6** (`Contents/Frameworks/Sparkle.framework`)
+y lo arranca desde `macos/app_main.py` vía PyObjC (`SPUStandardUpdaterController`).
+El feed es `appcast.xml`, publicado como asset de cada GitHub Release
+(`SUFeedURL` = `…/releases/latest/download/appcast.xml`).
+
+**Rationale:** diálogo estándar de macOS (notas, «Omitir esta versión»,
+«Recordar más tarde»), comprobación automática diaria y un instalador probado
+por miles de apps, en vez de mantener el nuestro (`ditto` + helper detached).
+Lo que en 2026-09 hacía caro a Sparkle (claves EdDSA, firma aparte) ya estaba
+resuelto: el manifiesto firmado de la v1.2.4 usa Ed25519.
+
+**Decisiones:**
+- **Misma clave Ed25519** que `latest.json`: `SUPublicEDKey` = la pública de
+  `updater.UPDATE_PUBLIC_KEYS[0]` en base64. Sparkle firma los bytes del zip
+  sin contexto y el manifiesto lleva `MANIFEST_SIG_CONTEXT` delante; como un zip
+  empieza por `PK\x03\x04`, ninguna firma vale para la otra.
+- El appcast lo genera `macos/make_appcast.py` en Python (sin `generate_appcast`
+  ni `sign_update`), verificando la firma con la clave embebida.
+- Sparkle descargado en `build_app.sh` con versión y sha256 fijados; se quitan
+  los XPC services (solo los usa una app con App Sandbox). Firma inside-out:
+  `Autoupdate`, `Updater.app` y después el framework.
+- Sparkle además valida que la nueva `.app` está firmada con la misma identidad
+  Developer ID que la instalada.
+- **Puente:** se sigue publicando `latest.json(.sig)`. Las 1.2.x solo conocen el
+  updater en Python y por ahí llegan a la 1.3.0; desde ahí actualiza Sparkle.
+- **Respaldo:** si el framework no está (desde fuente) o no carga,
+  `SparkleUpdater.available` es False y menú y botón usan `updater.py`.
+- Deltas (`BinaryDelta`) quedan fuera: exigen conservar la `.app` anterior en
+  cada build. Pueden añadirse sin tocar la app.
