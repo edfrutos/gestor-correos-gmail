@@ -122,6 +122,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-20 — **v1.4.0 publicada** (tag `v1.4.0` en `5f47135`, con el `.delta`
+  desde la 1.3.1). **Delta de Sparkle verificado en el Mac:** la 1.3.1 se
+  actualizó sola a la 1.4.0 y el Release cuenta 1 descarga del `.delta` y 0
+  del `.zip`. Fase 38 completada. Testeo humano 52/53 (solo falta TestFlight).
+
 - 2026-10-20 — **Sandbox de la Mac App Store probado en el Mac** (`MAS_LOCAL=1`):
   §10 pasa salvo TestFlight. La primera build fallaba al arrancar porque
   `_cffi_backend` (lo carga cryptography) no iba en el bundle; también le
@@ -301,16 +306,14 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.3.1 publicado** (tag `v1.3.1` en `fb9d695`). Las actualizaciones de la
-1.3.0 en adelante las gestiona Sparkle (`appcast.xml`); `latest.json` se sigue
-publicando para que las 1.2.x puedan actualizar.
-Deltas preparados como v1.3.2 (rama `feat/sparkle-deltas`): compilar, publicar
-(con el `.delta`) y verificar 1.3.1 → 1.3.2. Después, v1.4.0 (rama
-`feat/mac-app-store`): Release de Developer ID como siempre y, para la tienda,
-`docs/MAC_APP_STORE.md` (§0 prueba local del sandbox, luego Apple, Google,
-TestFlight y revisión). Sandbox local ya verificado (§10 salvo TestFlight).
-Testeo humano 51/53.
-`v1.2.2`–`v1.3.1` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
+**v1.4.0 publicado** (tag `v1.4.0` en `5f47135`, con deltas de Sparkle
+verificados). Las actualizaciones de la 1.3.0 en adelante las gestiona Sparkle
+(`appcast.xml`); `latest.json` se sigue publicando para que las 1.2.x puedan
+actualizar. La 1.3.2 no se publicó (sus cambios van en la 1.4.0).
+Siguiente: la Mac App Store según `docs/MAC_APP_STORE.md` (§1 Apple, §2 Google,
+§3 ficha, §4 TestFlight y revisión). Sandbox local ya verificado (§10 salvo
+TestFlight). Testeo humano 52/53.
+`v1.2.2`–`v1.4.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 
 Clave privada en
