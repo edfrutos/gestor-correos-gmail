@@ -122,6 +122,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-20 — **Deltas de Sparkle** (rama `feat/sparkle-deltas`, Fase 38,
+  v1.3.2): `macos/delta_base.py` descarga y verifica el zip publicado,
+  `build_app.sh` crea el `.delta` con `BinaryDelta`, lo comprueba aplicándolo
+  (codesign + CDHash) y `make_appcast.py` lo añade en `<sparkle:deltas>`. +9
+  tests. Pendiente: verificar 1.3.1 → 1.3.2 en el Mac. Testeo humano 44/45.
+
 - 2026-10-20 — **Release v1.3.1 publicado** (tag en `fb9d695`, PR #17).
   Verificado en el Mac 1.3.0 → 1.3.1 con Sparkle (diálogo, descarga,
   instalación y relanzamiento). Fase 37 completada. Testeo humano 44/44.
@@ -281,7 +287,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 **v1.3.1 publicado** (tag `v1.3.1` en `fb9d695`). Las actualizaciones de la
 1.3.0 en adelante las gestiona Sparkle (`appcast.xml`); `latest.json` se sigue
-publicando para que las 1.2.x puedan actualizar. Testeo humano 44/44.
+publicando para que las 1.2.x puedan actualizar.
+Deltas preparados como v1.3.2 (rama `feat/sparkle-deltas`): compilar, publicar
+(con el `.delta`) y verificar 1.3.1 → 1.3.2. Testeo humano 44/45.
 `v1.2.2`–`v1.3.1` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 
@@ -293,4 +301,3 @@ Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 
 Otros pendientes:
 - Fase 35 — Mac App Store (rama aparte, shell Swift + WKWebView, App Sandbox).
-- Deltas de Sparkle (`BinaryDelta`), fuera de alcance de la Fase 37.

@@ -1,11 +1,17 @@
 """Genera `dist/appcast.xml`, el feed de Sparkle (ADR-014).
 
-  build-venv/bin/python macos/make_appcast.py RUTA.pem dist/GestorDeCorreos-<VERSION>.zip <VERSION> dist/appcast.xml
+  build-venv/bin/python macos/make_appcast.py RUTA.pem dist/GestorDeCorreos-<VERSION>.zip <VERSION> dist/appcast.xml \
+      [dist/GestorDeCorreos-<VERSION>-from-<ANTERIOR>.delta <ANTERIOR>]
 
 Firma el .zip con la misma clave Ed25519 que `latest.json` (`sparkle:edSignature`
 = Ed25519 sobre los bytes del archivo, en base64, como `sign_update` de Sparkle)
 y lo verifica con `updater.sparkle_public_key()`, que es el `SUPublicEDKey` que
 lleva la app. Un solo `<item>`: Sparkle solo necesita la última versión.
+
+Con un delta (`BinaryDelta`, Fase 38) añade `<sparkle:deltas>`: la app que tenga
+exactamente `<ANTERIOR>` descarga solo el delta (firmado igual) y el resto, el
+zip completo. Un delta empieza por su cabecera binaria, nunca por
+`MANIFEST_SIG_CONTEXT`, así que su firma tampoco vale como la del manifiesto.
 """
 
 import base64
@@ -35,7 +41,19 @@ def sign_archive(key, archive_bytes):
     return base64.b64encode(signature).decode("ascii")
 
 
-def build_appcast(version, archive_name, length, signature, pub_date=None):
+def _deltas_xml(version, delta):
+    if not delta:
+        return ""
+    delta_name, delta_length, delta_signature, from_version = delta
+    url = f"{REPO_URL}/releases/download/v{version}/{delta_name}"
+    return f"""
+      <sparkle:deltas>
+        <enclosure url={quoteattr(url)} sparkle:deltaFrom={quoteattr(from_version)} length="{delta_length}" type="application/octet-stream" sparkle:edSignature={quoteattr(delta_signature)}/>
+      </sparkle:deltas>"""
+
+
+def build_appcast(version, archive_name, length, signature, pub_date=None, delta=None):
+    """`delta`: (nombre, longitud, firma, versión_origen) o None."""
     pub_date = pub_date or datetime.now(timezone.utc)
     url = f"{REPO_URL}/releases/download/v{version}/{archive_name}"
     notes = f"{REPO_URL}/releases/tag/v{version}"
@@ -51,7 +69,7 @@ def build_appcast(version, archive_name, length, signature, pub_date=None):
       <sparkle:shortVersionString>{escape(version)}</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>{MIN_SYSTEM_VERSION}</sparkle:minimumSystemVersion>
       <sparkle:releaseNotesLink>{escape(notes)}</sparkle:releaseNotesLink>
-      <enclosure url={quoteattr(url)} length="{length}" type="application/octet-stream" sparkle:edSignature={quoteattr(signature)}/>
+      <enclosure url={quoteattr(url)} length="{length}" type="application/octet-stream" sparkle:edSignature={quoteattr(signature)}/>{_deltas_xml(version, delta)}
     </item>
   </channel>
 </rss>
@@ -59,12 +77,18 @@ def build_appcast(version, archive_name, length, signature, pub_date=None):
 
 
 def main(argv):
-    if len(argv) != 5:
+    if len(argv) not in (5, 7):
         raise SystemExit(__doc__)
-    key_path, archive, version, out = argv[1:]
+    key_path, archive, version, out = argv[1:5]
+    key = load_key(key_path)
     archive = Path(archive)
     data = archive.read_bytes()
-    xml = build_appcast(version, archive.name, len(data), sign_archive(load_key(key_path), data))
+    delta = None
+    if len(argv) == 7:
+        delta_path, from_version = Path(argv[5]), argv[6]
+        delta_data = delta_path.read_bytes()
+        delta = (delta_path.name, len(delta_data), sign_archive(key, delta_data), from_version)
+    xml = build_appcast(version, archive.name, len(data), sign_archive(key, data), delta=delta)
     Path(out).write_text(xml, encoding="utf-8")
     print(f"    OK, {out}")
 

@@ -681,6 +681,20 @@ Scope:
 Verification: `pytest` (248) · en el Mac: 1.2.7 → 1.3.0 con el updater en
 Python y 1.3.0 → 1.3.1 con Sparkle.
 
+### Phase 38 — Deltas de Sparkle (ADR-014, addendum)
+
+**Status:** Implementado (v1.3.2), pendiente de verificar en el Mac.
+
+Scope:
+- `macos/delta_base.py`: descarga el zip del Release publicado y verifica
+  longitud, URL y `sparkle:edSignature` antes de usarlo como base.
+- `build_app.sh`: `BinaryDelta create` (del tarball de Sparkle) + comprobación
+  `apply` → `codesign --verify` + mismo CDHash; el `.delta` va en el
+  `gh release create` impreso. Sin base o sin verificar → sin delta.
+- `make_appcast.py`: `<sparkle:deltas>` firmado con la misma clave.
+
+Verification: `pytest` (257) · en el Mac: 1.3.1 → 1.3.2 descargando el delta.
+
 ## Product Backlog — Future Features
 
 - **Soporte Multi-cuenta:** Permitir gestionar varios perfiles de Gmail desde la misma instancia.

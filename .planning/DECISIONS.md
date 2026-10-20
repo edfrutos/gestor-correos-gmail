@@ -335,7 +335,7 @@ también la sustitución del zip por otra `.app` antigua firmada del mismo team
 ## ADR-014 — Sparkle 2 como updater de la app macOS (supera el updater en Python del ADR-013)
 
 **Date:** 2026-10-20
-**Status:** Accepted, pendiente de verificar en el Mac (v1.3.0, rama `feat/sparkle`)
+**Status:** Accepted. Verificado en el Mac (v1.3.0 → v1.3.1)
 
 Desde la v1.3.0 la `.app` lleva **Sparkle 2.9.6** (`Contents/Frameworks/Sparkle.framework`)
 y lo arranca desde `macos/app_main.py` vía PyObjC (`SPUStandardUpdaterController`).
@@ -366,3 +366,17 @@ resuelto: el manifiesto firmado de la v1.2.4 usa Ed25519.
   `SparkleUpdater.available` es False y menú y botón usan `updater.py`.
 - Deltas (`BinaryDelta`) quedan fuera: exigen conservar la `.app` anterior en
   cada build. Pueden añadirse sin tocar la app.
+
+**Addendum (2026-10-20, Fase 38 — deltas, v1.3.2):** en vez de conservar la
+`.app` anterior, `build_app.sh` descarga el zip del último Release
+(`macos/delta_base.py`) y solo lo usa si su longitud y su `sparkle:edSignature`
+del appcast publicado casan con la clave embebida (y la URL es un asset del
+propio repo y tag); así el delta parte exactamente de lo que tienen instalado
+los usuarios. `BinaryDelta` (del mismo tarball de Sparkle, sha256 fijado) crea
+`GestorDeCorreos-<v>-from-<anterior>.delta`; antes de publicarlo se aplica a la
+base y la `.app` resultante debe pasar `codesign --verify --deep --strict` y
+tener el mismo CDHash que la compilada. El delta se firma con la misma clave y
+va en `<sparkle:deltas>` (`sparkle:deltaFrom`). Un solo delta, desde la versión
+inmediatamente anterior; el resto descarga el zip completo. Sin base (primer
+Release, red) o si el delta no verifica, se publica sin delta; si la base
+publicada no casa con su firma, el build se detiene.

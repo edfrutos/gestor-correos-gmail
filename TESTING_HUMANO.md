@@ -70,6 +70,7 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 
 - [x] **Puente a Sparkle (v1.3.0):** Desde la 1.2.7, **Buscar actualizaciones** instala la 1.3.0 con el updater de siempre. En la 1.3.0, `ls "/Applications/Gestor de Correos.app/Contents/Frameworks"` muestra `Sparkle.framework`.
 - [x] **Sparkle (v1.3.0 → siguiente):** En la 1.3.0, **Buscar actualizaciones** (menú y botón ⟳) abre el diálogo de Sparkle: "estás al día" sin Release nuevo; con el siguiente Release, muestra la versión y las notas, descarga, instala y relanza la app en la versión nueva. _(2026-10-20: verificado 1.3.0 → 1.3.1: descarga, instala y relanza.)_
+- [ ] **Delta de Sparkle (v1.3.1 → v1.3.2):** El build de la 1.3.2 muestra `OK, dist/GestorDeCorreos-1.3.2-from-1.3.1.delta` y el Release lleva ese `.delta`. Desde la 1.3.1, **Buscar actualizaciones** instala la 1.3.2 y la app se relanza en la 1.3.2. En `log show --last 10m --predicate 'subsystem BEGINSWITH "org.sparkle-project"' --info` aparece la descarga del `.delta` (no la del `.zip`).
 
 2026-10-18: v1.2.4 (primer Release con `latest.json.sig`) instalado en el Mac
 desde 1.2.3 por el auto-updater; esa actualización aún no verifica la firma
