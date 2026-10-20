@@ -666,7 +666,7 @@ firma y se auto-reinstala).
 
 ### Phase 37 — Sparkle 2 (ADR-014)
 
-**Status:** Implementado (v1.3.0), pendiente de verificar en el Mac.
+**Status:** Publicado (v1.3.0); verificado 1.2.7 → 1.3.0 y la carga de Sparkle en el Mac. Pendiente: 1.3.0 → 1.3.1 con Sparkle.
 
 Scope:
 - `build_app.sh`: Sparkle 2.9.6 (sha256 fijado) → `Contents/Frameworks`, sin
