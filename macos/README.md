@@ -179,7 +179,19 @@ cualquier modo (ver `paths.py`).
 
 ## Publicar una actualización (auto-updater)
 
-La app trae **Buscar actualizaciones** (menú nativo + botón en la UI). Consulta
+**Desde la v1.3.0 actualiza Sparkle 2** (ADR-014). `build_app.sh` descarga
+Sparkle (versión y sha256 fijados, caché en `macos/.cache/`), lo copia a
+`Contents/Frameworks` y lo firma. El feed es `dist/appcast.xml`, firmado con la
+misma clave Ed25519 que `latest.json` (`UPDATE_SIGNING_KEY`). Sparkle comprueba
+una vez al día y con **Buscar actualizaciones** (menú o botón); muestra su
+diálogo estándar, descarga, verifica la firma EdDSA y la identidad Developer ID,
+y reinstala la app.
+
+Las 1.2.x no tienen Sparkle: siguen usando el updater en Python con
+`latest.json`, que por eso **se sigue publicando** en cada Release (es el puente
+hacia la 1.3.0). Si Sparkle no carga, la app también recurre a ese updater.
+
+Updater en Python (1.2.x y respaldo): consulta
 `latest.json` en el último GitHub Release, verifica su **firma Ed25519**
 (`latest.json.sig`, clave pública embebida en `updater.py`) y, si hay versión
 nueva, descarga el `.zip`, verifica **sha256**, valida el índice del zip y lo extrae con el mismo
@@ -193,8 +205,9 @@ Para sacar una versión nueva:
    commitea y construye **desde ese commit** (en `main`, sin cambios locales).
 2. `PYTHON=/usr/local/bin/python3.12 bash macos/build_app.sh`
    — genera `dist/GestorDeCorreos-<VERSION>.zip`, `dist/latest.json` (con el
-   sha256), su firma `dist/latest.json.sig` y el `dist/GestorDeCorreos.dmg`, y comprueba que el zip pasa la
-   validación del auto-updater (si no, aborta).
+   sha256), su firma `dist/latest.json.sig`, `dist/appcast.xml` (Sparkle) y el
+   `dist/GestorDeCorreos.dmg`, y comprueba que el zip pasa la validación del
+   auto-updater (si no, aborta).
 3. Publica el Release con el tag **`v<VERSION>`** sobre el commit compilado
    (`--target`; sin él, GitHub crea el tag sobre la punta de la rama por
    defecto, que es como `v1.2.0`/`v1.2.1` acabaron en otro commit). El script
@@ -202,7 +215,7 @@ Para sacar una versión nueva:
    ```bash
    git push origin HEAD
    gh release create v1.2.2 \
-       "dist/GestorDeCorreos-1.2.2.zip" dist/latest.json dist/latest.json.sig dist/GestorDeCorreos.dmg \
+       "dist/GestorDeCorreos-1.2.2.zip" dist/latest.json dist/latest.json.sig dist/appcast.xml dist/GestorDeCorreos.dmg \
        --target <commit-compilado> --title v1.2.2 --notes "Cambios…"
    ```
    El nombre del `.zip` y el tag deben coincidir con lo que `latest.json` apunta

@@ -119,6 +119,10 @@ async function checkStatus(){
 
 // ── ACTUALIZACIONES ───────────────────────────────────────
 async function checkForUpdates(){
+  // App de escritorio con Sparkle: su diálogo nativo hace todo el flujo.
+  try{
+    if(window.pywebview?.api?.check_updates&&await window.pywebview.api.check_updates())return;
+  }catch(e){console.warn('Sparkle no disponible, se usa el updater integrado',e);}
   const btn=document.getElementById('upd-check');
   const old=btn.textContent;
   btn.disabled=true;btn.textContent='⟳ Comprobando…';

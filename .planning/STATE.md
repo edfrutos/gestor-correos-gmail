@@ -60,7 +60,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `238 tests` · **238 verdes**.
+- **Suite automatizada:** `249 tests` · **248 verdes**, 1 omitido sin pywebview.
 - **Testeo humano:** `TESTING_HUMANO.md` 42/42 (2026-10-19: §9 «Manifiesto firmado»
   1.2.4 → 1.2.5 y las pruebas nuevas de §5–§6 del panel Configuración, v1.2.6/v1.2.7).
 
@@ -121,6 +121,13 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-10-20 — **Sparkle 2** (rama `feat/sparkle`, ADR-014, Fase 37, v1.3.0):
+  `Sparkle.framework` 2.9.6 embebido y firmado por `build_app.sh`,
+  `appcast.xml` generado por `macos/make_appcast.py` con la misma clave Ed25519,
+  `SparkleUpdater` en `app_main.py` (menú + botón vía `js_api`), respaldo a
+  `updater.py`. `latest.json` se sigue publicando como puente para las 1.2.x.
+  +11 tests. Pendiente: verificar en el Mac 1.2.7 → 1.3.0 → siguiente.
 
 - 2026-10-19 — **Release v1.2.7 publicado** (tag en `64d1198`, PR #14) y
   **v1.2.6** (tag en `274c402`, PR #12/#13). IA verificada en el Mac con
@@ -262,7 +269,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Next Recommended Action
 
-**v1.2.7 publicado** (tag `v1.2.7` en `64d1198`). Testeo humano 42/42.
+**v1.2.7 publicado** (tag `v1.2.7` en `64d1198`). Sparkle preparado como
+v1.3.0 (rama `feat/sparkle`): compilar, publicar y verificar en el Mac
+1.2.7 → 1.3.0 (updater en Python) y 1.3.0 → 1.3.1 (Sparkle). Testeo humano 42/44.
 `v1.2.2`–`v1.2.7` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 

@@ -57,6 +57,18 @@ UPDATE_PUBLIC_KEYS = (
 )
 # Separación de dominio: la firma solo vale para este manifiesto.
 MANIFEST_SIG_CONTEXT = b"gestor-correos/latest.json/v1\n"
+# Sparkle (desde v1.3.0, ADR-014) usa la misma clave Ed25519: firma los bytes
+# del .zip sin contexto, y como un zip empieza por "PK\x03\x04" y nunca por
+# MANIFEST_SIG_CONTEXT, ninguna de las dos firmas sirve para la otra.
+SPARKLE_FEED_URL = (
+    "https://github.com/edfrutos/gestor-correos-gmail/releases/latest/download/appcast.xml"
+)
+
+
+def sparkle_public_key():
+    """`SUPublicEDKey` del Info.plist: la clave pública en base64 (formato Sparkle)."""
+    from base64 import b64encode
+    return b64encode(bytes.fromhex(UPDATE_PUBLIC_KEYS[0])).decode("ascii")
 _UA = "GestorDeCorreos-Updater"
 _TIMEOUT = 20
 
