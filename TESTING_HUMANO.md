@@ -28,8 +28,8 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
 - [x] **Regla Auto-Archive:** Crea una regla con "Archivar automáticamente". Busca el remitente y verifica que los correos no llegan a aparecer en la bandeja de la app (van directos a ocultos).
 
 ## 5. Sugerencias IA (Opcional)
-- [ ] **Configuración IA desde la app (v1.2.6):** En el panel "🛠 Configuración" rellena URL base, modelo y clave y pulsa "Guardar configuración". Verifica que el estado pasa a "✓ Activa · <modelo>", que el campo de clave queda vacío con "•••• guardada" y que tras reiniciar la app sigue configurada.
-- [ ] **Modelo con razonamiento y modelo cloud (v1.2.7):** Con `qwen3:8b` (Ollama local), "Sugerir reglas ahora" propone reglas sin error de JSON. Con un modelo `…:cloud` el estado dice "remota (modelo cloud de Ollama…)" y sugerir reglas o el resumen IA piden confirmación antes de enviar.
+- [x] **Configuración IA desde la app (v1.2.6):** En el panel "🛠 Configuración" rellena URL base, modelo y clave y pulsa "Guardar configuración". Verifica que el estado pasa a "✓ Activa · <modelo>", que el campo de clave queda vacío con "•••• guardada" y que tras reiniciar la app sigue configurada.
+- [x] **Modelo con razonamiento y modelo cloud (v1.2.7):** Con `qwen3:8b` (Ollama local), "Sugerir reglas ahora" propone reglas sin error de JSON. Con un modelo `…:cloud` el estado dice "remota (modelo cloud de Ollama…)" y sugerir reglas o el resumen IA piden confirmación antes de enviar.
 - [x] **Activación:** Activa el toggle de IA en el panel de reglas.
 - [x] **Aprendizaje:** Oculta 5 correos de un remitente nuevo.
 - [x] **Sugerencia:** Pulsa "Sugerir reglas ahora". Verifica que la IA propone una regla coherente.
@@ -43,8 +43,8 @@ Este documento guía al usuario a través de las pruebas manuales para verificar
     - [x] Verifica que se abre el visor interno (sin abrir Apple Mail).
     - [x] Comprueba que se ve el remitente, fecha, asunto y el cuerpo (HTML/Texto).
 - [x] **Exportación ZIP:** Selecciona 3 correos y exporta. Verifica que el `.zip` se crea en `/exports`.
-- [ ] **Ruta real (v1.2.6):** En la app de escritorio, el texto bajo "📦 Exportaciones locales" muestra `~/Library/Application Support/GestorDeCorreos/exports` (desde fuente, la carpeta `exports` del proyecto).
-- [ ] **Carpeta de respaldo (v1.2.6):** En "🛠 Configuración" elige una carpeta con "📁 Elegir…" (o escribe la ruta) y guarda. Exporta un `.eml` y un `.zip`: ambos aparecen también en esa carpeta y el aviso dice "copiado a la carpeta de respaldo". Con una ruta que no existe, guardar da error claro.
+- [x] **Ruta real (v1.2.6):** En la app de escritorio, el texto bajo "📦 Exportaciones locales" muestra `~/Library/Application Support/GestorDeCorreos/exports` (desde fuente, la carpeta `exports` del proyecto).
+- [x] **Carpeta de respaldo (v1.2.6):** En "🛠 Configuración" elige una carpeta con "📁 Elegir…" (o escribe la ruta) y guarda. Exporta un `.eml` y un `.zip`: ambos aparecen también en esa carpeta y el aviso dice "copiado a la carpeta de respaldo". Con una ruta que no existe, guardar da error claro.
 
 ## 7. Integración con el Sistema (Servicios)
 - [x] **Abrir archivo externo:** Desde la terminal, ejecuta:
