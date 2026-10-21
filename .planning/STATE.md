@@ -122,6 +122,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-21 — **Primera subida a App Store Connect rechazada (91109)**: el
+  `oauth_client.json` bajado con el navegador llevaba `com.apple.quarantine` y
+  `cp` lo conserva. `build_mas.sh` hace `xattr -cr` sobre la app antes de
+  firmar. Build con cliente OAuth propio, solo arm64 y entitlements verificados
+  (`d8c43ef`). +1 test (301).
 - 2026-10-21 — **Primera build de la Mac App Store** (`build_mas.sh` con perfil
   y certificados; `.pkg` firmado, sin subir aún). Revisándola: `_rust.so` y
   `_cffi_backend.so` son solo arm64 (cryptography ya no trae x86_64 para

@@ -119,6 +119,10 @@ find "${BUNDLE}/Contents/Frameworks" -type d -name '*.app' -prune -print0 2>/dev
 if [ -z "${MAS_LOCAL}" ]; then
   cp "${MAS_PROFILE}" "${BUNDLE}/Contents/embedded.provisionprofile"
 fi
+# cp conserva los atributos extendidos: un oauth_client.json o un perfil bajados
+# con el navegador llevan com.apple.quarantine y App Store Connect rechaza el
+# .pkg (error 91109). Se limpian antes de firmar (la firma no los cubre).
+xattr -cr "${BUNDLE}"
 
 echo "==> 5/8  Firmar binarios anidados (inside-out)"
 sign_plain() { codesign --force --timestamp --sign "${SIGN_IDENTITY}" "$1"; }
