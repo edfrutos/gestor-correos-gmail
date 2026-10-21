@@ -82,7 +82,12 @@ Guía completa: `docs/MAC_APP_STORE.md`. Primero con la prueba local del sandbox
 - [x] **Exportar y respaldo:** Con una carpeta elegida con **📁 Elegir…** (p. ej. en Documentos), exporta un `.eml`: aparece en `exports/` del contenedor y en la carpeta elegida. Sal de la app, vuelve a abrirla y exporta otro: la copia de respaldo sigue llegando (bookmark).
 - [x] **Abrir .eml desde el Finder:** Doble clic (o «Abrir con») en un `.eml` lo muestra en el visor.
 - [x] **IA local en sandbox:** Con Ollama en el Mac, «Sugerir reglas» o el resumen funcionan igual que en la app de Developer ID.
-- [ ] **TestFlight:** La build subida con `build_mas.sh` se instala desde TestFlight y pasa las pruebas anteriores (con el cliente OAuth incluido si se usó `MAS_OAUTH_CLIENT`).
+- [x] **TestFlight:** La build subida con `build_mas.sh` se instala desde TestFlight y pasa las pruebas anteriores (con el cliente OAuth incluido si se usó `MAS_OAUTH_CLIENT`).
+
+2026-10-21: TestFlight verificado: build 2 de v1.4.0 (`3cdf450`, con
+`MAS_OAUTH_CLIENT`, solo arm64) subida con Transporter, procesada sin avisos e
+instalada desde TestFlight; pasa las pruebas anteriores. La build 1.4.0 se
+rechazó por ITMS-91109 (`com.apple.quarantine` en `oauth_client.json`). §10 completo.
 
 2026-10-20: §10 verificado en el Mac con la prueba local del sandbox
 (`MAS_LOCAL=1`, v1.4.0): arranque aislado, importar `credentials.json`, login
