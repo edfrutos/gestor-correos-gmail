@@ -122,6 +122,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-21 — **TestFlight verificado (§10 completo, 53/53)**: build 2 de
+  v1.4.0 (`3cdf450`, con el `xattr -cr` del PR #27) subida con Transporter,
+  procesada sin avisos e instalada desde TestFlight; pasa las pruebas de §10.
+  Siguiente: ficha de App Store Connect (§3) y Enviar a revisión.
 - 2026-10-21 — **Primera subida a App Store Connect rechazada (91109)**: el
   `oauth_client.json` bajado con el navegador llevaba `com.apple.quarantine` y
   `cp` lo conserva. `build_mas.sh` hace `xattr -cr` sobre la app antes de
