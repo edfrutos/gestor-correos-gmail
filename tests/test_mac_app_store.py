@@ -373,6 +373,16 @@ def test_build_mas_script_contract():
     assert '--options runtime' not in script
 
 
+def test_build_mas_clears_quarantine_before_signing():
+    # App Store Connect rechaza el .pkg si algún archivo lleva com.apple.quarantine
+    # (error 91109; p. ej. un oauth_client.json bajado con el navegador).
+    script = (MACOS / 'build_mas.sh').read_text(encoding='utf-8')
+    clear = script.index('xattr -cr "${BUNDLE}"')
+    assert script.index('cp "${MAS_OAUTH_CLIENT}"') < clear
+    assert script.index('embedded.provisionprofile"') < clear
+    assert clear < script.index('==> 5/8')
+
+
 def test_frontend_hides_updates_and_offers_credentials_import():
     js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
     html = (ROOT / 'index.html').read_text(encoding='utf-8')

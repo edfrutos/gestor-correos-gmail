@@ -165,6 +165,7 @@ en tu Mac. Haz ahí las pruebas de `TESTING_HUMANO.md` §10 y, si van bien,
 | `ITMS-90296: App sandbox not enabled` | Algún ejecutable no lleva `com.apple.security.app-sandbox`. `build_mas.sh` firma los anidados con `entitlements-mas-inherit.plist`; si añades un binario nuevo fuera de `Contents/MacOS`, fírmalo igual. |
 | `ITMS-90287: Invalid Code Signing Entitlements` | `application-identifier`/`team-identifier` no coinciden con el perfil. El script lo comprueba antes de firmar; revisa que el perfil sea del App ID correcto. |
 | `ITMS-90889` / perfil de desarrollo | Hace falta un perfil **Mac App Store Connect** (distribución). El script se para si el perfil lista dispositivos. |
+| `Invalid package contents … com.apple.quarantine` (91109) | Algún archivo copiado al bundle (p. ej. el `oauth_client.json` bajado con el navegador) llevaba el atributo de cuarentena. `build_mas.sh` hace `xattr -cr` sobre la app antes de firmar; vuelve a compilar con otro `MAS_BUILD_NUMBER`. |
 | `ITMS-4238: Redundant Binary Upload` | Ese `CFBundleVersion` ya se subió: vuelve a compilar con otro `MAS_BUILD_NUMBER`. |
 | `ITMS-90338: Non-public API usage` | Aviso típico de apps con PyObjC (selectores con nombres que coinciden con API privadas). Si App Review lo rechaza, anota el selector y lo revisamos. |
 | La app abre y se cierra al instante (TestFlight) | Mira *Consola → Informes de fallos*. Si aparece `deny(1)` del sandbox, falta un entitlement o un acceso a archivo: pásame el log. |
