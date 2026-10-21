@@ -122,6 +122,13 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-21 — **Primera build de la Mac App Store** (`build_mas.sh` con perfil
+  y certificados; `.pkg` firmado, sin subir aún). Revisándola: `_rust.so` y
+  `_cffi_backend.so` son solo arm64 (cryptography ya no trae x86_64 para
+  macOS) con el resto universal, así que en un Mac Intel la app abría y
+  fallaba al importar cryptography (también la 1.4.0 de Developer ID).
+  `macos/thin_bundle.py` deja todo en arm64 en los dos builds. +6 tests (300).
+
 - 2026-10-20 — **v1.4.0 publicada** (tag `v1.4.0` en `5f47135`, con el `.delta`
   desde la 1.3.1). **Delta de Sparkle verificado en el Mac:** la 1.3.1 se
   actualizó sola a la 1.4.0 y el Release cuenta 1 descarga del `.delta` y 0

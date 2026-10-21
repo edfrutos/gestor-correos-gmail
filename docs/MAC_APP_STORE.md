@@ -16,6 +16,11 @@ puedes hacer tú en Apple y en Google.
 | `credentials.json` | Copiado a mano o importado | Importado (🛠 Configuración) o incluido en la build (`MAS_OAUTH_CLIENT`) |
 | Carpeta de respaldo | Ruta libre | Elegida con **📁 Elegir…**; se recuerda con un *security-scoped bookmark* |
 | Firma | Developer ID Application + notarización | Apple Distribution + perfil «Mac App Store Connect»; `.pkg` con Mac Installer Distribution |
+| Arquitectura | Solo Apple Silicon (arm64) | Solo Apple Silicon (arm64) |
+
+Las dos son solo para Apple Silicon: cryptography ya no publica ruedas x86_64
+para macOS, así que `macos/thin_bundle.py` quita la parte Intel de todos los
+binarios (en un Mac Intel, macOS avisa de que la app no es compatible).
 
 Las dos variantes comparten el identificador `com.edefrutos.gestorcorreos`. No
 instales las dos a la vez en `/Applications`: la tienda no instala encima de una
