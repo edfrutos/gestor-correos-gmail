@@ -117,7 +117,8 @@ En [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → Apps → +
 idioma principal español, bundle ID `com.edefrutos.gestorcorreos`, SKU libre
 (p. ej. `gestor-correos-mac`).
 
-Lo que pide antes de enviar a revisión:
+Lo que pide antes de enviar a revisión (textos listos para pegar en
+`docs/APP_STORE_FICHA.md`):
 
 - **Política de privacidad** (URL) y **URL de soporte** (vale la de issues).
 - **Privacidad de la app**: el desarrollador no recoge datos (ningún dato llega
