@@ -87,7 +87,9 @@ Guía completa: `docs/MAC_APP_STORE.md`. Primero con la prueba local del sandbox
 2026-10-22: cliente OAuth incluido verificado en TestFlight: con
 `credentials.json` y `token.json` borrados del contenedor, la app copia el de
 la build (`MAS_OAUTH_CLIENT`), Google muestra «Gestor de Correos» y la cuenta
-de demostración (usuario de prueba) entra y busca.
+de demostración (usuario de prueba) entra. La primera búsqueda dio «Gmail API has
+not been used in project …»: faltaba activar la Gmail API en el proyecto de la
+tienda (§2.1 de MAC_APP_STORE.md).
 
 2026-10-21: TestFlight verificado: build 2 de v1.4.0 (`3cdf450`, con
 `MAS_OAUTH_CLIENT`, solo arm64) subida con Transporter, procesada sin avisos e
