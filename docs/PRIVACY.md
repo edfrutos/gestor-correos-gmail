@@ -1,6 +1,6 @@
 # Política de privacidad — Gestor de Correos
 
-*Última actualización: 20 de octubre de 2026*
+*Última actualización: 22 de octubre de 2026*
 
 Gestor de Correos es una aplicación para macOS que organiza tu propio correo de
 Gmail desde tu Mac. Esta política explica qué datos usa, dónde se guardan y con
@@ -23,9 +23,8 @@ Con tu autorización, la app accede a tu cuenta de Gmail para:
 
 - buscar y mostrar mensajes (remitente, asunto, fecha, etiquetas, fragmento y,
   cuando abres un mensaje, su contenido y adjuntos);
-- aplicar las acciones que tú eliges: etiquetar, archivar, mover a la papelera,
-  exportar a `.eml`/`.zip` y, solo si lo activas expresamente, borrar de forma
-  permanente.
+- aplicar las acciones que tú eliges: etiquetar, archivar, exportar a
+  `.eml`/`.zip` y, solo si lo activas expresamente, borrar de forma permanente.
 
 La app no usa tus datos de Gmail para ningún otro fin, no los vende, no los
 transfiere a terceros (salvo el proveedor de IA que tú configures, ver abajo),
