@@ -122,6 +122,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-22 — **Cliente OAuth incluido verificado en TestFlight** con la cuenta
+  de demostración: la prueba de TestFlight del 21 usaba el `credentials.json`
+  importado en la prueba local (otro proyecto, que da 403 a la cuenta demo).
+  Borrado del contenedor, la app copia el de la build y Google muestra
+  «Gestor de Correos». Documentado en MAC_APP_STORE.md. Siguiente: ficha y
+  Enviar a revisión.
 - 2026-10-21 — **TestFlight verificado (§10 completo, 53/53)**: build 2 de
   v1.4.0 (`3cdf450`, con el `xattr -cr` del PR #27) subida con Transporter,
   procesada sin avisos e instalada desde TestFlight; pasa las pruebas de §10.

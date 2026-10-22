@@ -84,9 +84,15 @@ Guía completa: `docs/MAC_APP_STORE.md`. Primero con la prueba local del sandbox
 - [x] **IA local en sandbox:** Con Ollama en el Mac, «Sugerir reglas» o el resumen funcionan igual que en la app de Developer ID.
 - [x] **TestFlight:** La build subida con `build_mas.sh` se instala desde TestFlight y pasa las pruebas anteriores (con el cliente OAuth incluido si se usó `MAS_OAUTH_CLIENT`).
 
+2026-10-22: cliente OAuth incluido verificado en TestFlight: con
+`credentials.json` y `token.json` borrados del contenedor, la app copia el de
+la build (`MAS_OAUTH_CLIENT`), Google muestra «Gestor de Correos» y la cuenta
+de demostración (usuario de prueba) entra y busca.
+
 2026-10-21: TestFlight verificado: build 2 de v1.4.0 (`3cdf450`, con
 `MAS_OAUTH_CLIENT`, solo arm64) subida con Transporter, procesada sin avisos e
-instalada desde TestFlight; pasa las pruebas anteriores. La build 1.4.0 se
+instalada desde TestFlight; pasa las pruebas anteriores (ese día con el
+`credentials.json` importado en la prueba local, que la app no sustituye). La build 1.4.0 se
 rechazó por ITMS-91109 (`com.apple.quarantine` en `oauth_client.json`). §10 completo.
 
 2026-10-20: §10 verificado en el Mac con la prueba local del sandbox
