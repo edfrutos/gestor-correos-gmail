@@ -75,7 +75,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 34 — App macOS (Developer ID) | `paths.py` + relocalización; `macos/` pywebview/py2app/firma inside-out/notarización/DMG/icono | ✅ Done (2026-09-09), mergeado a `main` (`afad3a9`) |
-| 35 — Mac App Store | Shell nativo Swift + WKWebView, App Sandbox, App Review | ⬜ Futuro, rama aparte |
+| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | 🟡 Enviada a revisión (2026-10-24, build 2 de v1.4.0) |
 
 ## Milestone v8 — Fases (cerrado en `main`)
 
@@ -122,6 +122,13 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-24 — **Enviada a revisión de App Review** (1 artículo): v1.4.0,
+  build 2. Ficha completada con los textos de `docs/APP_STORE_FICHA.md` (PR
+  #30), 6 capturas 2880×1800 hechas con la build de TestFlight y la cuenta de
+  demostración (`dist-mas/capturas/final/`, fuera del repo), categoría
+  Productividad, derechos de contenido y clasificación por edades (4+).
+  `docs/PRIVACY.md` corregida: la app no mueve a la papelera (PR #31).
+  Siguiente: esperar la respuesta de App Review.
 - 2026-10-22 — **Cliente OAuth incluido verificado en TestFlight** con la cuenta
   de demostración: la prueba de TestFlight del 21 usaba el `credentials.json`
   importado en la prueba local (otro proyecto, que da 403 a la cuenta demo).
@@ -333,9 +340,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 verificados). Las actualizaciones de la 1.3.0 en adelante las gestiona Sparkle
 (`appcast.xml`); `latest.json` se sigue publicando para que las 1.2.x puedan
 actualizar. La 1.3.2 no se publicó (sus cambios van en la 1.4.0).
-Siguiente: la Mac App Store según `docs/MAC_APP_STORE.md` (§1 Apple, §2 Google,
-§3 ficha, §4 TestFlight y revisión). Sandbox local ya verificado (§10 salvo
-TestFlight). Testeo humano 52/53.
+Mac App Store: v1.4.0 (build 2) **enviada a revisión el 2026-10-24**; TestFlight
+verificado (§10, 53/53). Siguiente: esperar a App Review. Si la rechaza, ver
+«Riesgos de la revisión de Apple» en `docs/MAC_APP_STORE.md` (4.2 envoltorio
+web → plan B: shell Swift + WKWebView); si la aprueba, cerrar MAS-05.
 `v1.2.2`–`v1.4.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
 
@@ -345,4 +353,5 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Otros pendientes: ninguno fuera de la Fase 35 (MAS-01 … MAS-05).
+Otros pendientes: ninguno fuera de la Fase 35 (MAS-01 … MAS-05; solo falta
+la aprobación de App Review para cerrarlos).

@@ -39,3 +39,6 @@ graphify-out/
 macos/build.env
 macos/AppIcon.icns
 macos/.cache/
+
+# Scripts locales (p. ej. capturas para la App Store)
+scripts/
