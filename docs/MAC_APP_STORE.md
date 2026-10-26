@@ -182,6 +182,14 @@ en tu Mac. Haz ahí las pruebas de `TESTING_HUMANO.md` §10 y, si van bien,
 - **5.1.1 (datos y privacidad)**: hace falta la política de privacidad y que el
   login de Google no sea obligatorio para *abrir* la app (no lo es: sin cuenta
   se pueden abrir `.eml`).
+- **2.4.5 (entitlements mínimos, `network.server`)**: el análisis automático de
+  Apple lo marca porque «no parece tener funcionalidad de servidor» (rechazo de
+  la v1.4.0 build 2, 2026-10-26). Sí la necesita: el servidor de la UI escucha
+  en 127.0.0.1 y el login OAuth usa la redirección *loopback* de Google
+  (`run_local_server`). En el sandbox, escuchar aunque sea en loopback exige
+  `network.server`. Respuesta: contestar al mensaje de App Review explicándolo
+  y dejar el mismo texto en las *Notes* (ver `APP_STORE_FICHA.md`). Quitarlo
+  obligaría a cambiar la UI a `js_api`/esquema propio y el OAuth a otro flujo.
 - **2.5.2 (código descargado)**: no aplica; sin Sparkle ni updater propio en
   esta variante.
 
