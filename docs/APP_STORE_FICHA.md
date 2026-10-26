@@ -80,6 +80,8 @@ How to test:
 
 Architecture: the interface is HTML, but all logic runs locally in Python inside the app bundle. It is served from an internal server on 127.0.0.1 that only answers its own window. The app does not download or execute code, has no self-updater in this version (updates come from the Mac App Store), and sends no data to the developer. It uses native macOS features: file and folder pickers, opening .eml files from the Finder.
 
+Network entitlements: com.apple.security.network.server is required because the app listens on the loopback interface only: (1) the app's own window (WKWebView) loads its interface from an HTTP server bound to 127.0.0.1 on a random free port, started in-process at launch; (2) Google sign-in uses the OAuth "loopback redirect" flow required by Google for desktop apps, which briefly listens on 127.0.0.1 to receive the authorization code. Nothing is reachable from other machines. com.apple.security.network.client is used for the Gmail API and Google OAuth.
+
 Privacy policy: https://github.com/edfrutos/gestor-correos-gmail/blob/main/docs/PRIVACY.md
 ```
 
