@@ -75,7 +75,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 34 — App macOS (Developer ID) | `paths.py` + relocalización; `macos/` pywebview/py2app/firma inside-out/notarización/DMG/icono | ✅ Done (2026-09-09), mergeado a `main` (`afad3a9`) |
-| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | 🟡 Enviada a revisión (2026-10-24, build 2 de v1.4.0) |
+| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | 🟠 Rechazada 2.4.5 (2026-10-26, `network.server`); pendiente de responder y reenviar |
 
 ## Milestone v8 — Fases (cerrado en `main`)
 
@@ -122,6 +122,14 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-10-26 — **App Review rechaza la v1.4.0 build 2 (2.4.5, automático)**:
+  `com.apple.security.network.server` «sin funcionalidad que lo justifique».
+  Sí se necesita (servidor de la UI en 127.0.0.1 y redirección *loopback* del
+  OAuth de Google). Justificación en `docs/MAC_APP_STORE.md` (2.4.5) y en las
+  *Notes* de `docs/APP_STORE_FICHA.md` (PR #33). Sin nueva build: contestar al
+  mensaje de App Review con ese texto, pegarlo en «Información de revisión» y
+  volver a enviar. Si Apple insiste, quitarlo exige UI por `js_api`/esquema
+  propio y otro flujo OAuth.
 - 2026-10-24 — **Enviada a revisión de App Review** (1 artículo): v1.4.0,
   build 2. Ficha completada con los textos de `docs/APP_STORE_FICHA.md` (PR
   #30), 6 capturas 2880×1800 hechas con la build de TestFlight y la cuenta de
@@ -340,8 +348,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 verificados). Las actualizaciones de la 1.3.0 en adelante las gestiona Sparkle
 (`appcast.xml`); `latest.json` se sigue publicando para que las 1.2.x puedan
 actualizar. La 1.3.2 no se publicó (sus cambios van en la 1.4.0).
-Mac App Store: v1.4.0 (build 2) **enviada a revisión el 2026-10-24**; TestFlight
-verificado (§10, 53/53). Siguiente: esperar a App Review. Si la rechaza, ver
+Mac App Store: v1.4.0 (build 2) enviada a revisión el 2026-10-24 y
+**rechazada el 2026-10-26 (2.4.5, `network.server`)**; TestFlight verificado
+(§10, 53/53). Siguiente: responder a App Review con la justificación de
+`APP_STORE_FICHA.md`, añadirla a las *Notes* y reenviar. Si vuelve a rechazarla, ver
 «Riesgos de la revisión de Apple» en `docs/MAC_APP_STORE.md` (4.2 envoltorio
 web → plan B: shell Swift + WKWebView); si la aprueba, cerrar MAS-05.
 `v1.2.2`–`v1.4.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
