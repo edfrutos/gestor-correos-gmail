@@ -188,7 +188,8 @@ en tu Mac. Haz ahí las pruebas de `TESTING_HUMANO.md` §10 y, si van bien,
   en 127.0.0.1 y el login OAuth usa la redirección *loopback* de Google
   (`run_local_server`). En el sandbox, escuchar aunque sea en loopback exige
   `network.server`. Respuesta: contestar al mensaje de App Review explicándolo
-  y dejar el mismo texto en las *Notes* (ver `APP_STORE_FICHA.md`). Quitarlo
+  y dejar el mismo texto en las *Notes* (ver `APP_STORE_FICHA.md`). Así se
+  aprobó, sin build nueva, el 2026-11-03. Quitarlo
   obligaría a cambiar la UI a `js_api`/esquema propio y el OAuth a otro flujo.
 - **2.5.2 (código descargado)**: no aplica; sin Sparkle ni updater propio en
   esta variante.

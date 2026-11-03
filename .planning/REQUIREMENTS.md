@@ -162,11 +162,11 @@
 
 ## v11 — Mac App Store (rama `feat/mac-app-store`, en curso)
 
-- [ ] **MAS-01**: Existe una variante de la `.app` para la Mac App Store con App Sandbox y entitlements mínimos, firmada con Apple Distribution, con perfil «Mac App Store Connect» y empaquetada en un `.pkg` firmado (`macos/build_mas.sh`). — Phase 35
-- [ ] **MAS-02**: La variante de la tienda no se actualiza sola: sin Sparkle, sin menú ni botón de actualizaciones, y el servidor rechaza `/api/update/install`. — Phase 35
-- [ ] **MAS-03**: Dentro del sandbox el usuario puede aportar `credentials.json` desde la app (o la build lleva su cliente OAuth) y el login de Google se abre en el navegador del sistema. — Phase 35
-- [ ] **MAS-04**: La carpeta de respaldo elegida sigue accesible tras reiniciar la app (security-scoped bookmark). — Phase 35
-- [ ] **MAS-05**: La app pasa TestFlight y App Review; política de privacidad publicada (`docs/PRIVACY.md`). — Phase 35
+- [x] **MAS-01**: Existe una variante de la `.app` para la Mac App Store con App Sandbox y entitlements mínimos, firmada con Apple Distribution, con perfil «Mac App Store Connect» y empaquetada en un `.pkg` firmado (`macos/build_mas.sh`). — Phase 35
+- [x] **MAS-02**: La variante de la tienda no se actualiza sola: sin Sparkle, sin menú ni botón de actualizaciones, y el servidor rechaza `/api/update/install`. — Phase 35
+- [x] **MAS-03**: Dentro del sandbox el usuario puede aportar `credentials.json` desde la app (o la build lleva su cliente OAuth) y el login de Google se abre en el navegador del sistema. — Phase 35
+- [x] **MAS-04**: La carpeta de respaldo elegida sigue accesible tras reiniciar la app (security-scoped bookmark). — Phase 35
+- [x] **MAS-05**: La app pasa TestFlight y App Review; política de privacidad publicada (`docs/PRIVACY.md`). — Phase 35
 
 ## Out of Scope
 
@@ -262,11 +262,11 @@
 | UPD-05 | Phase 36 | Done |
 | UPD-06 | Phase 36 | Done |
 | UPD-07 | Phase 36 | Complete |
-| MAS-01 | Phase 35 | Pending |
-| MAS-02 | Phase 35 | Pending |
-| MAS-03 | Phase 35 | Pending |
-| MAS-04 | Phase 35 | Pending |
-| MAS-05 | Phase 35 | Pending |
+| MAS-01 | Phase 35 | Done |
+| MAS-02 | Phase 35 | Done |
+| MAS-03 | Phase 35 | Done |
+| MAS-04 | Phase 35 | Done |
+| MAS-05 | Phase 35 | Done |
 
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.

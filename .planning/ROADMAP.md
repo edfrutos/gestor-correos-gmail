@@ -624,8 +624,8 @@ Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
 
 ### Phase 35 — Mac App Store (ADR-015)
 
-**Status:** Implementado (v1.4.0, rama `feat/mac-app-store`), pendiente de
-probar el sandbox en el Mac, configurar Apple/Google y pasar App Review.
+**Status:** ✅ Done (2026-11-03). v1.4.0 (build 2) aprobada por App Review
+tras justificar `network.server` (rechazo automático 2.4.5 del 2026-10-26).
 
 Misma base py2app + pywebview con una variante de build (no el shell Swift
 que se planteó al principio; queda como plan B si App Review rechaza esta).
@@ -646,7 +646,7 @@ Scope:
 - `docs/MAC_APP_STORE.md` (pasos Apple y Google, ficha, revisión) y
   `docs/PRIVACY.md` (política de privacidad).
 
-Requisitos: MAS-01 … MAS-05.
+Requisitos: MAS-01 … MAS-05 (todos Done).
 
 Verification: `pytest` (290) · ensayo de `build_mas.sh` con stubs · en el Mac:
 `TESTING_HUMANO.md` §10 (sandbox local y TestFlight).
