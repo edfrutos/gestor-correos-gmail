@@ -11,7 +11,7 @@ Complementa el §3 de `MAC_APP_STORE.md`. Límites de Apple entre paréntesis.
 | Categoría principal | Productividad |
 | Categoría secundaria | Utilidades |
 | URL de la política de privacidad | `https://gcorreos.efjdev.com/privacy.html` |
-| URL de soporte | `https://github.com/edfrutos/gestor-correos-gmail/issues` |
+| URL de soporte | `https://efjdev.com/soporte/` |
 | Copyright | `2026 EDF Developer` |
 | Precio | Gratis (o el que decidas) |
 

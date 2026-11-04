@@ -5,7 +5,7 @@
 Gestor de Correos es una aplicación para macOS que organiza tu propio correo de
 Gmail desde tu Mac. Esta política explica qué datos usa, dónde se guardan y con
 quién se comparten. El desarrollador es EDF Developer (contacto:
-[issues del proyecto](https://github.com/edfrutos/gestor-correos-gmail/issues)).
+[página de soporte](https://efjdev.com/soporte/)).
 
 ## Resumen
 
