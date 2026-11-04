@@ -8,9 +8,9 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | # | Paso | Dónde | Estado |
 |---|------|-------|--------|
 | 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
-| 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Pendiente |
+| 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Publicada; volver a subir `index.html` y `privacy.html` tras añadir la Papelera |
 | 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Pendiente |
-| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` nuevo | Pendiente |
+| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Pendiente |
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Pendiente |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Pendiente |
 | 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente |
@@ -54,7 +54,7 @@ de nuevo si compensa, porque es anual y de pago.
 ### App description
 
 ```text
-Gestor de Correos is a native macOS application, distributed through the Mac App Store, that helps people organize their own Gmail account, focusing on technical notifications such as hosting, domain, SSL certificate, security and billing notices. It searches the user's mail, classifies each message by category and severity on the user's Mac, and lets the user archive, label and export messages.
+Gestor de Correos is a native macOS application, distributed through the Mac App Store, that helps people organize their own Gmail account, focusing on technical notifications such as hosting, domain, SSL certificate, security and billing notices. It searches the user's mail, classifies each message by category and severity on the user's Mac, and lets the user archive, label, move to the Gmail Trash and export messages.
 ```
 
 ### Scope justification: gmail.modify
@@ -66,8 +66,9 @@ Features that depend on this scope:
 - Search and display: users.messages.list, users.messages.get, users.threads.list, users.threads.get and users.messages.attachments.get show the messages the user searches for, their content and their attachments, and let the user export them to .eml or .zip files on their own Mac.
 - Labels: users.labels.list and users.labels.create let the user pick or create a label.
 - Archive and label: users.messages.batchModify removes the INBOX label or adds a label, only on messages the user selected, after the user confirms the action.
+- Move to Trash: users.messages.trash moves a message to the Gmail Trash, only for messages the user has hidden in the app and selected, after the user confirms the action. Gmail keeps them for 30 days, and the user can recover them from Gmail during that time.
 
-Why a narrower scope is not sufficient: gmail.readonly and gmail.metadata cannot archive or label messages, which are core features; gmail.metadata also cannot read the message content needed to display and classify messages and to export them; gmail.labels cannot read messages. The app never sends, drafts, moves to trash or deletes email.
+Why a narrower scope is not sufficient: gmail.readonly and gmail.metadata cannot archive, label or trash messages, which are core features; gmail.metadata also cannot read the message content needed to display and classify messages and to export them; gmail.labels cannot read messages. The app never sends or drafts email and never permanently deletes it.
 ```
 
 ### Data handling and security assessment
@@ -92,6 +93,8 @@ Antes de grabar el vídeo:
 
 - [ ] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
   su texto inicial no habla de borrar en Gmail.
+- [ ] «Mover a la Papelera» pide confirmación, el mensaje aparece en la Papelera de
+  Gmail y desaparece de «Ocultos locales». Desde Gmail se puede recuperar.
 - [ ] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
   disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
 - [ ] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
@@ -105,7 +108,8 @@ Antes de grabar el vídeo:
 `capturas-mas/` (fuera del repo) guarda las 6 capturas de la v1.4.0. Hay que rehacer
 con la build de TestFlight y a 2880×1800:
 
-- `6-ocultos`: enseña «Eliminación permanente», que la v1.4.1 ya no tiene.
+- `6-ocultos`: enseña «Eliminación permanente», que la v1.4.1 ya no tiene. La nueva
+  debe mostrar «Mover a la Papelera».
 - `5-reglas-ia`: enseña la URL base con la etiqueta «OpenAI o compatible».
 
 ## Guion del vídeo
@@ -128,6 +132,8 @@ que se vea el identificador de cliente en la barra de direcciones.
    Enseñar el resultado en Gmail.
 8. **Archivar:** seleccionar mensajes, confirmar y enseñar en Gmail que han salido
    de la bandeja de entrada.
-9. **Exportar:** exportar un mensaje a `.eml` y enseñar el archivo en el Finder.
-10. **Datos locales y revocación:** explicar que nada llega al desarrollador y
+9. **Mover a la Papelera:** ocultar un mensaje, abrir «Ocultos locales», seleccionarlo,
+   mover a la Papelera y confirmar. Enseñar el mensaje en la Papelera de Gmail.
+10. **Exportar:** exportar un mensaje a `.eml` y enseñar el archivo en el Finder.
+11. **Datos locales y revocación:** explicar que nada llega al desarrollador y
     enseñar cómo revocar el acceso en `myaccount.google.com/permissions`.

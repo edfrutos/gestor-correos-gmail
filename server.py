@@ -36,9 +36,9 @@ from classifier import get_base_config
 from paths import data_dir, data_path, distribution, is_app_store, is_bundled, resource_dir
 from settings import load_settings, public_settings, save_settings
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
-from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query
-from storage import load_state, record_delete_results, save_user_state
-from validators import ApiError, parse_max, validate_attachment_id, validate_date, validate_delete_request, validate_filename, validate_gmail_id, validate_mime_type, validate_sender
+from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query, trash_messages
+from storage import load_state, record_delete_results, remove_hidden_ids, save_user_state
+from validators import ApiError, parse_max, validate_attachment_id, validate_date, validate_delete_request, validate_filename, validate_gmail_id, validate_mime_type, validate_sender, validate_trash_request
 
 
 def load_env():
@@ -219,6 +219,9 @@ class H(BaseHTTPRequestHandler):
 
         if p.path == '/api/messages/label':
             return self.handle_messages_label()
+
+        if p.path == '/api/messages/trash':
+            return self.handle_messages_trash()
 
         if p.path == '/api/ai-suggest-rules':
             return self.handle_ai_suggest_rules()
@@ -691,6 +694,39 @@ class H(BaseHTTPRequestHandler):
             detail = gmail_error_detail(e)
             print(f'[Archive] Error: {detail}')
             return self.err(502, 'Error archivando correos', detail)
+
+    def handle_messages_trash(self):
+        try:
+            payload = self.read_json_body()
+            ids = validate_trash_request(payload, load_state().get('hidden_ids', []), MAX_DELETE_BATCH)
+        except ApiError as exc:
+            return self.err(exc.status, str(exc), exc.detail)
+
+        if not self.require_gmail():
+            return
+
+        try:
+            results = trash_messages(ids)
+        except Exception as exc:
+            return self.err(502, 'Error moviendo correos a la Papelera', gmail_error_detail(exc))
+        if results is None:
+            return self.err(503, 'Gmail no disponible')
+
+        gone = [item['id'] for item in results if item['status'] in {'trashed', 'orphan'}]
+        state_error = None
+        try:
+            state = remove_hidden_ids(gone)
+        except Exception as exc:
+            state = None
+            state_error = 'Gmail procesó la operación, pero no se pudo actualizar el registro local.'
+            print(f'[Papelera] Error actualizando el estado: {exc}')
+        return self.j({
+            'status': 'ok',
+            'results': results,
+            'trashed': sum(item['status'] == 'trashed' for item in results),
+            'state': state,
+            'state_error': state_error,
+        })
 
     def handle_get_labels(self):
         if not self.require_gmail():

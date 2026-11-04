@@ -732,6 +732,7 @@ dominio, la v1.4.1 y la respuesta de Google.
 
 Scope:
 - La variante de la tienda solo usa `gmail.modify` y solo admite IA local.
+- Mover mensajes ocultos a la Papelera de Gmail, en lugar del borrado permanente.
 - `docs/site/`: página principal y política de privacidad para un dominio propio.
 - `docs/GOOGLE_VERIFICACION.md`: pasos, justificación y guion del vídeo.
 - Declarar el español en el bundle y volver a la venta con la v1.4.1.

@@ -195,3 +195,14 @@ def test_concurrent_saves_do_not_collide_on_temp_file(monkeypatch, tmp_path):
 
     assert len(results) == 50
     assert storage.load_state()['hidden_ids'][0].startswith('m')
+
+
+def test_remove_hidden_ids_keeps_the_rest_and_the_audit(monkeypatch, tmp_path):
+    monkeypatch.setattr(storage, 'STATE_FILE', tmp_path / 'app_state.json')
+    storage.save_state({'hidden_ids': ['m1', 'm2']})
+    storage.record_delete_results([{'id': 'old', 'status': 'deleted'}])
+
+    state = storage.remove_hidden_ids(['m1', 'absent'])
+
+    assert state['hidden_ids'] == ['m2']
+    assert [entry['id'] for entry in state['deletion_audit']] == ['old']

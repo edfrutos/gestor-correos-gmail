@@ -26,8 +26,10 @@ Con tu autorización, la app accede a tu cuenta de Gmail para:
 
 - buscar y mostrar mensajes (remitente, asunto, fecha, etiquetas, fragmento y,
   cuando abres un mensaje, su contenido y adjuntos);
-- aplicar las acciones que tú eliges: etiquetar, archivar y exportar a
-  `.eml`/`.zip`. En la versión descargada de GitHub, y solo si lo activas
+- aplicar las acciones que tú eliges: etiquetar, archivar, mover a la Papelera de
+  Gmail los mensajes que hayas ocultado y exportar a `.eml`/`.zip`. La Papelera
+  conserva los mensajes 30 días; puedes recuperarlos desde Gmail durante ese plazo.
+  En la versión descargada de GitHub, y solo si lo activas
   expresamente, también borrar de forma permanente. La versión de la Mac App Store
   no lo ofrece desde la 1.4.1.
 

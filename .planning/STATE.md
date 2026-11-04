@@ -378,7 +378,8 @@ Mac App Store: v1.4.0 (build 2) publicada el 2026-11-03 y **retirada de la venta
 el 2026-11-04 hasta verificarla con Google**
 ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)).
 Próximas versiones de la tienda: `build_mas.sh` con un
-`MAS_BUILD_NUMBER` nuevo y mantener la justificación de `network.server` en las
+`MAS_BUILD_NUMBER` mayor que cualquiera ya subido (el último subido es el 3, en la
+1.4.1) y mantener la justificación de `network.server` en las
 *Notes* (`docs/APP_STORE_FICHA.md`).
 `v1.2.2`–`v1.4.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
@@ -389,7 +390,7 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): publicar `docs/site/`
-en `https://gcorreos.efjdev.com/`, verificar `efjdev.com` en Search Console,
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): volver a publicar
+`docs/site/` en `https://gcorreos.efjdev.com/` con la Papelera, verificar `efjdev.com` en Search Console,
 compilar la v1.4.1 y enviar la solicitud a Google. **La app no debe volver a la venta
 hasta que Google la verifique.**
