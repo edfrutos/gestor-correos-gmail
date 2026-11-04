@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v10
 milestone_name: Auto-actualización
 status: completed
-last_updated: "2026-11-03T00:00:00.000Z"
+last_updated: "2026-11-04T00:00:00.000Z"
 branch: main
 progress:
   total_phases: 1
@@ -75,7 +75,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 34 — App macOS (Developer ID) | `paths.py` + relocalización; `macos/` pywebview/py2app/firma inside-out/notarización/DMG/icono | ✅ Done (2026-09-09), mergeado a `main` (`afad3a9`) |
-| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review (v1.4.0, build 2), pendiente de publicar por el desarrollador |
+| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review y publicada en la tienda (v1.4.0, build 2) |
 
 ## Milestone v8 — Fases (cerrado en `main`)
 
@@ -122,6 +122,13 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-04 — **Gestor de Correos Gmail ya está en la Mac App Store**: v1.4.0
+  publicada el 2026-11-03 (16:23 UTC), gratis
+  ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12), id `6825322977`). Comprobado con la API de búsqueda de iTunes:
+  disponible en ES, GB, MX, DE, FR, IT, PT y AR, pero **no en US ni CA**
+  (`resultCount` 0 y la página de US da 404). La ficha indica idioma `EN`:
+  el build 2 lleva `CFBundleDevelopmentRegion = English` (valor por defecto de
+  py2app) y no declara `CFBundleLocalizations`.
 - 2026-11-03 — **App Review aprueba la v1.4.0 (build 2) para la Mac App Store**
   tras justificar `network.server` (PR #33/#34), sin build nueva. Queda en
   «Pendiente de publicación por el desarrollador»: se publica con «Publicar
@@ -353,10 +360,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 verificados). Las actualizaciones de la 1.3.0 en adelante las gestiona Sparkle
 (`appcast.xml`); `latest.json` se sigue publicando para que las 1.2.x puedan
 actualizar. La 1.3.2 no se publicó (sus cambios van en la 1.4.0).
-Mac App Store: v1.4.0 (build 2) **aprobada el 2026-11-03** (tras un rechazo
-automático 2.4.5 por `network.server`, resuelto justificándolo). Siguiente:
-pulsar «Publicar esta versión» en App Store Connect y comprobar la ficha en la
-tienda. Próximas versiones de la tienda: `build_mas.sh` con un
+Mac App Store: v1.4.0 (build 2) **publicada el 2026-11-03**
+([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)).
+Próximas versiones de la tienda: `build_mas.sh` con un
 `MAS_BUILD_NUMBER` nuevo y mantener la justificación de `network.server` en las
 *Notes* (`docs/APP_STORE_FICHA.md`).
 `v1.2.2`–`v1.4.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
@@ -368,5 +374,10 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Otros pendientes: ninguno (Fase 35 cerrada; solo falta publicar la versión
-aprobada en App Store Connect).
+Otros pendientes (Mac App Store):
+
+1. Comprobar en App Store Connect → Precios y disponibilidad si EE. UU. y Canadá
+   están activados; la ficha no aparece en esas tiendas.
+2. Declarar el español en `macos/setup.py` (`CFBundleDevelopmentRegion` y
+   `CFBundleLocalizations`) para la próxima build: hoy la ficha indica idioma
+   `EN`.
