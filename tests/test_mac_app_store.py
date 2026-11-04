@@ -457,4 +457,13 @@ def test_remote_ai_unchanged_outside_app_store(monkeypatch, tmp_path):
 def test_frontend_hides_store_excluded_features():
     js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
     assert "closest('.gmail-section').style.display='none'" in js
+    store_text = js.split("getElementById('hidden-intro').textContent='", 1)[1].split("'", 1)[0]
+    assert 'borra' not in store_text.lower()
+    assert 'id="hidden-intro"' in (ROOT / 'index.html').read_text(encoding='utf-8')
+
+
+def test_build_mas_keeps_previous_builds():
+    script = (MACOS / 'build_mas.sh').read_text(encoding='utf-8')
+    assert 'rm -rf build "${BUNDLE}" "${PKG}"' in script
+    assert 'rm -rf build "${DIST}"' not in script
     assert "http://localhost:11434/v1" in js

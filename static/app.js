@@ -100,6 +100,7 @@ async function checkStatus(){
       document.getElementById('upd-check').style.display='none';
       // Sin borrado permanente ni IA remota: la tienda solo usa gmail.modify y los datos no salen del Mac.
       document.getElementById('delete-status').closest('.gmail-section').style.display='none';
+      document.getElementById('hidden-intro').textContent='Restaura mensajes, manténlos ocultos o limpia huérfanos locales. Usa Shift para seleccionar un rango y Cmd/Ctrl para alternar mensajes individuales. Sólo los huérfanos se pueden limpiar localmente.';
       const aiUrl=document.getElementById('cfg-ai-url');
       aiUrl.placeholder='http://localhost:11434/v1';
       aiUrl.previousElementSibling.textContent='URL base de tu modelo local (esta versión solo admite IA local)';
