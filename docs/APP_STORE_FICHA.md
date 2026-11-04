@@ -10,7 +10,7 @@ Complementa el §3 de `MAC_APP_STORE.md`. Límites de Apple entre paréntesis.
 | Subtítulo (30) | `Avisos técnicos de Gmail` |
 | Categoría principal | Productividad |
 | Categoría secundaria | Utilidades |
-| URL de la política de privacidad | `https://DOMINIO/privacy.html` (`docs/site/`, pendiente de elegir dominio) |
+| URL de la política de privacidad | `https://gcorreos.efjdev.com/privacy.html` |
 | URL de soporte | `https://github.com/edfrutos/gestor-correos-gmail/issues` |
 | Copyright | `2026 EDF Developer` |
 | Precio | Gratis (o el que decidas) |
@@ -82,7 +82,7 @@ Architecture: the interface is HTML, but all logic runs locally in Python inside
 
 Network entitlements: com.apple.security.network.server is required because the app listens on the loopback interface only: (1) the app's own window (WKWebView) loads its interface from an HTTP server bound to 127.0.0.1 on a random free port, started in-process at launch; (2) Google sign-in uses the OAuth "loopback redirect" flow required by Google for desktop apps, which briefly listens on 127.0.0.1 to receive the authorization code. Nothing is reachable from other machines. com.apple.security.network.client is used for the Gmail API and Google OAuth.
 
-Privacy policy: https://DOMINIO/privacy.html
+Privacy policy: https://gcorreos.efjdev.com/privacy.html
 ```
 
 ## Capturas

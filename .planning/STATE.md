@@ -122,6 +122,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-04 — **Fase 39:** app retirada de la venta en App Store Connect. Web en
+  `gcorreos.efjdev.com` (DNS y certificado comodín ya existentes; estática, sin
+  WordPress) y nombre «Gestor de Correos» para la ficha. `VERSION` en 1.4.1.
 - 2026-11-04 — **La app no es utilizable por el público**: el proyecto de Google
   sigue en «Prueba», con la cuenta de demostración como único usuario, y por eso
   la aprobó App Review. El usuario decide apuntar al público general: retirar la
@@ -381,7 +384,7 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): confirmar la retirada
-de la venta, elegir dominio para `docs/site/`, compilar la v1.4.1 (con el español
-en el bundle) y enviar la solicitud a Google. **La app no debe volver a la venta
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): publicar `docs/site/`
+en `https://gcorreos.efjdev.com/`, verificar `efjdev.com` en Search Console,
+compilar la v1.4.1 y enviar la solicitud a Google. **La app no debe volver a la venta
 hasta que Google la verifique.**
