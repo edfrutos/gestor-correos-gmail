@@ -7,11 +7,11 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 
 | # | Paso | Dónde | Estado |
 |---|------|-------|--------|
-| 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Decidido el 2026-11-04 |
-| 2 | Publicar `docs/site/` en un dominio propio (`index.html` y `privacy.html`) | Hosting | Pendiente de elegir dominio |
-| 3 | Verificar ese dominio en Search Console, con una cuenta propietaria del dominio y del proyecto | Search Console | Pendiente |
+| 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
+| 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Pendiente |
+| 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Pendiente |
 | 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` nuevo | Pendiente |
-| 5 | Completar la marca: nombre, logotipo, correo de asistencia, página principal, política y dominio autorizado | Google Auth Platform → Información de la marca | Pendiente |
+| 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Pendiente |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Pendiente |
 | 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente |
 | 8 | Pulsar «Publicar app» y enviar a verificación con los textos de abajo | Google Auth Platform → Público y Centro de verificación | Pendiente |
@@ -37,11 +37,11 @@ de nuevo si compensa, porque es anual y de pago.
 
 ## Riesgos que conviene resolver antes de enviar
 
-- **La palabra «Gmail» en el nombre.** La ficha de la tienda se llama «Gestor de
-  Correos Gmail» y el proyecto de Google, «Gestor de Correo Gmail». La marca debe
-  representar con exactitud la app y Google limita el uso de sus marcas sin
-  permiso. En la pantalla de consentimiento hay que usar «Gestor de Correos», y
-  conviene quitar «Gmail» del nombre de la ficha en la v1.4.1.
+- **La palabra «Gmail» en el nombre.** Decidido: la app se llama «Gestor de Correos»
+  en la ficha de la v1.4.1 y en la pantalla de consentimiento, porque Google limita
+  el uso de sus marcas sin permiso. App Store Connect confirmará si el nombre está
+  libre al guardarlo; la búsqueda pública de la tienda no lo garantiza. Alternativa
+  si está cogido: «GCorreos».
 - **Nombres coincidentes.** La pantalla de consentimiento, la página principal y
   la app deben mostrar el mismo nombre.
 - **Web pública.** La página principal debe ser accesible sin iniciar sesión y
@@ -85,6 +85,19 @@ Limited Use: the app uses Google user data only to provide the user-facing featu
 
 Because restricted scope data is not stored on, transmitted to or accessed from or through any server of ours or of a third party, we understand that the security assessment does not apply. Please confirm whether this is correct or tell us what you need in order to assess it. The source code is available at https://github.com/edfrutos/gestor-correos-gmail.
 ```
+
+## Comprobaciones en la v1.4.1 de TestFlight
+
+Antes de grabar el vídeo:
+
+- [ ] La ventana «Ocultos» no muestra la sección «Eliminación permanente».
+- [ ] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
+  disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
+- [ ] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
+  Ollama.
+- [ ] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
+- [ ] La ficha de App Store Connect indica el idioma español tras publicarse; hasta
+  entonces no se puede comprobar.
 
 ## Guion del vídeo
 
