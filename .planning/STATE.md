@@ -122,6 +122,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-04 — **v1.4.1 con el número de build 1.4.1 subida, pero sustituida por el
+  build 2:** en la tienda, «Ocultos locales» seguía hablando de borrar en Gmail.
+  `build_mas.sh` borraba `dist-mas` entero al compilar y se perdieron las capturas
+  y el `.pkg` de la 1.4.0. Ahora solo borra lo que regenera; capturas recuperadas
+  de la CDN de Apple en `capturas-mas/` (pueden estar recomprimidas).
 - 2026-11-04 — **Fase 39:** app retirada de la venta en App Store Connect. Web en
   `gcorreos.efjdev.com` (DNS y certificado comodín ya existentes; estática, sin
   WordPress) y nombre «Gestor de Correos» para la ficha. `VERSION` en 1.4.1.
@@ -154,7 +159,7 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 - 2026-10-24 — **Enviada a revisión de App Review** (1 artículo): v1.4.0,
   build 2. Ficha completada con los textos de `docs/APP_STORE_FICHA.md` (PR
   #30), 6 capturas 2880×1800 hechas con la build de TestFlight y la cuenta de
-  demostración (`dist-mas/capturas/final/`, fuera del repo), categoría
+  demostración (`capturas-mas/`, fuera del repo), categoría
   Productividad, derechos de contenido y clasificación por edades (4+).
   `docs/PRIVACY.md` corregida: la app no mueve a la papelera (PR #31).
   Siguiente: esperar la respuesta de App Review.

@@ -90,7 +90,8 @@ Because restricted scope data is not stored on, transmitted to or accessed from 
 
 Antes de grabar el vídeo:
 
-- [ ] La ventana «Ocultos» no muestra la sección «Eliminación permanente».
+- [ ] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
+  su texto inicial no habla de borrar en Gmail.
 - [ ] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
   disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
 - [ ] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
@@ -98,6 +99,14 @@ Antes de grabar el vídeo:
 - [ ] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
 - [ ] La ficha de App Store Connect indica el idioma español tras publicarse; hasta
   entonces no se puede comprobar.
+
+## Capturas de la ficha
+
+`capturas-mas/` (fuera del repo) guarda las 6 capturas de la v1.4.0. Hay que rehacer
+con la build de TestFlight y a 2880×1800:
+
+- `6-ocultos`: enseña «Eliminación permanente», que la v1.4.1 ya no tiene.
+- `5-reglas-ia`: enseña la URL base con la etiqueta «OpenAI o compatible».
 
 ## Guion del vídeo
 
