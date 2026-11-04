@@ -81,12 +81,12 @@ la build de la tienda debería llevar **su propio cliente OAuth**.
    **Gmail API** activada.
 2. **Pantalla de consentimiento OAuth** (Google Auth Platform → Branding):
    nombre «Gestor de Correos», correo de asistencia, logotipo, página principal
-   y **política de privacidad**: `docs/PRIVACY.md` publicada, p. ej.
-   `https://github.com/edfrutos/gestor-correos-gmail/blob/main/docs/PRIVACY.md`.
+   y **política de privacidad**. Para verificar la app, ambas deben estar en un
+   dominio propio y verificado: `docs/site/`. Ver `docs/GOOGLE_VERIFICACION.md`.
 3. **Permisos** (Data Access): `https://www.googleapis.com/auth/gmail.modify`.
-   El borrado permanente usa además `https://mail.google.com/`; si no lo vas a
-   ofrecer a los usuarios de la tienda, no lo declares (es el permiso que más
-   cuesta verificar) y deja `ENABLE_PERMANENT_DELETE` sin activar.
+   No declares `https://mail.google.com/`: desde la v1.4.1, la variante de la
+   tienda desactiva el borrado permanente aunque `ENABLE_PERMANENT_DELETE` esté
+   activo (ADR-016).
 4. **Cliente** (Clients → Create client): tipo **App de escritorio**. Descarga el
    JSON y apúntalo en `macos/build.env` (fuera del repo):
    ```bash
@@ -97,13 +97,16 @@ la build de la tienda debería llevar **su propio cliente OAuth**.
 5. **Estado de publicación:**
    - **Testing**: solo los usuarios de prueba que añadas (máx. 100) pueden
      autorizar, y su autorización caduca a los 7 días. Basta para TestFlight y
-     para la revisión de Apple si añades la cuenta de demostración.
+     para la revisión de Apple si añades la cuenta de demostración, **pero no
+     para el público**: el resto de usuarios no puede iniciar sesión, aunque
+     App Review apruebe la app.
    - **In production** con `gmail.modify` (permiso *restringido*) exige la
      **verificación de Google**: revisión de marca y de la política de
-     privacidad, vídeo del flujo de autorización y una **evaluación de
-     seguridad CASA** anual por un evaluador autorizado (de pago). Sin ella,
-     los usuarios ven «Google no ha verificado esta aplicación» y hay un límite
-     de 100 usuarios.
+     privacidad y vídeo del flujo de autorización. La **evaluación de seguridad
+     CASA** (anual y de pago) depende de si Google considera que aplica a una app
+     sin servidores. Sin verificar, los usuarios ven «Google no ha verificado esta
+     aplicación» y hay un límite de 100 usuarios. Pasos y textos en
+     `docs/GOOGLE_VERIFICACION.md`.
 
 Sin `MAS_OAUTH_CLIENT` la app funciona igual, pero cada usuario tiene que crear
 su propio cliente e importarlo (🛠 Configuración → **📄 Importar

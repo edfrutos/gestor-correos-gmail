@@ -96,7 +96,14 @@ async function checkStatus(){
     if(d.app_version){document.getElementById('ver-pill').textContent='v'+d.app_version;}
     appBundled=d.bundled===true;
     // Mac App Store: actualiza la tienda, no hay botón propio.
-    if(d.distribution==='mas')document.getElementById('upd-check').style.display='none';
+    if(d.distribution==='mas'){
+      document.getElementById('upd-check').style.display='none';
+      // Sin borrado permanente ni IA remota: la tienda solo usa gmail.modify y los datos no salen del Mac.
+      document.getElementById('delete-status').closest('.gmail-section').style.display='none';
+      const aiUrl=document.getElementById('cfg-ai-url');
+      aiUrl.placeholder='http://localhost:11434/v1';
+      aiUrl.previousElementSibling.textContent='URL base de tu modelo local (esta versión solo admite IA local)';
+    }
     if(d.ok){
       led.className='sled ok';
       msg.textContent='✓ Gmail conectado — búsqueda en tiempo real disponible';

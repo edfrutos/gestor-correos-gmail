@@ -72,6 +72,10 @@ OPTIONS = {
         "CFBundleIdentifier": "com.edefrutos.gestorcorreos",
         "CFBundleShortVersionString": VERSION,
         "CFBundleVersion": BUNDLE_VERSION,
+        # La interfaz está solo en español. Sin esto, py2app deja «English» y la
+        # Mac App Store muestra la app como disponible en inglés.
+        "CFBundleDevelopmentRegion": "es",
+        "CFBundleLocalizations": ["es"],
         "LSMinimumSystemVersion": "12.0",
         "LSUIElement": False,
         "NSHighResolutionCapable": True,
