@@ -389,3 +389,10 @@ def test_frontend_hides_updates_and_offers_credentials_import():
     assert "d.distribution==='mas'" in js
     assert 'window.pywebview.api.import_credentials()' in js
     assert 'id="cfg-creds-import"' in html and 'id="cfg-google"' in html
+
+
+def test_bundle_declares_spanish_in_both_builds():
+    """Sin esto, py2app deja «English» y la tienda anuncia la app en inglés."""
+    head = (MACOS / 'setup.py').read_text(encoding='utf-8').split('if not APP_STORE:', 1)[0]
+    assert '"CFBundleDevelopmentRegion": "es"' in head
+    assert '"CFBundleLocalizations": ["es"]' in head
