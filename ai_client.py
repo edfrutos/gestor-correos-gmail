@@ -4,15 +4,13 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-from settings import ai_config
+import paths
+from settings import LOCAL_AI_ONLY_DETAIL, LOCAL_AI_ONLY_ERROR, ai_config, is_remote
 from validators import ApiError
 
 
 MAX_PROMPT_LENGTH = 20000
 _THINK_BLOCK = re.compile(r'<think>.*?</think>', re.DOTALL | re.IGNORECASE)
-# Ollama sirve en localhost modelos que se ejecutan en ollama.com
-# (`kimi-k2.5:cloud`, `gpt-oss:20b-cloud`): los datos salen del equipo.
-_CLOUD_MODEL = re.compile(r'(^|[:\-])cloud$', re.IGNORECASE)
 
 
 def strip_reasoning(text):
@@ -27,16 +25,19 @@ def strip_reasoning(text):
     return text.strip()
 
 
-def is_remote(base_url, model):
-    if not base_url:
-        return False
-    if urlparse(base_url).hostname not in {'localhost', '127.0.0.1', '::1'}:
-        return True
-    return bool(_CLOUD_MODEL.search(model or ''))
+def _blocked(base_url, model):
+    return paths.is_app_store() and is_remote(base_url, model)
+
+
+def _ensure_allowed(base_url, model):
+    if _blocked(base_url, model):
+        raise ApiError(LOCAL_AI_ONLY_ERROR, status=403, detail=LOCAL_AI_ONLY_DETAIL)
 
 
 def ai_status():
     base_url, model, _ = ai_config()
+    if _blocked(base_url, model):
+        return {'configured': False, 'model': None, 'remote': False}
     return {
         'configured': bool(base_url and model),
         'model': model or None,
@@ -56,6 +57,7 @@ def summarize(prompt):
         raise ApiError('Contenido AI demasiado grande', status=413, detail=f'El contenido supera {MAX_PROMPT_LENGTH} caracteres')
 
     base_url, model, api_key = ai_config()
+    _ensure_allowed(base_url, model)
     if not base_url or not model:
         raise ApiError(
             'Integración AI no configurada',
@@ -105,6 +107,7 @@ def suggest_rules(emails_metadata):
         return {'suggestions': []}
 
     base_url, model, api_key = ai_config()
+    _ensure_allowed(base_url, model)
     
     if not base_url or not model:
         raise ApiError('AI no configurada', status=503, detail='Configura la URL base y el modelo en el panel Configuración')

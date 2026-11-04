@@ -3,6 +3,7 @@ import os
 import threading
 from pathlib import Path
 
+import paths
 from gmail_client import run_oauth_flow
 from paths import data_path
 from validators import ApiError
@@ -33,6 +34,9 @@ _delete_lock = threading.Lock()
 
 
 def delete_enabled():
+    # La tienda solo pide gmail.modify: mail.google.com no entra en la verificación de Google.
+    if paths.is_app_store():
+        return False
     return os.getenv('ENABLE_PERMANENT_DELETE', '').strip().lower() in {'1', 'true', 'yes'}
 
 

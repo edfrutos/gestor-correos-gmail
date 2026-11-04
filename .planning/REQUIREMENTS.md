@@ -160,13 +160,15 @@
 - [x] **UPD-06**: Flujo real verificado en el Mac (Release de prueba → actualización desde versión anterior). — Phase 36 (verificado 2026-09-11: v1.1.0 → v1.2.0 → v1.2.1)
 - [x] **UPD-07**: `latest.json` va firmado (Ed25519, `latest.json.sig`); la app rechaza un manifiesto sin firma o con firma que no verifique con la clave embebida. — Phase 36 (Release v1.2.4 firmado y verificado contra GitHub 2026-10-18; actualización 1.2.4 → 1.2.5 que verifica la firma comprobada en el Mac 2026-10-19)
 
-## v11 — Mac App Store (completado)
+## v11 — Mac App Store (en curso: verificación de Google)
 
 - [x] **MAS-01**: Existe una variante de la `.app` para la Mac App Store con App Sandbox y entitlements mínimos, firmada con Apple Distribution, con perfil «Mac App Store Connect» y empaquetada en un `.pkg` firmado (`macos/build_mas.sh`). — Phase 35
 - [x] **MAS-02**: La variante de la tienda no se actualiza sola: sin Sparkle, sin menú ni botón de actualizaciones, y el servidor rechaza `/api/update/install`. — Phase 35
 - [x] **MAS-03**: Dentro del sandbox el usuario puede aportar `credentials.json` desde la app (o la build lleva su cliente OAuth) y el login de Google se abre en el navegador del sistema. — Phase 35
 - [x] **MAS-04**: La carpeta de respaldo elegida sigue accesible tras reiniciar la app (security-scoped bookmark). — Phase 35
 - [x] **MAS-05**: La app pasa TestFlight y App Review; política de privacidad publicada (`docs/PRIVACY.md`). — Phase 35
+- [x] **MAS-06**: La variante de la tienda solo pide `gmail.modify` y solo admite IA local (ADR-016). — Phase 39
+- [ ] **MAS-07**: Google verifica la app, de modo que cualquier usuario de la tienda puede iniciar sesión. — Phase 39
 
 ## Out of Scope
 
@@ -267,6 +269,8 @@
 | MAS-03 | Phase 35 | Done |
 | MAS-04 | Phase 35 | Done |
 | MAS-05 | Phase 35 | Done |
+| MAS-06 | Phase 39 | Done |
+| MAS-07 | Phase 39 | Pending |
 
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.
@@ -275,7 +279,7 @@
   (Fase 32, 2026-10-18).
 - v9 (MAC-*): 5 requisitos — 5 Done (Fase 34; DMG firmado + notarizado verificado 2026-09-09).
 - v10 (UPD-*): 7 requisitos — 6 Done, UPD-07 pendiente de Release (Fase 36; verificación real en Mac 2026-09-11).
-- v11 (MAS-*): 5 requisitos — 5 Done (Fase 35; aprobada y publicada el 2026-11-03).
+- v11 (MAS-*): 7 requisitos — 6 Done, MAS-07 pendiente de Google (Fases 35 y 39).
 - Unmapped: 0.
 
 ---

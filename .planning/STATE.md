@@ -75,7 +75,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 34 — App macOS (Developer ID) | `paths.py` + relocalización; `macos/` pywebview/py2app/firma inside-out/notarización/DMG/icono | ✅ Done (2026-09-09), mergeado a `main` (`afad3a9`) |
-| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review y publicada en la tienda (v1.4.0, build 2) |
+| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review y publicada (v1.4.0, build 2); retirada de la venta hasta la Fase 39 |
 
 ## Milestone v8 — Fases (cerrado en `main`)
 
@@ -122,6 +122,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-04 — **La app no es utilizable por el público**: el proyecto de Google
+  sigue en «Prueba», con la cuenta de demostración como único usuario, y por eso
+  la aprobó App Review. El usuario decide apuntar al público general: retirar la
+  app de la venta y verificarla con Google (ADR-016, Fase 39). La variante de la
+  tienda deja de ofrecer IA remota y borrado permanente. EE. UU. y Canadá estaban
+  desmarcados en App Store Connect; no se activan hasta volver a la venta.
 - 2026-11-04 — **Gestor de Correos Gmail ya está en la Mac App Store**: v1.4.0
   publicada el 2026-11-03 (16:23 UTC), gratis
   ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12), id `6825322977`). Comprobado con la API de búsqueda de iTunes:
@@ -360,7 +366,8 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 verificados). Las actualizaciones de la 1.3.0 en adelante las gestiona Sparkle
 (`appcast.xml`); `latest.json` se sigue publicando para que las 1.2.x puedan
 actualizar. La 1.3.2 no se publicó (sus cambios van en la 1.4.0).
-Mac App Store: v1.4.0 (build 2) **publicada el 2026-11-03**
+Mac App Store: v1.4.0 (build 2) publicada el 2026-11-03 y **retirada de la venta
+el 2026-11-04 hasta verificarla con Google**
 ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)).
 Próximas versiones de la tienda: `build_mas.sh` con un
 `MAS_BUILD_NUMBER` nuevo y mantener la justificación de `network.server` en las
@@ -374,10 +381,7 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Otros pendientes (Mac App Store):
-
-1. Comprobar en App Store Connect → Precios y disponibilidad si EE. UU. y Canadá
-   están activados; la ficha no aparece en esas tiendas.
-2. Declarar el español en `macos/setup.py` (`CFBundleDevelopmentRegion` y
-   `CFBundleLocalizations`) para la próxima build: hoy la ficha indica idioma
-   `EN`.
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): confirmar la retirada
+de la venta, elegir dominio para `docs/site/`, compilar la v1.4.1 (con el español
+en el bundle) y enviar la solicitud a Google. **La app no debe volver a la venta
+hasta que Google la verifique.**

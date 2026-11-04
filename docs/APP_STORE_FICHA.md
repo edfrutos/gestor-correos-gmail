@@ -10,7 +10,7 @@ Complementa el §3 de `MAC_APP_STORE.md`. Límites de Apple entre paréntesis.
 | Subtítulo (30) | `Avisos técnicos de Gmail` |
 | Categoría principal | Productividad |
 | Categoría secundaria | Utilidades |
-| URL de la política de privacidad | `https://github.com/edfrutos/gestor-correos-gmail/blob/main/docs/PRIVACY.md` |
+| URL de la política de privacidad | `https://DOMINIO/privacy.html` (`docs/site/`, pendiente de elegir dominio) |
 | URL de soporte | `https://github.com/edfrutos/gestor-correos-gmail/issues` |
 | Copyright | `2026 EDF Developer` |
 | Precio | Gratis (o el que decidas) |
@@ -40,7 +40,7 @@ QUÉ HACE
 • Resúmenes de los últimos 7 o 30 días y tendencias.
 • Archiva y etiqueta en lote, con confirmación; oculta lo que ya revisaste.
 • Exporta mensajes completos a .eml o .zip y abre archivos .eml desde el Finder, incluso sin cuenta conectada.
-• Resúmenes con IA opcionales: local o con el proveedor que tú configures, siempre con aviso previo.
+• Resúmenes con IA opcionales, con un modelo local en tu Mac.
 
 PRIVACIDAD
 • Tus correos van directamente de Google a tu Mac. El desarrollador no recibe ningún dato: sin servidores propios, sin analítica, sin publicidad.
@@ -59,8 +59,8 @@ Primera versión en la Mac App Store.
 ## Privacidad de la app (cuestionario)
 
 - **¿Recoges datos de esta app?** → **No, no recogemos datos.**
-  Es correcto mientras no haya analítica ni un proveedor de IA remoto activado
-  por defecto: los correos viajan de Google al Mac y nunca a servidores del
+  Es correcto mientras no haya analítica; desde la v1.4.1 la variante de la tienda
+  además rechaza la IA remota: los correos viajan de Google al Mac y nunca a servidores del
   desarrollador. Si eso cambia, hay que rehacer el cuestionario.
 
 ## Información para la revisión (App Review Information)
@@ -75,14 +75,14 @@ Gestor de Correos organizes the user's own Gmail account, focusing on technical 
 
 How to test:
 1. Open the app. Without signing in you can already open .eml files (Exportaciones locales → "Abrir archivo .eml externo…").
-2. Click "Buscar en Gmail" (any sender or text, or just the date range). Google's sign-in page opens in the browser; use the demo account provided. It is a test user of our OAuth project, so Google may show an "unverified app" notice: choose Continue.
+2. Click "Buscar en Gmail" (any sender or text, or just the date range). Google's sign-in page opens in the browser; use the demo account provided.
 3. Results are classified by category and severity; open any message to see its content and attachments.
 
 Architecture: the interface is HTML, but all logic runs locally in Python inside the app bundle. It is served from an internal server on 127.0.0.1 that only answers its own window. The app does not download or execute code, has no self-updater in this version (updates come from the Mac App Store), and sends no data to the developer. It uses native macOS features: file and folder pickers, opening .eml files from the Finder.
 
 Network entitlements: com.apple.security.network.server is required because the app listens on the loopback interface only: (1) the app's own window (WKWebView) loads its interface from an HTTP server bound to 127.0.0.1 on a random free port, started in-process at launch; (2) Google sign-in uses the OAuth "loopback redirect" flow required by Google for desktop apps, which briefly listens on 127.0.0.1 to receive the authorization code. Nothing is reachable from other machines. com.apple.security.network.client is used for the Gmail API and Google OAuth.
 
-Privacy policy: https://github.com/edfrutos/gestor-correos-gmail/blob/main/docs/PRIVACY.md
+Privacy policy: https://DOMINIO/privacy.html
 ```
 
 ## Capturas

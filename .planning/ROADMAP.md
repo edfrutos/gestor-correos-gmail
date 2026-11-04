@@ -724,3 +724,14 @@ Verification: `pytest` (257) · en el Mac: 1.3.1 → 1.4.0 descargando el delta 
 - **Histórico de Auditoría Extendido:** Trazabilidad completa de acciones AI y archivados masivos.
 - **Análisis de Adjuntos:** Búsqueda y filtrado avanzado por tipo/tamaño de archivo adjunto.
 - **Sincronización AI automática:** aplicar sugerencias de IA como "reglas temporales" para limpiezas puntuales.
+
+### Phase 39 — Verificación de Google para la Mac App Store (ADR-016)
+
+**Status:** En curso (desde 2026-11-04). Código y textos preparados; faltan el
+dominio, la v1.4.1 y la respuesta de Google.
+
+Scope:
+- La variante de la tienda solo usa `gmail.modify` y solo admite IA local.
+- `docs/site/`: página principal y política de privacidad para un dominio propio.
+- `docs/GOOGLE_VERIFICACION.md`: pasos, justificación y guion del vídeo.
+- Declarar el español en el bundle y volver a la venta con la v1.4.1.

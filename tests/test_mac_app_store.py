@@ -396,3 +396,65 @@ def test_bundle_declares_spanish_in_both_builds():
     head = (MACOS / 'setup.py').read_text(encoding='utf-8').split('if not APP_STORE:', 1)[0]
     assert '"CFBundleDevelopmentRegion": "es"' in head
     assert '"CFBundleLocalizations": ["es"]' in head
+
+
+# --- Verificación de Google: la tienda solo pide gmail.modify y no saca datos ---
+
+def test_permanent_delete_never_enabled_in_app_store(monkeypatch):
+    import destructive_gmail
+    monkeypatch.setenv('ENABLE_PERMANENT_DELETE', '1')
+    monkeypatch.setattr(paths, 'is_app_store', lambda: False)
+    assert destructive_gmail.delete_enabled() is True
+    monkeypatch.setattr(paths, 'is_app_store', lambda: True)
+    assert destructive_gmail.delete_enabled() is False
+
+
+@pytest.mark.parametrize('base_url,model', [
+    ('https://api.openai.com/v1', 'gpt-4o'),
+    ('http://localhost:11434/v1', 'kimi-k2.5:cloud'),
+])
+def test_remote_ai_refused_in_app_store(monkeypatch, tmp_path, base_url, model):
+    import ai_client
+    import settings
+    from validators import ApiError
+    monkeypatch.setattr(settings, 'SETTINGS_FILE', tmp_path / 'settings.json')
+    monkeypatch.setattr(paths, 'is_app_store', lambda: True)
+
+    with pytest.raises(ApiError):
+        settings.save_settings({'ai_base_url': base_url, 'ai_model': model})
+    assert not (tmp_path / 'settings.json').exists()
+
+    # Ajustes guardados por una versión anterior o llegados por el entorno.
+    monkeypatch.setattr(ai_client, 'ai_config', lambda: (base_url, model, 'k'))
+    monkeypatch.setattr(ai_client, 'urlopen', lambda *a, **k: pytest.fail('no debe enviar nada'))
+    assert ai_client.ai_status()['configured'] is False
+    with pytest.raises(ApiError):
+        ai_client.summarize('texto')
+    with pytest.raises(ApiError):
+        ai_client.suggest_rules([{'subject': 'a', 'from': 'b'}])
+
+
+def test_local_ai_still_allowed_in_app_store(monkeypatch, tmp_path):
+    import ai_client
+    import settings
+    monkeypatch.setattr(settings, 'SETTINGS_FILE', tmp_path / 'settings.json')
+    monkeypatch.setattr(paths, 'is_app_store', lambda: True)
+
+    settings.save_settings({'ai_base_url': 'http://localhost:11434/v1', 'ai_model': 'llama3'})
+
+    monkeypatch.setattr(ai_client, 'ai_config', lambda: ('http://localhost:11434/v1', 'llama3', ''))
+    assert ai_client.ai_status() == {'configured': True, 'model': 'llama3', 'remote': False}
+
+
+def test_remote_ai_unchanged_outside_app_store(monkeypatch, tmp_path):
+    import settings
+    monkeypatch.setattr(settings, 'SETTINGS_FILE', tmp_path / 'settings.json')
+    monkeypatch.setattr(paths, 'is_app_store', lambda: False)
+    settings.save_settings({'ai_base_url': 'https://api.openai.com/v1', 'ai_model': 'gpt-4o'})
+    assert settings.load_settings()['ai_model'] == 'gpt-4o'
+
+
+def test_frontend_hides_store_excluded_features():
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    assert "closest('.gmail-section').style.display='none'" in js
+    assert "http://localhost:11434/v1" in js

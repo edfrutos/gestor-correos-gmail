@@ -11,10 +11,12 @@ entorno / `.env` equivalente (`AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY`).
 
 import json
 import os
+import re
 import threading
 from pathlib import Path
 from urllib.parse import urlparse
 
+import paths
 from paths import data_path
 from validators import ApiError
 
@@ -29,6 +31,22 @@ DEFAULT_SETTINGS = {
     'backup_dir': '',
 }
 AI_ENV = {'ai_base_url': 'AI_BASE_URL', 'ai_model': 'AI_MODEL', 'ai_api_key': 'AI_API_KEY'}
+
+
+# Ollama sirve en localhost modelos que se ejecutan en ollama.com
+# (`kimi-k2.5:cloud`, `gpt-oss:20b-cloud`): los datos salen del equipo.
+_CLOUD_MODEL = re.compile(r'(^|[:\-])cloud$', re.IGNORECASE)
+
+LOCAL_AI_ONLY_ERROR = 'IA remota no disponible'
+LOCAL_AI_ONLY_DETAIL = 'En la versión de la Mac App Store solo se admite un modelo local, p. ej. Ollama en este Mac'
+
+
+def is_remote(base_url, model):
+    if not base_url:
+        return False
+    if urlparse(base_url).hostname not in {'localhost', '127.0.0.1', '::1'}:
+        return True
+    return bool(_CLOUD_MODEL.search(model or ''))
 
 
 def _text(value, max_len, name):
@@ -98,6 +116,9 @@ def save_settings(payload):
             settings['ai_base_url'] = _validate_base_url(payload['ai_base_url'])
         if 'ai_model' in payload:
             settings['ai_model'] = _text(payload['ai_model'], 200, 'Modelo AI')
+        # Los correos no salen del Mac en la tienda: es lo que se declara a Google.
+        if paths.is_app_store() and is_remote(settings['ai_base_url'], settings['ai_model']):
+            raise ApiError(LOCAL_AI_ONLY_ERROR, status=403, detail=LOCAL_AI_ONLY_DETAIL)
         if payload.get('ai_api_key_clear'):
             settings['ai_api_key'] = ''
         else:

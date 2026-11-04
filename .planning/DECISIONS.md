@@ -435,3 +435,36 @@ Lo único incompatible con la tienda es actualizarse sola, y eso se desactiva.
   anual. Detalle en `docs/MAC_APP_STORE.md`.
 - Riesgo de rechazo por la guía 4.2 (interfaz HTML). Plan B: el shell Swift del
   ADR-012 lanzando el mismo backend.
+
+---
+
+## ADR-016 — La variante de la tienda solo usa `gmail.modify` y los datos no salen del Mac
+
+**Date:** 2026-11-04
+**Status:** Accepted, pendiente de la respuesta de Google
+
+La v1.4.0 se publicó en la Mac App Store con el proyecto de Google en «Prueba» y
+un único usuario de prueba, la cuenta de demostración: App Review pudo probarla,
+pero el público no puede iniciar sesión. Se retira de la venta para verificar la
+app con Google y abrirla al público general.
+
+Desde la v1.4.1, la variante de la tienda (`paths.is_app_store()`):
+
+- no ofrece el borrado permanente: `delete_enabled()` devuelve `False` aunque
+  `ENABLE_PERMANENT_DELETE` esté activo, y la interfaz oculta la sección;
+- solo admite IA local: `save_settings` rechaza un proveedor remoto o un modelo
+  «cloud» de Ollama, y `ai_client` se niega a enviar con ajustes anteriores o del
+  entorno.
+
+La versión de Developer ID no cambia: usa el cliente OAuth de cada usuario y no
+pasa por esta verificación.
+
+**Rationale:** `mail.google.com` es otro permiso restringido que habría que
+justificar. Y la guía de Google vincula la evaluación CASA a acceder a los datos a
+través de servidores, de modo que enviar asuntos y fragmentos a un proveedor
+externo debilitaría el principal argumento para evitarla. Ninguna página recoge una
+exención expresa para apps locales: lo decide Google.
+
+**Consecuencias:** la tienda pierde dos funciones respecto a la versión de GitHub.
+Si Google exige la evaluación CASA pese a todo, hay que valorar de nuevo si
+compensa. Detalle en `docs/GOOGLE_VERIFICACION.md`.
