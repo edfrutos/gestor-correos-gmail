@@ -160,7 +160,7 @@
 - [x] **UPD-06**: Flujo real verificado en el Mac (Release de prueba → actualización desde versión anterior). — Phase 36 (verificado 2026-09-11: v1.1.0 → v1.2.0 → v1.2.1)
 - [x] **UPD-07**: `latest.json` va firmado (Ed25519, `latest.json.sig`); la app rechaza un manifiesto sin firma o con firma que no verifique con la clave embebida. — Phase 36 (Release v1.2.4 firmado y verificado contra GitHub 2026-10-18; actualización 1.2.4 → 1.2.5 que verifica la firma comprobada en el Mac 2026-10-19)
 
-## v11 — Mac App Store (rama `feat/mac-app-store`, en curso)
+## v11 — Mac App Store (completado)
 
 - [x] **MAS-01**: Existe una variante de la `.app` para la Mac App Store con App Sandbox y entitlements mínimos, firmada con Apple Distribution, con perfil «Mac App Store Connect» y empaquetada en un `.pkg` firmado (`macos/build_mas.sh`). — Phase 35
 - [x] **MAS-02**: La variante de la tienda no se actualiza sola: sin Sparkle, sin menú ni botón de actualizaciones, y el servidor rechaza `/api/update/install`. — Phase 35
@@ -275,7 +275,7 @@
   (Fase 32, 2026-10-18).
 - v9 (MAC-*): 5 requisitos — 5 Done (Fase 34; DMG firmado + notarizado verificado 2026-09-09).
 - v10 (UPD-*): 7 requisitos — 6 Done, UPD-07 pendiente de Release (Fase 36; verificación real en Mac 2026-09-11).
-- v11 (MAS-*): 5 requisitos — pendientes de verificar en el Mac y en App Store Connect (Fase 35).
+- v11 (MAS-*): 5 requisitos — 5 Done (Fase 35; aprobada y publicada el 2026-11-03).
 - Unmapped: 0.
 
 ---

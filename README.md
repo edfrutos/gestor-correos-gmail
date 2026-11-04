@@ -3,6 +3,7 @@
 Panel local de inteligencia operativa para consultar, organizar y tratar correos técnicos de Gmail. Detecta riesgos (SSL, facturas, seguridad) y automatiza el orden del buzón real sin exponer datos fuera del equipo local o VPN privada.
 
 **Estado actual:** Milestones v1–v10 completados (macOS: app firmada + auto-actualización con Sparkle verificada en el Mac) · **301 pruebas verdes** · Plan de testeo humano 53/53
+**Disponible en la [Mac App Store](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)** (gratis, v1.4.0).
 Estado detallado y canónico: [`.planning/STATE.md`](.planning/STATE.md).
 
 ## Créditos

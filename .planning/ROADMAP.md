@@ -625,7 +625,8 @@ Verification: `pytest` (143/143) · DMG notarizado + `stapler validate` OK ·
 ### Phase 35 — Mac App Store (ADR-015)
 
 **Status:** ✅ Done (2026-11-03). v1.4.0 (build 2) aprobada por App Review
-tras justificar `network.server` (rechazo automático 2.4.5 del 2026-10-26).
+tras justificar `network.server` (rechazo automático 2.4.5 del 2026-10-26) y
+publicada el mismo día.
 
 Misma base py2app + pywebview con una variante de build (no el shell Swift
 que se planteó al principio; queda como plan B si App Review rechaza esta).
