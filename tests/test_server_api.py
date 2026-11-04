@@ -738,3 +738,71 @@ def test_read_eml_exports_file_must_be_eml(monkeypatch, tmp_path):
     assert read_eml('file=lote.zip')[0] == 400
     assert read_eml('file=ok.eml')[0] == 200
     assert read_eml('file=falta.eml')[0] == 404
+
+
+def test_handle_messages_trash_rejects_visible_message(monkeypatch):
+    handler = DummyHandler(request_body({'ids': ['visible']}))
+    called = []
+    monkeypatch.setattr(server, 'load_state', lambda: {'hidden_ids': ['hidden']})
+    monkeypatch.setattr(server, 'trash_messages', lambda ids: called.append(ids))
+    monkeypatch.setattr(handler, 'require_gmail', lambda: True, raising=False)
+
+    handler.handle_messages_trash()
+
+    assert handler.status_sent == 403
+    assert called == []
+
+
+def test_handle_messages_trash_rejects_oversized_batch(monkeypatch):
+    ids = [f'm{i}' for i in range(server.MAX_DELETE_BATCH + 1)]
+    handler = DummyHandler(request_body({'ids': ids}))
+    called = []
+    monkeypatch.setattr(server, 'load_state', lambda: {'hidden_ids': ids})
+    monkeypatch.setattr(server, 'trash_messages', lambda values: called.append(values))
+    monkeypatch.setattr(handler, 'require_gmail', lambda: True, raising=False)
+
+    handler.handle_messages_trash()
+
+    assert handler.status_sent == 400
+    assert called == []
+
+
+def test_handle_messages_trash_forgets_only_what_left_the_inbox(monkeypatch):
+    handler = DummyHandler(request_body({'ids': ['m1', 'm2', 'm3']}))
+    results = [
+        {'id': 'm1', 'status': 'trashed'},
+        {'id': 'm2', 'status': 'orphan', 'detail': 'not found'},
+        {'id': 'm3', 'status': 'error', 'detail': 'quota'},
+    ]
+    removed = []
+    monkeypatch.setattr(server, 'load_state', lambda: {'hidden_ids': ['m1', 'm2', 'm3']})
+    monkeypatch.setattr(server, 'trash_messages', lambda ids: results)
+    monkeypatch.setattr(server, 'remove_hidden_ids', lambda ids: removed.extend(ids) or {'hidden_ids': ['m3']})
+    monkeypatch.setattr(handler, 'require_gmail', lambda: True, raising=False)
+
+    handler.handle_messages_trash()
+
+    body = response_json(handler)
+    assert handler.status_sent == 200
+    assert removed == ['m1', 'm2']
+    assert body['trashed'] == 1
+    assert body['state_error'] is None
+
+
+def test_handle_messages_trash_reports_state_failure(monkeypatch):
+    handler = DummyHandler(request_body({'ids': ['m1']}))
+
+    def fail(ids):
+        raise OSError('disco lleno')
+
+    monkeypatch.setattr(server, 'load_state', lambda: {'hidden_ids': ['m1']})
+    monkeypatch.setattr(server, 'trash_messages', lambda ids: [{'id': 'm1', 'status': 'trashed'}])
+    monkeypatch.setattr(server, 'remove_hidden_ids', fail)
+    monkeypatch.setattr(handler, 'require_gmail', lambda: True, raising=False)
+
+    handler.handle_messages_trash()
+
+    body = response_json(handler)
+    assert handler.status_sent == 200
+    assert body['trashed'] == 1
+    assert body['state_error']

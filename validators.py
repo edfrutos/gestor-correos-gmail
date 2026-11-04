@@ -78,6 +78,21 @@ def validate_delete_request(payload, hidden_ids, max_batch=100):
     return ids
 
 
+def validate_trash_request(payload, hidden_ids, max_batch=100):
+    if not isinstance(payload, dict):
+        raise ApiError('Solicitud inválida')
+    raw_ids = payload.get('ids')
+    if not isinstance(raw_ids, list) or not raw_ids:
+        raise ApiError('Selecciona correos ocultos para mover a la Papelera')
+    ids = list(dict.fromkeys(validate_gmail_id(raw, 'id') for raw in raw_ids))
+    if len(ids) > max_batch:
+        raise ApiError('Lote demasiado grande', detail=f'Puedes mover como máximo {max_batch} mensajes por solicitud')
+    hidden = set(hidden_ids)
+    if any(message_id not in hidden for message_id in ids):
+        raise ApiError('Operación rechazada', status=403, detail='Sólo se pueden mover a la Papelera mensajes ocultos')
+    return ids
+
+
 def validate_attachment_id(raw):
     value = (raw or '').strip()
     if 1 <= len(value) <= 2048 and not re.search(r'[\x00-\x1f\x7f\s<>"`]', value):

@@ -392,6 +392,28 @@ def archive_messages(message_ids):
     return _batch_modify_chunked(message_ids, {'removeLabelIds': ['INBOX']})
 
 
+def trash_messages(message_ids):
+    """Mueve cada mensaje a la Papelera de Gmail, que lo conserva 30 días.
+
+    Devuelve un resultado por mensaje, porque cada llamada puede fallar por
+    separado. Un mensaje que ya no existe se indica como 'orphan'.
+    """
+    svc = gmail()
+    if not svc:
+        return None
+    results = []
+    for message_id in message_ids:
+        try:
+            with _api_lock:
+                svc.users().messages().trash(userId='me', id=message_id).execute()
+            results.append({'id': message_id, 'status': 'trashed'})
+        except Exception as exc:
+            state = gmail_message_lookup_state(exc)
+            status = 'orphan' if state['status'] == 'orphan' else 'error'
+            results.append({'id': message_id, 'status': status, 'detail': state['detail'][:300]})
+    return results
+
+
 def get_labels():
     svc = gmail()
     if not svc:

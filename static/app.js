@@ -100,7 +100,7 @@ async function checkStatus(){
       document.getElementById('upd-check').style.display='none';
       // Sin borrado permanente ni IA remota: la tienda solo usa gmail.modify y los datos no salen del Mac.
       document.getElementById('delete-status').closest('.gmail-section').style.display='none';
-      document.getElementById('hidden-intro').textContent='Restaura mensajes, manténlos ocultos o limpia huérfanos locales. Usa Shift para seleccionar un rango y Cmd/Ctrl para alternar mensajes individuales. Sólo los huérfanos se pueden limpiar localmente.';
+      document.getElementById('hidden-intro').textContent='Restaura mensajes, manténlos ocultos, limpia huérfanos locales o muévelos a la Papelera de Gmail. Usa Shift para seleccionar un rango y Cmd/Ctrl para alternar mensajes individuales. Sólo los huérfanos se pueden limpiar localmente.';
       const aiUrl=document.getElementById('cfg-ai-url');
       aiUrl.placeholder='http://localhost:11434/v1';
       aiUrl.previousElementSibling.textContent='URL base de tu modelo local (esta versión solo admite IA local)';
@@ -1241,6 +1241,7 @@ function updateHiddenSelection(){
   const canDelete=count>0&&count<=limit&&deleteStatus.enabled&&deleteStatus.authorized&&input.value===expected;
   const canForget=orphan>0;
   document.getElementById('hidden-restore').disabled=count===0;
+  document.getElementById('hidden-trash').disabled=count===0||count>limit;
   document.getElementById('hidden-delete').disabled=!canDelete;
   document.getElementById('hidden-forget').disabled=!canForget;
 }
@@ -1362,6 +1363,33 @@ async function forgetHiddenSelection(){
   await flushSaveState();
   await loadHiddenReviewPage(hiddenReviewPage);
   toast(`${count} registro${count===1?'':'s'} local${count===1?'':'es'} eliminado${count===1?'':'s'}`,'ok');
+}
+async function trashHiddenSelection(){
+  const ids=[...hiddenSelected];
+  if(!ids.length)return;
+  const count=ids.length;
+  if(!confirm(`Vas a mover ${count} correo${count===1?'':'s'} a la Papelera de Gmail. Podrás recuperarlo${count===1?'':'s'} desde Gmail durante 30 días; después, Gmail lo${count===1?'':'s'} eliminará. ¿Continuar?`))return;
+  const button=document.getElementById('hidden-trash');
+  button.disabled=true;
+  try{
+    const r=await fetch(`${API}/api/messages/trash`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ids})
+    });
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.detail||d.error||`Error HTTP ${r.status}`);
+    const results=d.results||[];
+    await purgeOrphanMessages(results.filter(item=>item.status!=='error').map(item=>item.id),{silent:true});
+    await loadHiddenReviewPage(hiddenReviewPage);
+    const failed=results.filter(item=>item.status==='error').length;
+    const moved=d.trashed||0;
+    const summary=`${moved} correo${moved===1?'':'s'} movido${moved===1?'':'s'} a la Papelera de Gmail`;
+    if(d.state_error)toast(`${summary}. ${d.state_error}`,'err');
+    else if(failed)toast(`${summary}. ${failed} no se ${failed===1?'pudo':'pudieron'} mover y sigue${failed===1?'':'n'} seleccionado${failed===1?'':'s'}.`,'err');
+    else toast(summary,'ok');
+  }catch(e){
+    toast('No se pudieron mover a la Papelera: '+e.message,'err');
+  }finally{button.disabled=false;updateHiddenSelection();}
 }
 async function authorizePermanentDelete(){
   const button=document.getElementById('delete-authorize');
@@ -2074,6 +2102,7 @@ document.getElementById('hidden-all').addEventListener('click',hiddenSelectAllCu
 document.getElementById('hidden-none').addEventListener('click',hiddenClearSelection);
 document.getElementById('hidden-restore').addEventListener('click',restoreHiddenSelection);
 document.getElementById('hidden-forget').addEventListener('click',forgetHiddenSelection);
+document.getElementById('hidden-trash').addEventListener('click',trashHiddenSelection);
 document.getElementById('delete-authorize').addEventListener('click',authorizePermanentDelete);
 document.getElementById('delete-revoke').addEventListener('click',revokePermanentDelete);
 document.getElementById('delete-confirm').addEventListener('input',updateHiddenSelection);

@@ -465,6 +465,10 @@ través de servidores, de modo que enviar asuntos y fragmentos a un proveedor
 externo debilitaría el principal argumento para evitarla. Ninguna página recoge una
 exención expresa para apps locales: lo decide Google.
 
+Como sustituto del borrado permanente, ambas variantes pueden mover a la Papelera
+de Gmail los mensajes ocultos (`users.messages.trash`). `gmail.modify` lo permite y
+Gmail conserva los mensajes 30 días, de modo que la acción se puede deshacer.
+
 **Consecuencias:** la tienda pierde dos funciones respecto a la versión de GitHub.
 Si Google exige la evaluación CASA pese a todo, hay que valorar de nuevo si
 compensa. Detalle en `docs/GOOGLE_VERIFICACION.md`.

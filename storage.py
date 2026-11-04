@@ -252,6 +252,14 @@ def save_user_state(raw_state):
         return _save_state_unlocked(candidate)
 
 
+def remove_hidden_ids(message_ids):
+    with _state_lock:
+        state = _load_state_unlocked()
+        removed = set(message_ids)
+        state['hidden_ids'] = [message_id for message_id in state['hidden_ids'] if message_id not in removed]
+        return _save_state_unlocked(state)
+
+
 def record_delete_results(results):
     with _state_lock:
         state = _load_state_unlocked()

@@ -27,7 +27,8 @@ Estado detallado y canónico: [`.planning/STATE.md`](.planning/STATE.md).
 | **Lector EML** | Visor nativo de `.eml` con renderizado HTML seguro y **descarga de adjuntos** |
 | **macOS** | Abre cualquier `.eml` desde el Finder con "Acciones rápidas" |
 | **Despliegue remoto** | VPN (Tailscale/WireGuard), modo headless, configuración completa por `.env` |
-| **Borrado permanente** | Aislado bajo autorización explícita y confirmación reforzada |
+| **Papelera de Gmail** | Mueve correos ocultos a la Papelera, con confirmación; recuperables desde Gmail durante 30 días |
+| **Borrado permanente** | Aislado bajo autorización explícita y confirmación reforzada. No está en la versión de la Mac App Store |
 
 ---
 
@@ -133,6 +134,7 @@ Build firmado + notarizado (DMG, distribución Developer ID): ver
 | GET | `/api/hidden` | Lista paginada de mensajes ocultos |
 | POST | `/api/messages/archive` | Archiva correos por lotes (retira INBOX) |
 | POST | `/api/messages/label` | Aplica etiqueta (y opcionalmente archiva) por lotes |
+| POST | `/api/messages/trash` | Mueve correos ocultos a la Papelera de Gmail (máx. 100/lote) |
 | POST | `/api/messages/export` | Exporta `.eml` o `.zip` al directorio `/exports` |
 | GET | `/api/exports` | Lista los archivos en `/exports` |
 | GET | `/api/read-eml` | Parsea un `.eml` de `/exports` (`file`) o una ruta local (`path`); rechaza todo lo que no sea `.eml` |

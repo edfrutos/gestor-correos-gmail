@@ -38,7 +38,7 @@ QUÉ HACE
 • Agrupa los avisos por proveedor y detecta los asuntos que se repiten.
 • Reglas personalizables con palabras clave para tus propios proveedores, con sugerencias por IA si la activas.
 • Resúmenes de los últimos 7 o 30 días y tendencias.
-• Archiva y etiqueta en lote, con confirmación; oculta lo que ya revisaste.
+• Archiva y etiqueta en lote, con confirmación; oculta lo que ya revisaste y mueve a la Papelera de Gmail lo que no necesites.
 • Exporta mensajes completos a .eml o .zip y abre archivos .eml desde el Finder, incluso sin cuenta conectada.
 • Resúmenes con IA opcionales, con un modelo local en tu Mac.
 
@@ -77,6 +77,7 @@ How to test:
 1. Open the app. Without signing in you can already open .eml files (Exportaciones locales → "Abrir archivo .eml externo…").
 2. Click "Buscar en Gmail" (any sender or text, or just the date range). Google's sign-in page opens in the browser; use the demo account provided.
 3. Results are classified by category and severity; open any message to see its content and attachments.
+4. Hidden messages are listed under "Ocultos locales", where they can be restored or moved to the Gmail Trash after a confirmation. Gmail keeps them for 30 days.
 
 Architecture: the interface is HTML, but all logic runs locally in Python inside the app bundle. It is served from an internal server on 127.0.0.1 that only answers its own window. The app does not download or execute code, has no self-updater in this version (updates come from the Mac App Store), and sends no data to the developer. It uses native macOS features: file and folder pickers, opening .eml files from the Finder.
 

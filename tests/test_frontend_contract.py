@@ -190,6 +190,9 @@ def test_hidden_review_and_permanent_delete_are_explicit_flows():
     assert 'id="hidden-restore"' in html
     assert 'id="hidden-delete"' in html
     assert 'id="hidden-forget"' in html
+    assert 'id="hidden-trash"' in html
+    assert "fetch(`${API}/api/messages/trash`" in js
+    assert 'Recuperable 30 días' in html
     assert 'id="delete-revoke"' in html
     assert 'id="delete-confirm"' in html
     assert 'id="hidden-prev"' in html

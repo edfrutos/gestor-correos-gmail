@@ -467,3 +467,21 @@ def test_build_mas_keeps_previous_builds():
     script = (MACOS / 'build_mas.sh').read_text(encoding='utf-8')
     assert 'rm -rf build "${BUNDLE}" "${PKG}"' in script
     assert 'rm -rf build "${DIST}"' not in script
+
+
+def test_trash_stays_available_in_app_store():
+    """La sección que oculta la tienda no debe arrastrar la Papelera."""
+    html = (ROOT / 'index.html').read_text(encoding='utf-8')
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    sections = html.split('<div class="hidden-section gmail-section">')
+    assert 'id="hidden-trash"' in sections[1] and 'id="delete-status"' not in sections[1]
+    assert 'id="delete-status"' in sections[2] and 'id="hidden-trash"' not in sections[2]
+    assert "getElementById('delete-status').closest('.gmail-section')" in js
+    store_text = js.split("getElementById('hidden-intro').textContent='", 1)[1].split("'", 1)[0]
+    assert 'Papelera' in store_text
+
+
+def test_build_mas_requires_build_number_for_the_store():
+    script = (MACOS / 'build_mas.sh').read_text(encoding='utf-8')
+    store_branch = script.split('if [ -n "${MAS_LOCAL}" ]; then', 1)[1].split('\nfi\n', 1)[0].split('else', 1)[1]
+    assert 'require MAS_BUILD_NUMBER' in store_branch

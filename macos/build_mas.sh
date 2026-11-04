@@ -11,7 +11,7 @@
 #   MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: Nombre (V29BTBRY6G)"
 #   MAS_PROFILE="$HOME/.config/gestor-correos/GestorDeCorreos_MAS.provisionprofile"
 #   MAS_OAUTH_CLIENT=".../credentials.json"   # opcional: cliente OAuth que lleva la app
-#   MAS_BUILD_NUMBER=2                         # opcional: CFBundleVersion (por defecto VERSION)
+#   MAS_BUILD_NUMBER=4                         # obligatorio: CFBundleVersion, mayor que cualquiera ya subido
 #
 # Prueba local del sandbox, sin perfil ni App Store Connect (firma con tu
 # Developer ID, sin .pkg; la .app resultante se abre con doble clic):
@@ -41,6 +41,8 @@ else
   require MAS_APP_IDENTITY
   require MAS_INSTALLER_IDENTITY
   require MAS_PROFILE
+  # VERSION no sirve: Apple exige un número mayor y 1.4.1 es menor que un 2 ya subido.
+  require MAS_BUILD_NUMBER
   SIGN_IDENTITY="${MAS_APP_IDENTITY}"
   [ -f "${MAS_PROFILE}" ] || { echo "No existe MAS_PROFILE: ${MAS_PROFILE}" >&2; exit 1; }
 fi

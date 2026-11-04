@@ -154,8 +154,10 @@ Entregar. También puedes subirlo con `xcrun altool --upload-app` y una clave de
 la API de App Store Connect (el script imprime el comando). Con `MAS_API_KEY` y
 `MAS_API_ISSUER` definidos, el script además lo valida antes.
 
-Cada subida necesita un **número de build nuevo** para la misma versión:
-`MAS_BUILD_NUMBER=2 PYTHON=… bash macos/build_mas.sh` (por defecto es `VERSION`).
+Cada subida necesita un **número de build mayor que cualquiera ya subido**, también
+de versiones anteriores, y el script no compila sin él:
+`MAS_BUILD_NUMBER=4 PYTHON=… bash macos/build_mas.sh`. Consulta el último en App Store
+Connect → TestFlight. Con `MAS_LOCAL=1` es opcional.
 
 Cuando App Store Connect termine de procesarlo (minutos), en **TestFlight →
 Internal Testing** añádete como probador e instala la build con la app TestFlight
@@ -172,6 +174,7 @@ en tu Mac. Haz ahí las pruebas de `TESTING_HUMANO.md` §10 y, si van bien,
 | `Invalid package contents … com.apple.quarantine` (91109) | Algún archivo copiado al bundle (p. ej. el `oauth_client.json` bajado con el navegador) llevaba el atributo de cuarentena. `build_mas.sh` hace `xattr -cr` sobre la app antes de firmar; vuelve a compilar con otro `MAS_BUILD_NUMBER`. |
 | Google muestra el nombre de otro proyecto o `Error 403: access_denied` (TestFlight) | Un `credentials.json` importado antes (p. ej. en la prueba con `MAS_LOCAL=1`) tiene prioridad: la app nunca sustituye el del usuario por el de la build. Cierra la app y borra `credentials.json` y `token.json` de `~/Library/Containers/com.edefrutos.gestorcorreos/Data/Library/Application Support/GestorDeCorreos/`; al abrirla copia el incluido. Si sigue el 403, la cuenta no es usuario de prueba de ese proyecto. |
 | `Gmail API has not been used in project …` al buscar | El login funciona, pero el proyecto del cliente incluido no tiene la **Gmail API** activada (paso 2.1): APIs y servicios → Gmail API → Habilitar, y espera unos minutos. |
+| `The value for key CFBundleVersion … must contain a higher version` (90061) | El número de build no supera al último subido. Vuelve a compilar con un `MAS_BUILD_NUMBER` mayor que el que indica el error. |
 | `ITMS-4238: Redundant Binary Upload` | Ese `CFBundleVersion` ya se subió: vuelve a compilar con otro `MAS_BUILD_NUMBER`. |
 | `ITMS-90338: Non-public API usage` | Aviso típico de apps con PyObjC (selectores con nombres que coinciden con API privadas). Si App Review lo rechaza, anota el selector y lo revisamos. |
 | La app abre y se cierra al instante (TestFlight) | Mira *Consola → Informes de fallos*. Si aparece `deny(1)` del sandbox, falta un entitlement o un acceso a archivo: pásame el log. |

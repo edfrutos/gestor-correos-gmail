@@ -432,3 +432,45 @@ def test_gmail_operations_are_serialized_for_shared_service(monkeypatch):
 
 def test_gmail_error_detail_for_plain_exception():
     assert gmail_error_detail(RuntimeError('fallo')) == 'fallo'
+
+
+class _Http404(Exception):
+    def __str__(self):
+        return 'Requested entity was not found'
+
+
+class _RecordingTrashService:
+    def __init__(self, fail=None):
+        self.calls = []
+        self.fail = fail or {}
+
+    def users(self):
+        outer = self
+
+        class _Messages:
+            def trash(self, userId, id):
+                outer.calls.append(id)
+
+                def execute(_self):
+                    if id in outer.fail:
+                        raise outer.fail[id]
+                    return {}
+                return type('E', (), {'execute': execute})()
+
+        return type('U', (), {'messages': lambda self: _Messages()})()
+
+
+def test_trash_messages_reports_each_message(monkeypatch):
+    svc = _RecordingTrashService(fail={'gone': _Http404(), 'bad': RuntimeError('quota')})
+    monkeypatch.setattr(gmail_client, 'gmail', lambda: svc)
+
+    results = gmail_client.trash_messages(['ok', 'gone', 'bad'])
+
+    assert svc.calls == ['ok', 'gone', 'bad']
+    assert [item['status'] for item in results] == ['trashed', 'orphan', 'error']
+    assert results[2]['detail'] == 'quota'
+
+
+def test_trash_messages_without_gmail_returns_none(monkeypatch):
+    monkeypatch.setattr(gmail_client, 'gmail', lambda: None)
+    assert gmail_client.trash_messages(['m1']) is None

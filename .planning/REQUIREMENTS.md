@@ -169,6 +169,7 @@
 - [x] **MAS-05**: La app pasa TestFlight y App Review; política de privacidad publicada (`docs/PRIVACY.md`). — Phase 35
 - [x] **MAS-06**: La variante de la tienda solo pide `gmail.modify` y solo admite IA local (ADR-016). — Phase 39
 - [ ] **MAS-07**: Google verifica la app, de modo que cualquier usuario de la tienda puede iniciar sesión. — Phase 39
+- [x] **MAS-08**: Los mensajes ocultos se pueden mover a la Papelera de Gmail con `gmail.modify`, tras confirmarlo. — Phase 39
 
 ## Out of Scope
 
@@ -271,6 +272,7 @@
 | MAS-05 | Phase 35 | Done |
 | MAS-06 | Phase 39 | Done |
 | MAS-07 | Phase 39 | Pending |
+| MAS-08 | Phase 39 | Done |
 
 **Coverage:**
 - v1–v5 + post-v5: 57 requisitos, todos mapeados y Done.
@@ -279,7 +281,7 @@
   (Fase 32, 2026-10-18).
 - v9 (MAC-*): 5 requisitos — 5 Done (Fase 34; DMG firmado + notarizado verificado 2026-09-09).
 - v10 (UPD-*): 7 requisitos — 6 Done, UPD-07 pendiente de Release (Fase 36; verificación real en Mac 2026-09-11).
-- v11 (MAS-*): 7 requisitos — 6 Done, MAS-07 pendiente de Google (Fases 35 y 39).
+- v11 (MAS-*): 8 requisitos — 7 Done, MAS-07 pendiente de Google (Fases 35 y 39).
 - Unmapped: 0.
 
 ---
