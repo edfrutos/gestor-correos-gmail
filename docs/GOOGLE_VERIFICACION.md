@@ -8,11 +8,11 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | # | Paso | Dónde | Estado |
 |---|------|-------|--------|
 | 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
-| 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Publicada; volver a subir `index.html` y `privacy.html` tras añadir la Papelera |
-| 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Pendiente |
-| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Pendiente |
-| 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Pendiente |
-| 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Pendiente |
+| 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho; la web coincide con `docs/site/` |
+| 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Hecho |
+| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 6 en preparación; es la que debe grabarse y enviarse a App Review |
+| 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
+| 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
 | 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente |
 | 8 | Pulsar «Publicar app» y enviar a verificación con los textos de abajo | Google Auth Platform → Público y Centro de verificación | Pendiente |
 | 9 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente |
@@ -102,23 +102,21 @@ Antes de grabar el vídeo:
 - [ ] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
   Ollama.
 - [ ] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
+- [ ] Con la app abierta, revocar el acceso en `myaccount.google.com/permissions`:
+  la siguiente búsqueda avisa de que la autorización expiró o fue revocada, y la
+  posterior abre Google sin reiniciar la app.
 - [ ] La ficha de App Store Connect indica el idioma español tras publicarse; hasta
   entonces no se puede comprobar.
 
 ## Capturas de la ficha
 
-`capturas-mas/` (fuera del repo) guarda las 6 capturas de la v1.4.0. Hay que rehacer
-con la build de TestFlight y a 2880×1800:
-
-- `6-ocultos`: enseña «Eliminación permanente», que la v1.4.1 ya no tiene. La nueva
-  debe mostrar «Mover a la Papelera».
-- `5-reglas-ia`: enseña la URL base con la etiqueta «OpenAI o compatible». Sustituirla
-  por una de «Reglas personalizadas» con alguna regla creada y sin 🛠 Configuración,
-  que enseña la ruta de la carpeta de respaldo.
+Rehechas con la 1.4.1 y subidas el 2026-11-05. `capturas-mas/` (fuera del repo)
+conserva `5-reglas-ia` y `6-ocultos`, de la versión anterior: no deben subirse.
+Las capturas no deben mostrar direcciones personales.
 
 ## Guion del vídeo
 
-Con la build de TestFlight (paso 4), en inglés o con subtítulos en inglés. Debe
+Con la build de TestFlight (paso 4) y la sesión de Google cerrada, en inglés o con subtítulos en inglés. Debe
 mostrar de principio a fin cómo el usuario inicia y concede el acceso. Conviene
 que se vea el identificador de cliente en la barra de direcciones.
 

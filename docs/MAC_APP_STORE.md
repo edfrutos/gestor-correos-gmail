@@ -156,7 +156,7 @@ la API de App Store Connect (el script imprime el comando). Con `MAS_API_KEY` y
 
 Cada subida necesita un **número de build mayor que cualquiera ya subido**, también
 de versiones anteriores, y el script no compila sin él:
-`MAS_BUILD_NUMBER=5 PYTHON=… bash macos/build_mas.sh`. Consulta el último en App Store
+`MAS_BUILD_NUMBER=6 PYTHON=… bash macos/build_mas.sh`. Consulta el último en App Store
 Connect → TestFlight. Con `MAS_LOCAL=1` es opcional.
 
 Cuando App Store Connect termine de procesarlo (minutos), en **TestFlight →
