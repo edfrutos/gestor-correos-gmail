@@ -108,11 +108,11 @@
       <label class="rule-field"><span>Clave API</span><input id="cfg-ai-key" type="password" maxlength="500" placeholder="sk-…" autocomplete="off"></label>
     </div>
     <label class="cfg-check"><input type="checkbox" id="cfg-ai-key-clear"> Borrar la clave guardada</label>
-    <p class="hint">Para Ollama local: <code>http://localhost:11434/v1</code>, modelo <code>llama3</code>, clave <code>ollama</code>. La clave solo se guarda en este equipo (<code>settings.json</code>, permisos 600) y nunca vuelve a la interfaz. Lo guardado aquí tiene prioridad sobre <code>.env</code>.</p>
+    <p class="hint" id="cfg-ai-hint">Para Ollama local: <code>http://localhost:11434/v1</code>, modelo <code>llama3</code>, clave <code>ollama</code>. La clave solo se guarda en este equipo (<code>settings.json</code>, permisos 600) y nunca vuelve a la interfaz. Lo guardado aquí tiene prioridad sobre <code>.env</code>.</p>
 
     <div class="cfg-head" style="margin-top:14px">Carpeta de respaldo de exportaciones</div>
     <div class="cfg-form">
-      <label class="rule-field wide"><span>Ruta absoluta (vacío = sin respaldo)</span><input id="cfg-backup-dir" maxlength="1000" placeholder="/Users/tu-usuario/Documents/Correos" autocomplete="off" spellcheck="false"></label>
+      <label class="rule-field wide"><span>Ruta absoluta (vacío = sin respaldo)</span><input id="cfg-backup-dir" maxlength="1000" placeholder="/Users/tu-usuario/Documents/Copias de correos" autocomplete="off" spellcheck="false"></label>
       <button class="addbtn" type="button" id="cfg-backup-pick" style="display:none">📁 Elegir…</button>
     </div>
     <p class="hint">Cada <code>.eml</code> o <code>.zip</code> exportado se copia también a esta carpeta. Si no está disponible (p. ej. un disco desmontado), la exportación se guarda igual y se avisa.</p>
