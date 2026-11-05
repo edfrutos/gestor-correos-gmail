@@ -391,6 +391,24 @@ def test_frontend_hides_updates_and_offers_credentials_import():
     assert 'id="cfg-creds-import"' in html and 'id="cfg-google"' in html
 
 
+def test_status_reports_bundled_oauth_client(monkeypatch, tmp_path):
+    monkeypatch.setattr(paths, 'resource_dir', lambda: tmp_path)
+    assert paths.has_bundled_oauth_client() is False
+    (tmp_path / app_main.BUNDLED_OAUTH_CLIENT).write_text('{}', encoding='utf-8')
+    assert paths.has_bundled_oauth_client() is True
+
+    handler = DummyHandler()
+    handler.path = '/api/status'
+    monkeypatch.setattr(server, 'gmail_status', lambda: {'ok': False})
+    monkeypatch.setattr(server, 'ai_status', lambda: {})
+    monkeypatch.setattr(server, 'delete_status', lambda: {})
+    monkeypatch.setattr(server, 'has_bundled_oauth_client', lambda: True)
+
+    handler.do_GET()
+
+    assert response_json(handler)['oauth_bundled'] is True
+
+
 def test_bundle_declares_spanish_in_both_builds():
     """Sin esto, py2app deja «English» y la tienda anuncia la app en inglés."""
     head = (MACOS / 'setup.py').read_text(encoding='utf-8').split('if not APP_STORE:', 1)[0]
@@ -485,3 +503,15 @@ def test_build_mas_requires_build_number_for_the_store():
     script = (MACOS / 'build_mas.sh').read_text(encoding='utf-8')
     store_branch = script.split('if [ -n "${MAS_LOCAL}" ]; then', 1)[1].split('\nfi\n', 1)[0].split('else', 1)[1]
     assert 'require MAS_BUILD_NUMBER' in store_branch
+
+
+def test_store_settings_do_not_suggest_cloud_or_own_google_client():
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    store = js.split("if(d.distribution==='mas'){", 1)[1].split('if(d.ok){', 1)[0]
+    assert "getElementById('cfg-ai-model').placeholder='llama3'" in store
+    assert "aiKeyPlaceholder='ollama'" in store
+    hint = store.split("getElementById('cfg-ai-hint').textContent='", 1)[1].split("'", 1)[0]
+    assert '.env' not in hint and 'settings.json' not in hint
+    assert 'if(d.oauth_bundled){' in store
+    # pywebviewready puede llegar después del estado: no debe volver a mostrarla.
+    assert 'if(credentialsImportHidden||' in js

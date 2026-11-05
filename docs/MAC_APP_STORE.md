@@ -13,7 +13,7 @@ puedes hacer tú en Apple y en Google.
 | Actualizaciones | Sparkle 2 (y `latest.json` para las 1.2.x) | Las hace la tienda: sin Sparkle, sin menú ni botón ⟳ |
 | Aislamiento | Hardened Runtime | **App Sandbox** (sin Hardened Runtime) |
 | Datos | `~/Library/Application Support/GestorDeCorreos/` | `~/Library/Containers/com.edefrutos.gestorcorreos/Data/Library/Application Support/GestorDeCorreos/` |
-| `credentials.json` | Copiado a mano o importado | Importado (🛠 Configuración) o incluido en la build (`MAS_OAUTH_CLIENT`) |
+| `credentials.json` | Copiado a mano o importado | Incluido en la build (`MAS_OAUTH_CLIENT`), que oculta la importación; sin él, importado (🛠 Configuración) |
 | Carpeta de respaldo | Ruta libre | Elegida con **📁 Elegir…**; se recuerda con un *security-scoped bookmark* |
 | Firma | Developer ID Application + notarización | Apple Distribution + perfil «Mac App Store Connect»; `.pkg` con Mac Installer Distribution |
 | Arquitectura | Solo Apple Silicon (arm64) | Solo Apple Silicon (arm64) |
@@ -156,7 +156,7 @@ la API de App Store Connect (el script imprime el comando). Con `MAS_API_KEY` y
 
 Cada subida necesita un **número de build mayor que cualquiera ya subido**, también
 de versiones anteriores, y el script no compila sin él:
-`MAS_BUILD_NUMBER=4 PYTHON=… bash macos/build_mas.sh`. Consulta el último en App Store
+`MAS_BUILD_NUMBER=5 PYTHON=… bash macos/build_mas.sh`. Consulta el último en App Store
 Connect → TestFlight. Con `MAS_LOCAL=1` es opcional.
 
 Cuando App Store Connect termine de procesarlo (minutos), en **TestFlight →

@@ -39,7 +39,7 @@ if str(_PROJECT_DIR) not in sys.path:
 
 APP_TITLE = "Gestor de Correos"
 OAUTH_BROWSER = "gestor-nsworkspace"
-BUNDLED_OAUTH_CLIENT = "oauth_client.json"  # lo añade build_mas.sh (MAS_OAUTH_CLIENT)
+BUNDLED_OAUTH_CLIENT = "oauth_client.json"  # lo añade build_mas.sh (MAS_OAUTH_CLIENT); igual que paths.BUNDLED_OAUTH_CLIENT
 BUNDLED_MARK = "gestor_bundled"
 BOOKMARKS_FILE = "bookmarks.json"
 # NSURLBookmarkCreationWithSecurityScope / NSURLBookmarkResolutionWithSecurityScope

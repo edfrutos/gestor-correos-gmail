@@ -95,7 +95,10 @@ botón «⟳ Actualizaciones») y la cuenta de demostración con correos cargado
 1. Resultados de una búsqueda con categorías y severidades.
 2. Un correo abierto en el modal.
 3. Resumen de 30 días / tendencias.
-4. Reglas personalizadas.
+4. Reglas personalizadas, con alguna regla creada.
+5. «Ocultos locales», con la acción de mover a la Papelera.
+
+No uses 🛠 Configuración: enseña la ruta de tu carpeta de respaldo, si la tienes configurada.
 
 Para pasarlas a 2880×1800 sin deformarlas, centradas sobre fondo oscuro:
 

@@ -27,6 +27,7 @@ from pathlib import Path
 
 APP_SUPPORT_NAME = "GestorDeCorreos"
 DISTRIBUTION_FILE = "DISTRIBUTION"
+BUNDLED_OAUTH_CLIENT = "oauth_client.json"  # lo añade build_mas.sh
 APP_STORE = "mas"
 _PROJECT_DIR = Path(__file__).resolve().parent
 
@@ -75,6 +76,11 @@ def distribution() -> str:
 
 def is_app_store() -> bool:
     return distribution() == APP_STORE
+
+
+def has_bundled_oauth_client() -> bool:
+    """La build lleva cliente OAuth propio (`MAS_OAUTH_CLIENT`)."""
+    return (resource_dir() / BUNDLED_OAUTH_CLIENT).is_file()
 
 
 def data_path(name: str) -> Path:

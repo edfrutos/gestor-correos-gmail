@@ -14,6 +14,8 @@
 const API = '';
 App.api = API;
 let aiStatus={configured:false,remote:false,model:null};
+let credentialsImportHidden=false;
+let aiKeyPlaceholder='sk-…';
 let deleteStatus={enabled:false,authorized:false,available:false,max_batch:100,state:'disabled',token_present:false,revoked:false};
 let appBundled=false;
 
@@ -104,6 +106,16 @@ async function checkStatus(){
       const aiUrl=document.getElementById('cfg-ai-url');
       aiUrl.placeholder='http://localhost:11434/v1';
       aiUrl.previousElementSibling.textContent='URL base de tu modelo local (esta versión solo admite IA local)';
+      document.getElementById('cfg-ai-model').placeholder='llama3';
+      const aiKey=document.getElementById('cfg-ai-key');
+      if(aiKey.placeholder===aiKeyPlaceholder)aiKey.placeholder='ollama';
+      aiKeyPlaceholder='ollama';
+      document.getElementById('cfg-ai-hint').textContent='Esta versión usa un modelo instalado en tu Mac, por ejemplo con Ollama: URL http://localhost:11434/v1, modelo llama3, clave ollama. Tus correos no salen del Mac y la clave solo se guarda en este equipo.';
+      // La app ya incluye su cliente de Google; sin él, importar es la única forma de iniciar sesión.
+      if(d.oauth_bundled){
+        credentialsImportHidden=true;
+        document.getElementById('cfg-google').style.display='none';
+      }
     }
     if(d.ok){
       led.className='sled ok';
@@ -1886,7 +1898,7 @@ function renderAiSettingsState(s){
   }
   const keyInp=document.getElementById('cfg-ai-key');
   keyInp.value='';
-  keyInp.placeholder=s.ai_api_key_set?'•••• guardada (deja vacío para conservarla)':(s.ai_env_api_key_set?'(usa la de .env)':'sk-…');
+  keyInp.placeholder=s.ai_api_key_set?'•••• guardada (deja vacío para conservarla)':(s.ai_env_api_key_set?'(usa la de .env)':aiKeyPlaceholder);
   document.getElementById('cfg-ai-key-clear').checked=false;
   document.getElementById('cfg-ai-key-clear').parentElement.style.display=s.ai_api_key_set?'flex':'none';
 }
@@ -1947,7 +1959,7 @@ enableFolderPicker();
 // Importar credentials.json con el selector nativo (app de escritorio): en la
 // Mac App Store, con App Sandbox, no se puede dejar a mano en la carpeta de datos.
 function enableCredentialsImport(){
-  if(!window.pywebview?.api?.import_credentials)return;
+  if(credentialsImportHidden||!window.pywebview?.api?.import_credentials)return;
   document.getElementById('cfg-google').style.display='';
   const btn=document.getElementById('cfg-creds-import');
   btn.onclick=async()=>{

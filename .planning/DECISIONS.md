@@ -465,6 +465,10 @@ través de servidores, de modo que enviar asuntos y fragmentos a un proveedor
 externo debilitaría el principal argumento para evitarla. Ninguna página recoge una
 exención expresa para apps locales: lo decide Google.
 
+Si la build lleva cliente de Google, la tienda oculta la importación de
+`credentials.json`: el público no debe creer que necesita crear uno. Sin ese cliente
+(`MAS_LOCAL=1`) se mantiene, porque es la única forma de iniciar sesión.
+
 Como sustituto del borrado permanente, ambas variantes pueden mover a la Papelera
 de Gmail los mensajes ocultos (`users.messages.trash`). `gmail.modify` lo permite y
 Gmail conserva los mensajes 30 días, de modo que la acción se puede deshacer.

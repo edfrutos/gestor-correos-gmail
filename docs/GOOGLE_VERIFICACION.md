@@ -95,6 +95,8 @@ Antes de grabar el vídeo:
   su texto inicial no habla de borrar en Gmail.
 - [ ] «Mover a la Papelera» pide confirmación, el mensaje aparece en la Papelera de
   Gmail y desaparece de «Ocultos locales». Desde Gmail se puede recuperar.
+- [ ] 🛠 Configuración no ofrece importar `credentials.json` y, en la IA, propone
+  `llama3` y `ollama`, sin mencionar `gpt-4o-mini`, `sk-…` ni `.env`.
 - [ ] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
   disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
 - [ ] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
@@ -110,7 +112,9 @@ con la build de TestFlight y a 2880×1800:
 
 - `6-ocultos`: enseña «Eliminación permanente», que la v1.4.1 ya no tiene. La nueva
   debe mostrar «Mover a la Papelera».
-- `5-reglas-ia`: enseña la URL base con la etiqueta «OpenAI o compatible».
+- `5-reglas-ia`: enseña la URL base con la etiqueta «OpenAI o compatible». Sustituirla
+  por una de «Reglas personalizadas» con alguna regla creada y sin 🛠 Configuración,
+  que enseña la ruta de la carpeta de respaldo.
 
 ## Guion del vídeo
 
