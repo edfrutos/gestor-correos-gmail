@@ -141,6 +141,99 @@ def test_gmail_reauthorizes_after_revoked_refresh_token(monkeypatch, tmp_path):
     assert token.stat().st_mode & 0o777 == 0o600
 
 
+def _session_files(monkeypatch, tmp_path):
+    token = tmp_path / 'token.json'
+    token.write_text('{"token": "revoked"}', encoding='utf-8')
+    credentials = tmp_path / 'credentials.json'
+    credentials.write_text('{}', encoding='utf-8')
+    monkeypatch.setattr(gmail_client, 'TOKEN', token)
+    monkeypatch.setattr(gmail_client, 'CREDS', credentials)
+    return token
+
+
+def test_revoked_session_is_reauthorized_on_next_search(monkeypatch, tmp_path):
+    """Si Google revoca el acceso con la app abierta, la siguiente búsqueda debe
+    abrir el inicio de sesión, sin tener que reiniciar la app."""
+    token = _session_files(monkeypatch, tmp_path)
+    stale, fresh = object(), object()
+
+    class FreshCredentials:
+        valid = True
+
+        def to_json(self):
+            return '{"token": "fresh"}'
+
+    class FakeFlow:
+        def run_local_server(self, port, open_browser=True, **kwargs):
+            return FreshCredentials()
+
+    monkeypatch.setattr(gmail_client, '_svc', stale)
+    monkeypatch.setattr(
+        gmail_client.InstalledAppFlow,
+        'from_client_secrets_file',
+        lambda path, scopes: FakeFlow(),
+    )
+    monkeypatch.setattr(gmail_client, 'build', lambda *args, **kwargs: fresh)
+
+    assert gmail_client.gmail() is stale
+    detail = gmail_error_detail(gmail_client.RefreshError('invalid_grant'))
+
+    assert 'próxima búsqueda' in detail
+    assert not token.exists()
+    assert gmail_client.gmail() is fresh
+    assert token.read_text(encoding='utf-8') == '{"token": "fresh"}'
+
+
+def test_temporary_refresh_failure_keeps_session(monkeypatch, tmp_path):
+    token = _session_files(monkeypatch, tmp_path)
+    service = object()
+    monkeypatch.setattr(gmail_client, '_svc', service)
+
+    gmail_error_detail(gmail_client.RefreshError('backend error', retryable=True))
+
+    assert gmail_client._svc is service
+    assert token.exists()
+
+
+def test_other_errors_keep_session(monkeypatch, tmp_path):
+    token = _session_files(monkeypatch, tmp_path)
+    service = object()
+    monkeypatch.setattr(gmail_client, '_svc', service)
+
+    gmail_error_detail(ValueError('otro error'))
+
+    assert gmail_client._svc is service
+    assert token.exists()
+
+
+def test_revoked_session_does_not_wait_for_login_in_progress(monkeypatch, tmp_path):
+    """Otra petición puede tener el inicio de sesión abierto hasta 5 minutos: el
+    error no debe esperarla ni borrar el token que esa petición va a guardar."""
+    token = _session_files(monkeypatch, tmp_path)
+    monkeypatch.setattr(gmail_client, '_svc', None)
+
+    with gmail_client._svc_lock:
+        detail = gmail_error_detail(gmail_client.RefreshError('invalid_grant'))
+
+    assert 'próxima búsqueda' in detail
+    assert token.exists()
+
+
+def test_revoked_session_error_survives_undeletable_token(monkeypatch, tmp_path):
+    _session_files(monkeypatch, tmp_path)
+    monkeypatch.setattr(gmail_client, '_svc', object())
+
+    def fail():
+        raise PermissionError('sin permiso')
+
+    monkeypatch.setattr(gmail_client, '_discard_token', fail)
+
+    detail = gmail_error_detail(gmail_client.RefreshError('invalid_grant'))
+
+    assert 'próxima búsqueda' in detail
+    assert gmail_client._svc is None
+
+
 def test_gmail_message_lookup_state_marks_not_found_as_orphan():
     class FakeHttpError(Exception):
         pass
