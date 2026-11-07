@@ -82,6 +82,8 @@ STATIC_FILES = {
     '/static/logo.svg': ('image/svg+xml', ASSET_DIR / 'static' / 'logo.svg'),
     '/static/favicon.svg': ('image/svg+xml', ASSET_DIR / 'static' / 'favicon.svg'),
 }
+for _font in sorted((ASSET_DIR / 'static').glob('*.woff2')):
+    STATIC_FILES[f'/static/{_font.name}'] = ('font/woff2', _font)
 def _header_hostname(value):
     try:
         return urlparse(f'//{value}').hostname
@@ -940,7 +942,8 @@ class H(BaseHTTPRequestHandler):
 
     def _sanitize_html(self, html):
         import re
-        # Saneamiento muy agresivo para evitar scripts en el lector integrado
+        # Filtro básico, no una barrera: las expresiones regulares no bastan contra
+        # HTML hostil. El aislamiento lo da el iframe `sandbox` de readerDocument().
         html = re.sub(r'<script.*?>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
         html = re.sub(r'on\w+=".*?"', '', html, flags=re.IGNORECASE)
         html = re.sub(r'<iframe.*?>.*?</iframe>', '', html, flags=re.DOTALL | re.IGNORECASE)

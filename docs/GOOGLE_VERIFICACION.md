@@ -10,7 +10,7 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
 | 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho; la web coincide con `docs/site/` |
 | 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Hecho |
-| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 6 en preparación; es la que debe grabarse y enviarse a App Review |
+| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Pendiente: build 7, con el visor de `.eml` aislado. Es la que debe grabarse y enviarse a App Review; la build 6 no sirve |
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
 | 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente |
@@ -76,7 +76,7 @@ Why a narrower scope is not sufficient: gmail.readonly and gmail.metadata cannot
 ```text
 Gestor de Correos has no backend. The developer operates no server that receives, stores or can access Google user data, and the app contains no analytics, advertising or tracking.
 
-Data flow: the app calls the Gmail API directly from the user's Mac over HTTPS. Message content is processed in memory on the user's device. The OAuth token and the user's settings are stored locally inside the app's macOS App Sandbox container, with permissions restricted to the user. Exported files are written only where the user chooses on their own Mac.
+Data flow: the app calls the Gmail API directly from the user's Mac over HTTPS. Message content is processed in memory on the user's device. The OAuth token and the user's settings are stored locally inside the app's macOS App Sandbox container, with permissions restricted to the user. Exported files are written inside that container and, only if the user chooses a backup folder, copied to that folder on their own Mac.
 
 Network: the app's interface is served to its own window from a loopback server on 127.0.0.1, and sign-in uses the OAuth loopback redirect for desktop apps. Neither is reachable from other machines.
 
@@ -105,6 +105,8 @@ Antes de grabar el vídeo:
 - [ ] Con la app abierta, revocar el acceso en `myaccount.google.com/permissions`:
   la siguiente búsqueda avisa de que la autorización expiró o fue revocada, y la
   posterior abre Google sin reiniciar la app.
+- [ ] Abrir en el visor un `.eml` con imágenes remotas: el texto se lee, las imágenes
+  remotas no se cargan y un enlace del correo se abre en el navegador.
 - [ ] La ficha de App Store Connect indica el idioma español tras publicarse; hasta
   entonces no se puede comprobar.
 
@@ -136,6 +138,8 @@ que se vea el identificador de cliente en la barra de direcciones.
    de la bandeja de entrada.
 9. **Mover a la Papelera:** ocultar un mensaje, abrir «Ocultos locales», seleccionarlo,
    mover a la Papelera y confirmar. Enseñar el mensaje en la Papelera de Gmail.
-10. **Exportar:** exportar un mensaje a `.eml` y enseñar el archivo en el Finder.
+10. **Exportar:** exportar un mensaje a `.eml` y enseñar el archivo en el Finder (por
+    defecto queda dentro del contenedor de la app; con carpeta de respaldo, también
+    en ella: es la forma más sencilla de enseñarlo).
 11. **Datos locales y revocación:** explicar que nada llega al desarrollador y
     enseñar cómo revocar el acceso en `myaccount.google.com/permissions`.
