@@ -2003,6 +2003,12 @@ function buildEmlAttachmentChips(attachments, container){
     container.appendChild(chip);
   });
 }
+// Un .eml es contenido ajeno. El iframe `sandbox` (sin allow-scripts ni
+// allow-same-origin) le impide ejecutar código y llamar a la API local; la CSP
+// impide cargar nada remoto (píxeles de rastreo incluidos). `base` va antes que la
+// CSP porque `base-uri 'none'` anula los <base> posteriores, los del propio correo.
+const READER_HEAD='<base target="_blank"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; font-src data:; base-uri \'none\'; form-action \'none\'">';
+function readerDocument(html){return READER_HEAD+html;}
 async function openEmlReader(filename, externalPath=''){
   const modal=document.getElementById('reader-modal');
   const frame=document.getElementById('reader-frame');
@@ -2032,7 +2038,7 @@ async function openEmlReader(filename, externalPath=''){
     
     if(m.body_html){
       frame.style.display='block';
-      frame.srcdoc=m.body_html;
+      frame.srcdoc=readerDocument(m.body_html);
     } else {
       txt.style.display='block';
       txt.textContent=m.body_text;
@@ -2078,7 +2084,7 @@ document.getElementById('exp-import-file').addEventListener('change',async e=>{
     
     if(m.body_html){
       frame.style.display='block';
-      frame.srcdoc=m.body_html;
+      frame.srcdoc=readerDocument(m.body_html);
     } else {
       txt.style.display='block';
       txt.textContent=m.body_text;

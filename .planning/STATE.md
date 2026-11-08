@@ -122,6 +122,13 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-06 — **Visor de `.eml` aislado (build 7):** el HTML del correo se cargaba
+  en un iframe sin `sandbox`, con el origen de la app, y el filtro con expresiones
+  regulares dejaba pasar `onerror='…'`. Reproducido en Chromium: un correo leía la
+  API local y enviaba el resultado a otro servidor, lo que contradecía lo declarado
+  a Google. Ahora el iframe va con `sandbox` y CSP, sin contenido remoto. La build 6
+  no debe grabarse. Pasos 1 a 3, 5 y 6 hechos; faltan la build 7, el vídeo y el envío.
+  Syne y DM Mono van ahora dentro de la app: la interfaz ya no conecta con Google Fonts.
 - 2026-11-05 — **Sesión revocada con la app abierta (build 6):** la app conservaba
   el servicio de Gmail en memoria y todas las búsquedas fallaban hasta reiniciarla,
   aunque el mensaje prometía autorizar en la siguiente. Ahora olvida la sesión
@@ -396,7 +403,6 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): volver a publicar
-`docs/site/` en `https://gcorreos.efjdev.com/` con la Papelera, verificar `efjdev.com` en Search Console,
-compilar la v1.4.1 y enviar la solicitud a Google. **La app no debe volver a la venta
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): compilar y subir la
+build 7 de la v1.4.1, grabar el vídeo con ella y enviar la solicitud a Google. **La app no debe volver a la venta
 hasta que Google la verifique.**

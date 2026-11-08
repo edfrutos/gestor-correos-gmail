@@ -727,8 +727,8 @@ Verification: `pytest` (257) · en el Mac: 1.3.1 → 1.4.0 descargando el delta 
 
 ### Phase 39 — Verificación de Google para la Mac App Store (ADR-016)
 
-**Status:** En curso (desde 2026-11-04). Código y textos preparados; faltan el
-dominio, la v1.4.1 y la respuesta de Google.
+**Status:** En curso (desde 2026-11-04). Web y marca listas; faltan la build 7 de la
+v1.4.1, el vídeo, el envío y la respuesta de Google.
 
 Scope:
 - La variante de la tienda solo usa `gmail.modify` y solo admite IA local.

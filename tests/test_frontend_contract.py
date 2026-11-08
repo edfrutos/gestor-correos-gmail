@@ -222,3 +222,45 @@ def test_hidden_review_and_permanent_delete_are_explicit_flows():
     assert 'Página ${hiddenReviewPage} de ${pages} · ${total} ocultos' in js
     assert 'No se puede deshacer' in js
     assert 'puedes limpiar su información local' in js
+
+
+def test_eml_reader_isolates_untrusted_html():
+    html = INDEX.read_text(encoding='utf-8')
+    js = APP_JS.read_text(encoding='utf-8')
+
+    frame = re.search(r'<iframe id="reader-frame"[^>]*>', html).group(0)
+    sandbox = re.search(r'sandbox="([^"]*)"', frame).group(1).split()
+    # Con cualquiera de estos dos, el correo podría ejecutar código o usar la API local.
+    assert 'allow-scripts' not in sandbox
+    assert 'allow-same-origin' not in sandbox
+
+    assert js.count('frame.srcdoc=readerDocument(m.body_html);') == 2
+    assert js.count('.srcdoc=') == 2
+    csp = re.search(r'content="(default-src[^"]*)"', js).group(1)
+    assert "default-src \\'none\\'" in csp
+    assert 'img-src data:;' in csp
+
+
+def test_interface_loads_nothing_from_external_servers():
+    root = INDEX.parent
+    html = INDEX.read_text(encoding='utf-8')
+    css = APP_CSS.read_text(encoding='utf-8')
+
+    # Lo declarado a Google y en la política: la interfaz no conecta con terceros.
+    assert not re.search(r'(?:src|href)="https?://', html)
+    assert 'fonts.googleapis' not in html + css
+
+    fonts = re.findall(r'url\(/static/([\w-]+\.woff2)\)', css)
+    assert fonts
+    assert all((root / 'static' / name).is_file() for name in fonts)
+    assert {'Syne', 'DM Mono'} == set(re.findall(r"@font-face\{font-family:'([^']+)'", css))
+    assert (root / 'static' / 'OFL-Syne.txt').is_file()
+    assert (root / 'static' / 'OFL-DM-Mono.txt').is_file()
+
+
+def test_bundled_fonts_are_served_by_the_local_server():
+    import server
+
+    fonts = {path: entry for path, entry in server.STATIC_FILES.items() if path.endswith('.woff2')}
+    assert fonts
+    assert all(content_type == 'font/woff2' for content_type, _ in fonts.values())
