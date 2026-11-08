@@ -10,10 +10,10 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
 | 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho; la web coincide con `docs/site/` |
 | 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Hecho |
-| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Pendiente: build 7, con el visor de `.eml` aislado. Es la que debe grabarse y enviarse a App Review; la build 6 no sirve |
+| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 7 (`4a5b717`, visor de `.eml` aislado) subida el 2026-11-08, en proceso en TestFlight. Es la que debe grabarse y enviarse a App Review; la build 6 no sirve |
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
-| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente |
+| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: cuando la build 7 esté disponible en TestFlight y pase las comprobaciones |
 | 8 | Pulsar «Publicar app» y enviar a verificación con los textos de abajo | Google Auth Platform → Público y Centro de verificación | Pendiente |
 | 9 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente |
 | 10 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
@@ -89,7 +89,7 @@ Because restricted scope data is not stored on, transmitted to or accessed from 
 
 ## Comprobaciones en la v1.4.1 de TestFlight
 
-Antes de grabar el vídeo:
+Con la build 7 instalada desde TestFlight, antes de grabar el vídeo:
 
 - [ ] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
   su texto inicial no habla de borrar en Gmail.

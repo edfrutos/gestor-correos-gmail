@@ -122,6 +122,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-08 — **Build 7 de la v1.4.1 subida** (`4a5b717`, PR #44), en proceso en
+  TestFlight. Siguen las comprobaciones de `docs/GOOGLE_VERIFICACION.md` con ella,
+  el vídeo y el envío a Google.
 - 2026-11-06 — **Visor de `.eml` aislado (build 7):** el HTML del correo se cargaba
   en un iframe sin `sandbox`, con el origen de la app, y el filtro con expresiones
   regulares dejaba pasar `onerror='…'`. Reproducido en Chromium: un correo leía la
@@ -403,6 +406,6 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): compilar y subir la
-build 7 de la v1.4.1, grabar el vídeo con ella y enviar la solicitud a Google. **La app no debe volver a la venta
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): comprobar la build 7
+desde TestFlight, grabar el vídeo con ella y enviar la solicitud a Google. **La app no debe volver a la venta
 hasta que Google la verifique.**
