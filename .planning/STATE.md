@@ -122,8 +122,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
-- 2026-11-08 — **Build 7 de la v1.4.1 subida** (`4a5b717`, PR #44), en proceso en
-  TestFlight. Siguen las comprobaciones de `docs/GOOGLE_VERIFICACION.md` con ella,
+- 2026-11-08 — **Build 7 de la v1.4.1 subida** (`4a5b717`, PR #44), ya disponible en
+  TestFlight. Google exige verificar la marca antes de enviar la del acceso a los
+  datos: pasos 8 a 10 de la tabla. Siguen las comprobaciones de `docs/GOOGLE_VERIFICACION.md` con ella,
   el vídeo y el envío a Google.
 - 2026-11-06 — **Visor de `.eml` aislado (build 7):** el HTML del correo se cargaba
   en un iframe sin `sandbox`, con el origen de la app, y el filtro con expresiones
