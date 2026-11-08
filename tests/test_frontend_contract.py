@@ -264,3 +264,15 @@ def test_bundled_fonts_are_served_by_the_local_server():
     fonts = {path: entry for path, entry in server.STATIC_FILES.items() if path.endswith('.woff2')}
     assert fonts
     assert all(content_type == 'font/woff2' for content_type, _ in fonts.values())
+
+
+def test_scrolling_modals_keep_a_reachable_close_button():
+    html = INDEX.read_text(encoding='utf-8')
+    css = APP_CSS.read_text(encoding='utf-8')
+    js = APP_JS.read_text(encoding='utf-8')
+
+    for button in ('exp-x', 'sum-x', 'hidden-x', 'lbl-x'):
+        assert f'class="mclose mclose-fixed" id="{button}"' in html
+    assert '.mclose.mclose-fixed{position:sticky;top:0;' in css
+    assert 'width:32px;height:32px;' in css
+    assert "document.querySelectorAll('.modal.show')].pop()" in js

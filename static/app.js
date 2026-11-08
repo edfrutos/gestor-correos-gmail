@@ -1836,7 +1836,7 @@ document.getElementById('lbl-ok').addEventListener('click',applySelectedLabel);
   okBtn.addEventListener('click',createInline);
   inp.addEventListener('keydown',e=>{
     if(e.key==='Enter'){e.preventDefault();createInline();}
-    if(e.key==='Escape'){closeInline();}
+    if(e.key==='Escape'){e.preventDefault();closeInline();}
   });
 })();
 
@@ -2108,6 +2108,13 @@ document.getElementById('del-cx').addEventListener('click',()=>{document.getElem
 document.getElementById('del-ok').addEventListener('click',()=>{pendingDel.forEach(id=>{deleted.add(id);selected.delete(id);openMessages.delete(id);});document.getElementById('del-modal').classList.remove('show');toast(`${pendingDel.length} ocultado${pendingDel.length>1?'s':''}`,'ok');pendingDel=[];queueSaveState();render();});
 document.getElementById('manage-hidden').addEventListener('click',openHiddenReview);
 ['hidden-x','hidden-cn'].forEach(id=>document.getElementById(id).addEventListener('click',closeHiddenReview));
+// Escape cierra el modal visible de encima pulsando su ✕, para que cada uno haga su limpieza.
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||e.defaultPrevented)return;
+  const open=[...document.querySelectorAll('.modal.show')].pop();
+  const close=open&&open.querySelector('.mclose');
+  if(close){e.preventDefault();close.click();}
+});
 document.getElementById('hidden-prev').addEventListener('click',()=>{if(hiddenReviewPage>1)loadHiddenReviewPage(hiddenReviewPage-1);});
 document.getElementById('hidden-next').addEventListener('click',()=>{if(hiddenReviewPage<hiddenReviewPages)loadHiddenReviewPage(hiddenReviewPage+1);});
 document.getElementById('hidden-search').addEventListener('keydown',e=>{
