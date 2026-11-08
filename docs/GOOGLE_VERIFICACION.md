@@ -103,6 +103,10 @@ Con la build 8 instalada desde TestFlight, antes de grabar el vídeo. Las casill
   disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
 - [x] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
   Ollama.
+- [ ] Con Ollama y `llama3`, «Sugerir reglas ahora» propone reglas (en la build 7
+  fallaba con «Expecting value»).
+- [ ] En «Ocultos locales», tras desplazar el contenido, la ✕ sigue visible y cierra;
+  Escape también cierra el modal.
 - [x] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
 - [ ] Con la app abierta, revocar el acceso en `myaccount.google.com/permissions`:
   la siguiente búsqueda avisa de que la autorización expiró o fue revocada, y la
