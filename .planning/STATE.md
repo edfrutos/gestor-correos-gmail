@@ -122,6 +122,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-08 — **Build 8 de la v1.4.1:** la build 7 no se graba porque le faltan dos
+  arreglos encontrados al probarla: la ✕ de los modales que se desplazan quedaba
+  fuera de la vista (PR #47) y las sugerencias IA fallaban con `llama3`, que añade
+  texto al JSON (PR #48).
 - 2026-11-08 — **Build 7 de la v1.4.1 subida** (`4a5b717`, PR #44), ya disponible en
   TestFlight. Google exige verificar la marca antes de enviar la del acceso a los
   datos: pasos 8 a 10 de la tabla. Siguen las comprobaciones de `docs/GOOGLE_VERIFICACION.md` con ella,
