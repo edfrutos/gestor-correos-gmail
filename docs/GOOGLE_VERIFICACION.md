@@ -10,15 +10,17 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
 | 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho; la web coincide con `docs/site/` |
 | 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Hecho |
-| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 7 (`4a5b717`, visor de `.eml` aislado) subida el 2026-11-08, en proceso en TestFlight. Es la que debe grabarse y enviarse a App Review; la build 6 no sirve |
+| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 7 (`4a5b717`, visor de `.eml` aislado), disponible en TestFlight desde el 2026-11-08. Es la que debe grabarse y enviarse a App Review; la build 6 no sirve |
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
-| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: cuando la build 7 esté disponible en TestFlight y pase las comprobaciones |
-| 8 | Pulsar «Publicar app» y enviar a verificación con los textos de abajo | Google Auth Platform → Público y Centro de verificación | Pendiente |
-| 9 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente |
-| 10 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
+| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: con la build 7, tras pasar las comprobaciones |
+| 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Pendiente |
+| 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Pendiente |
+| 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Pendiente |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente |
+| 12 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
 
-Hasta el paso 10, la app no debe volver a la venta: el público no podría iniciar
+Hasta el paso 12, la app no debe volver a la venta: el público no podría iniciar
 sesión.
 
 ## Evaluación CASA: qué sabemos
@@ -127,7 +129,10 @@ que se vea el identificador de cliente en la barra de direcciones.
 3. Ampliar la **barra de direcciones** para que se lea el `client_id`, y que
    coincida con el del proyecto enviado.
 4. Elegir la cuenta y mostrar la pantalla de consentimiento completa, con el
-   nombre de la app y el permiso solicitado. Conceder el acceso.
+   nombre de la app y el permiso solicitado. Google describe `gmail.modify` con un
+   texto fijo que menciona redactar y enviar: aclararlo en voz o subtítulo
+   (*Google's standard description for this scope mentions sending, but the app
+   never drafts or sends email*). Conceder el acceso.
 5. Volver a la app. **Buscar y leer:** buscar por remitente, abrir un mensaje y un
    adjunto.
 6. **Clasificar:** enseñar las categorías y la severidad, y explicar que se
