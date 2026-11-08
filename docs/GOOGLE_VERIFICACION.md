@@ -10,10 +10,10 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
 | 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho; la web coincide con `docs/site/` |
 | 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Hecho |
-| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 7 (`4a5b717`, visor de `.eml` aislado), disponible en TestFlight desde el 2026-11-08. Es la que debe grabarse y enviarse a App Review; la build 6 no sirve |
+| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 8 en preparación: añade a la 7 (visor de `.eml` aislado) el cierre de los modales (PR #47) y las sugerencias IA con modelos locales (PR #48). Es la que debe grabarse y enviarse a App Review; las builds 6 y 7 no sirven |
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
-| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: con la build 7, tras pasar las comprobaciones |
+| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: con la build 8, tras pasar las comprobaciones |
 | 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Pendiente |
 | 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Pendiente |
 | 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Pendiente |
@@ -91,19 +91,19 @@ Because restricted scope data is not stored on, transmitted to or accessed from 
 
 ## Comprobaciones en la v1.4.1 de TestFlight
 
-Con la build 7 instalada desde TestFlight, antes de grabar el vídeo:
+Con la build 8 instalada desde TestFlight, antes de grabar el vídeo. Las casillas marcadas se comprobaron en la build 7:
 
-- [ ] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
+- [x] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
   su texto inicial no habla de borrar en Gmail.
-- [ ] «Mover a la Papelera» pide confirmación, el mensaje aparece en la Papelera de
+- [x] «Mover a la Papelera» pide confirmación, el mensaje aparece en la Papelera de
   Gmail y desaparece de «Ocultos locales». Desde Gmail se puede recuperar.
-- [ ] 🛠 Configuración no ofrece importar `credentials.json` y, en la IA, propone
+- [x] 🛠 Configuración no ofrece importar `credentials.json` y, en la IA, propone
   `llama3` y `ollama`, sin mencionar `gpt-4o-mini`, `sk-…` ni `.env`.
-- [ ] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
+- [x] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
   disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
-- [ ] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
+- [x] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
   Ollama.
-- [ ] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
+- [x] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
 - [ ] Con la app abierta, revocar el acceso en `myaccount.google.com/permissions`:
   la siguiente búsqueda avisa de que la autorización expiró o fue revocada, y la
   posterior abre Google sin reiniciar la app.

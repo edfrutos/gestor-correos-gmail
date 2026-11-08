@@ -43,3 +43,7 @@ macos/.cache/
 
 # Scripts locales (p. ej. capturas para la App Store)
 scripts/
+
+# Capturas de pantalla de macOS guardadas por error en el repositorio
+Captura de pantalla *.png
+Screenshot *.png
