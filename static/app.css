@@ -187,7 +187,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1) 
 .modal.show{display:flex;}
 .mbox{background:var(--card);border:1px solid var(--bdr-h);border-radius:12px;padding:20px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;position:relative;min-width:0;}
 .mttl{font-family:'Syne',sans-serif;font-weight:700;margin-bottom:11px;color:var(--txt);}
-.mclose{position:absolute;right:12px;top:12px;cursor:pointer;color:var(--mut);background:none;border:none;} .mclose:hover{color:var(--txt);}
+.mclose{position:absolute;right:12px;top:12px;cursor:pointer;color:var(--mut);background:none;border:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:16px;line-height:1;} .mclose:hover{color:var(--txt);background:var(--card-h);}
+/* En los modales que se desplazan, la ✕ se queda arriba en vez de irse con el contenido. */
+.mclose.mclose-fixed{position:sticky;top:0;right:auto;float:right;margin:-12px -12px 0 8px;z-index:2;background:var(--card);} .mclose.mclose-fixed:hover{background:var(--card-h);}
 .mbox pre{line-height:1.7;color:#b8bbc5;white-space:pre-wrap;word-break:break-word;background:var(--surf);border-radius:7px;padding:9px;margin:8px 0;max-height:300px;overflow-y:auto;}
 .mact{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
 .mab{cursor:pointer;padding:6px 11px;border-radius:7px;font-family:'DM Mono',monospace;letter-spacing:.04em;text-transform:uppercase;border:1px solid;transition:all .15s;max-width:100%;}
