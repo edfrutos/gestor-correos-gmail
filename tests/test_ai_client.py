@@ -107,3 +107,35 @@ def test_suggest_rules_parses_json_after_think_block(monkeypatch):
     result = ai_client.suggest_rules([{'from': 'a@plesk.com', 'sub': 'SSL'}])
 
     assert result['suggestions'] == [{'label': 'Plesk'}]
+
+
+@pytest.mark.parametrize('content', [
+    'Aquí tienes las reglas:\n[{"label": "Plesk", "provider": "plesk.com"}]\nEspero que te sirvan.',
+    'Claro. ```json\n[{"label": "Plesk", "provider": "plesk.com"}]\n```',
+    '{"reglas": [{"label": "Plesk", "provider": "plesk.com"}]}',
+    '{"label": "Plesk", "provider": "plesk.com"}',
+    'Ver [nota 1]. [{"label": "Plesk", "provider": "plesk.com"}]',
+])
+def test_suggest_rules_tolerates_text_around_json(monkeypatch, content):
+    _fake_completion(monkeypatch, content)
+
+    result = ai_client.suggest_rules([{'from': 'a@plesk.com', 'sub': 'SSL'}])
+
+    assert result['suggestions'] == [{'label': 'Plesk', 'provider': 'plesk.com'}]
+
+
+def test_suggest_rules_without_json_explains_the_model(monkeypatch):
+    _fake_completion(monkeypatch, 'No he encontrado patrones claros.')
+
+    with pytest.raises(ApiError) as error:
+        ai_client.suggest_rules([{'from': 'a@plesk.com', 'sub': 'SSL'}])
+
+    assert error.value.status == 502
+    assert 'lista JSON de reglas' in error.value.detail
+    assert 'Expecting value' not in error.value.detail
+
+
+def test_suggest_rules_empty_list_means_no_patterns(monkeypatch):
+    _fake_completion(monkeypatch, '[]')
+
+    assert ai_client.suggest_rules([{'from': 'a@plesk.com', 'sub': 'SSL'}])['suggestions'] == []

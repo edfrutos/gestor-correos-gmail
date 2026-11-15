@@ -1836,7 +1836,7 @@ document.getElementById('lbl-ok').addEventListener('click',applySelectedLabel);
   okBtn.addEventListener('click',createInline);
   inp.addEventListener('keydown',e=>{
     if(e.key==='Enter'){e.preventDefault();createInline();}
-    if(e.key==='Escape'){closeInline();}
+    if(e.key==='Escape'){e.preventDefault();closeInline();}
   });
 })();
 
@@ -2003,6 +2003,12 @@ function buildEmlAttachmentChips(attachments, container){
     container.appendChild(chip);
   });
 }
+// Un .eml es contenido ajeno. El iframe `sandbox` (sin allow-scripts ni
+// allow-same-origin) le impide ejecutar código y llamar a la API local; la CSP
+// impide cargar nada remoto (píxeles de rastreo incluidos). `base` va antes que la
+// CSP porque `base-uri 'none'` anula los <base> posteriores, los del propio correo.
+const READER_HEAD='<base target="_blank"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; font-src data:; base-uri \'none\'; form-action \'none\'">';
+function readerDocument(html){return READER_HEAD+html;}
 async function openEmlReader(filename, externalPath=''){
   const modal=document.getElementById('reader-modal');
   const frame=document.getElementById('reader-frame');
@@ -2032,7 +2038,7 @@ async function openEmlReader(filename, externalPath=''){
     
     if(m.body_html){
       frame.style.display='block';
-      frame.srcdoc=m.body_html;
+      frame.srcdoc=readerDocument(m.body_html);
     } else {
       txt.style.display='block';
       txt.textContent=m.body_text;
@@ -2078,7 +2084,7 @@ document.getElementById('exp-import-file').addEventListener('change',async e=>{
     
     if(m.body_html){
       frame.style.display='block';
-      frame.srcdoc=m.body_html;
+      frame.srcdoc=readerDocument(m.body_html);
     } else {
       txt.style.display='block';
       txt.textContent=m.body_text;
@@ -2102,6 +2108,13 @@ document.getElementById('del-cx').addEventListener('click',()=>{document.getElem
 document.getElementById('del-ok').addEventListener('click',()=>{pendingDel.forEach(id=>{deleted.add(id);selected.delete(id);openMessages.delete(id);});document.getElementById('del-modal').classList.remove('show');toast(`${pendingDel.length} ocultado${pendingDel.length>1?'s':''}`,'ok');pendingDel=[];queueSaveState();render();});
 document.getElementById('manage-hidden').addEventListener('click',openHiddenReview);
 ['hidden-x','hidden-cn'].forEach(id=>document.getElementById(id).addEventListener('click',closeHiddenReview));
+// Escape cierra el modal visible de encima pulsando su ✕, para que cada uno haga su limpieza.
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||e.defaultPrevented)return;
+  const open=[...document.querySelectorAll('.modal.show')].pop();
+  const close=open&&open.querySelector('.mclose');
+  if(close){e.preventDefault();close.click();}
+});
 document.getElementById('hidden-prev').addEventListener('click',()=>{if(hiddenReviewPage>1)loadHiddenReviewPage(hiddenReviewPage-1);});
 document.getElementById('hidden-next').addEventListener('click',()=>{if(hiddenReviewPage<hiddenReviewPages)loadHiddenReviewPage(hiddenReviewPage+1);});
 document.getElementById('hidden-search').addEventListener('keydown',e=>{

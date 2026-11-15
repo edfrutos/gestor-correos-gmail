@@ -8,17 +8,19 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | # | Paso | Dónde | Estado |
 |---|------|-------|--------|
 | 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04 |
-| 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho: lo publicado coincide con `docs/site/`, con la Papelera (comprobado el 2026-11-15) |
-| 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Pendiente |
-| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Pendiente |
-| 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Pendiente |
-| 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Pendiente |
-| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente |
-| 8 | Pulsar «Publicar app» y enviar a verificación con los textos de abajo | Google Auth Platform → Público y Centro de verificación | Pendiente |
-| 9 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente |
-| 10 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
+| 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho; la web coincide con `docs/site/` |
+| 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Hecho |
+| 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Build 8 en preparación: añade a la 7 (visor de `.eml` aislado) el cierre de los modales (PR #47) y las sugerencias IA con modelos locales (PR #48). Es la que debe grabarse y enviarse a App Review; las builds 6 y 7 no sirven |
+| 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
+| 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
+| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: con la build 8, tras pasar las comprobaciones |
+| 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Pendiente |
+| 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Pendiente |
+| 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Pendiente |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente |
+| 12 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
 
-Hasta el paso 10, la app no debe volver a la venta: el público no podría iniciar
+Hasta el paso 12, la app no debe volver a la venta: el público no podría iniciar
 sesión.
 
 ## Evaluación CASA: qué sabemos
@@ -76,7 +78,7 @@ Why a narrower scope is not sufficient: gmail.readonly and gmail.metadata cannot
 ```text
 Gestor de Correos has no backend. The developer operates no server that receives, stores or can access Google user data, and the app contains no analytics, advertising or tracking.
 
-Data flow: the app calls the Gmail API directly from the user's Mac over HTTPS. Message content is processed in memory on the user's device. The OAuth token and the user's settings are stored locally inside the app's macOS App Sandbox container, with permissions restricted to the user. Exported files are written only where the user chooses on their own Mac.
+Data flow: the app calls the Gmail API directly from the user's Mac over HTTPS. Message content is processed in memory on the user's device. The OAuth token and the user's settings are stored locally inside the app's macOS App Sandbox container, with permissions restricted to the user. Exported files are written inside that container and, only if the user chooses a backup folder, copied to that folder on their own Mac.
 
 Network: the app's interface is served to its own window from a loopback server on 127.0.0.1, and sign-in uses the OAuth loopback redirect for desktop apps. Neither is reachable from other machines.
 
@@ -89,36 +91,40 @@ Because restricted scope data is not stored on, transmitted to or accessed from 
 
 ## Comprobaciones en la v1.4.1 de TestFlight
 
-Antes de grabar el vídeo:
+Con la build 8 instalada desde TestFlight, antes de grabar el vídeo. Las casillas marcadas se comprobaron en la build 7:
 
-- [ ] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
+- [x] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
   su texto inicial no habla de borrar en Gmail.
-- [ ] «Mover a la Papelera» pide confirmación, el mensaje aparece en la Papelera de
+- [x] «Mover a la Papelera» pide confirmación, el mensaje aparece en la Papelera de
   Gmail y desaparece de «Ocultos locales». Desde Gmail se puede recuperar.
-- [ ] 🛠 Configuración no ofrece importar `credentials.json` y, en la IA, propone
+- [x] 🛠 Configuración no ofrece importar `credentials.json` y, en la IA, propone
   `llama3` y `ollama`, sin mencionar `gpt-4o-mini`, `sk-…` ni `.env`.
-- [ ] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
+- [x] 🛠 Configuración rechaza `https://api.openai.com/v1` con «IA remota no
   disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
-- [ ] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
+- [x] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
   Ollama.
-- [ ] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
+- [ ] Con Ollama y `llama3`, «Sugerir reglas ahora» propone reglas (en la build 7
+  fallaba con «Expecting value»).
+- [ ] En «Ocultos locales», tras desplazar el contenido, la ✕ sigue visible y cierra;
+  Escape también cierra el modal.
+- [x] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
+- [ ] Con la app abierta, revocar el acceso en `myaccount.google.com/permissions`:
+  la siguiente búsqueda avisa de que la autorización expiró o fue revocada, y la
+  posterior abre Google sin reiniciar la app.
+- [ ] Abrir en el visor un `.eml` con imágenes remotas: el texto se lee, las imágenes
+  remotas no se cargan y un enlace del correo se abre en el navegador.
 - [ ] La ficha de App Store Connect indica el idioma español tras publicarse; hasta
   entonces no se puede comprobar.
 
 ## Capturas de la ficha
 
-`capturas-mas/` (fuera del repo) guarda las 6 capturas de la v1.4.0. Hay que rehacer
-con la build de TestFlight y a 2880×1800:
-
-- `6-ocultos`: enseña «Eliminación permanente», que la v1.4.1 ya no tiene. La nueva
-  debe mostrar «Mover a la Papelera».
-- `5-reglas-ia`: enseña la URL base con la etiqueta «OpenAI o compatible». Sustituirla
-  por una de «Reglas personalizadas» con alguna regla creada y sin 🛠 Configuración,
-  que enseña la ruta de la carpeta de respaldo.
+Rehechas con la 1.4.1 y subidas el 2026-11-05. `capturas-mas/` (fuera del repo)
+conserva `5-reglas-ia` y `6-ocultos`, de la versión anterior: no deben subirse.
+Las capturas no deben mostrar direcciones personales.
 
 ## Guion del vídeo
 
-Con la build de TestFlight (paso 4), en inglés o con subtítulos en inglés. Debe
+Con la build de TestFlight (paso 4) y la sesión de Google cerrada, en inglés o con subtítulos en inglés. Debe
 mostrar de principio a fin cómo el usuario inicia y concede el acceso. Conviene
 que se vea el identificador de cliente en la barra de direcciones.
 
@@ -127,7 +133,10 @@ que se vea el identificador de cliente en la barra de direcciones.
 3. Ampliar la **barra de direcciones** para que se lea el `client_id`, y que
    coincida con el del proyecto enviado.
 4. Elegir la cuenta y mostrar la pantalla de consentimiento completa, con el
-   nombre de la app y el permiso solicitado. Conceder el acceso.
+   nombre de la app y el permiso solicitado. Google describe `gmail.modify` con un
+   texto fijo que menciona redactar y enviar: aclararlo en voz o subtítulo
+   (*Google's standard description for this scope mentions sending, but the app
+   never drafts or sends email*). Conceder el acceso.
 5. Volver a la app. **Buscar y leer:** buscar por remitente, abrir un mensaje y un
    adjunto.
 6. **Clasificar:** enseñar las categorías y la severidad, y explicar que se
@@ -138,6 +147,8 @@ que se vea el identificador de cliente en la barra de direcciones.
    de la bandeja de entrada.
 9. **Mover a la Papelera:** ocultar un mensaje, abrir «Ocultos locales», seleccionarlo,
    mover a la Papelera y confirmar. Enseñar el mensaje en la Papelera de Gmail.
-10. **Exportar:** exportar un mensaje a `.eml` y enseñar el archivo en el Finder.
+10. **Exportar:** exportar un mensaje a `.eml` y enseñar el archivo en el Finder (por
+    defecto queda dentro del contenedor de la app; con carpeta de respaldo, también
+    en ella: es la forma más sencilla de enseñarlo).
 11. **Datos locales y revocación:** explicar que nada llega al desarrollador y
     enseñar cómo revocar el acceso en `myaccount.google.com/permissions`.

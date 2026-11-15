@@ -60,7 +60,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `321 tests` · **320 verdes**, 1 omitido sin pywebview (2026-11-15).
+- **Suite automatizada:** `337 tests` · **336 verdes**, 1 omitido sin pywebview (2026-11-15).
 - **Testeo humano:** `TESTING_HUMANO.md` 42/42 (2026-10-19: §9 «Manifiesto firmado»
   1.2.4 → 1.2.5 y las pruebas nuevas de §5–§6 del panel Configuración, v1.2.6/v1.2.7).
 
@@ -122,6 +122,27 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-08 — **Build 8 de la v1.4.1:** la build 7 no se graba porque le faltan dos
+  arreglos encontrados al probarla: la ✕ de los modales que se desplazan quedaba
+  fuera de la vista (PR #47) y las sugerencias IA fallaban con `llama3`, que añade
+  texto al JSON (PR #48).
+- 2026-11-08 — **Build 7 de la v1.4.1 subida** (`4a5b717`, PR #44), ya disponible en
+  TestFlight. Google exige verificar la marca antes de enviar la del acceso a los
+  datos: pasos 8 a 10 de la tabla. Siguen las comprobaciones de `docs/GOOGLE_VERIFICACION.md` con ella,
+  el vídeo y el envío a Google.
+- 2026-11-06 — **Visor de `.eml` aislado (build 7):** el HTML del correo se cargaba
+  en un iframe sin `sandbox`, con el origen de la app, y el filtro con expresiones
+  regulares dejaba pasar `onerror='…'`. Reproducido en Chromium: un correo leía la
+  API local y enviaba el resultado a otro servidor, lo que contradecía lo declarado
+  a Google. Ahora el iframe va con `sandbox` y CSP, sin contenido remoto. La build 6
+  no debe grabarse. Pasos 1 a 3, 5 y 6 hechos; faltan la build 7, el vídeo y el envío.
+  Syne y DM Mono van ahora dentro de la app: la interfaz ya no conecta con Google Fonts.
+- 2026-11-05 — **Sesión revocada con la app abierta (build 6):** la app conservaba
+  el servicio de Gmail en memoria y todas las búsquedas fallaban hasta reiniciarla,
+  aunque el mensaje prometía autorizar en la siguiente. Ahora olvida la sesión
+  rechazada y la siguiente búsqueda abre Google. Reproducido con la librería real
+  de Google. Estado de la verificación: pasos 1 a 6 hechos; faltan el vídeo y el
+  envío (`docs/GOOGLE_VERIFICACION.md`).
 - 2026-11-04 — **v1.4.1 con el número de build 1.4.1 subida, pero sustituida por el
   build 2:** en la tienda, «Ocultos locales» seguía hablando de borrar en Gmail.
   `build_mas.sh` borraba `dist-mas` entero al compilar y se perdieron las capturas
@@ -378,8 +399,8 @@ Mac App Store: v1.4.0 (build 2) publicada el 2026-11-03 y **retirada de la venta
 el 2026-11-04 hasta verificarla con Google**
 ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)).
 Próximas versiones de la tienda: `build_mas.sh` con un
-`MAS_BUILD_NUMBER` mayor que cualquiera ya subido (el último subido es el 4, en la
-1.4.1) y mantener la justificación de `network.server` en las
+`MAS_BUILD_NUMBER` mayor que cualquiera ya subido (el último subido es el 5, en la
+1.4.1; la corrección de sesión revocada irá en el 6) y mantener la justificación de `network.server` en las
 *Notes* (`docs/APP_STORE_FICHA.md`).
 `v1.2.2`–`v1.4.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
@@ -390,8 +411,6 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): la web de
-`https://gcorreos.efjdev.com/` ya coincide con `docs/site/` (con la Papelera; comprobado el
-2026-11-15). Queda verificar `efjdev.com` en Search Console,
-compilar la v1.4.1 y enviar la solicitud a Google. **La app no debe volver a la venta
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): comprobar la build 7
+desde TestFlight, grabar el vídeo con ella y enviar la solicitud a Google. **La app no debe volver a la venta
 hasta que Google la verifique.**

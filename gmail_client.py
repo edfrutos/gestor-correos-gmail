@@ -187,8 +187,32 @@ def tag(frm):
     return parts[0].capitalize() + ' · Email'
 
 
+def _forget_revoked_session(exc):
+    """Olvida la sesión que Google ha rechazado, para que la siguiente búsqueda
+    abra el inicio de sesión sin reiniciar la app.
+
+    No espera a `_svc_lock`: si está ocupado, otra petición ya está autorizando la
+    cuenta (hasta OAUTH_TIMEOUT_SECONDS) y no hay que borrar el token que guardará.
+    Un fallo temporal de Google (`retryable`) conserva la sesión.
+    """
+    global _svc
+    if getattr(exc, 'retryable', False) or not _svc_lock.acquire(blocking=False):
+        return
+    try:
+        _svc = None
+        _discard_token()
+    except OSError as discard_error:
+        # gmail() lo reintenta: el token rechazado vuelve a fallar al renovarlo.
+        print(f'[Gmail OAuth] No se pudo borrar el token: {discard_error}')
+    finally:
+        _svc_lock.release()
+
+
 def gmail_error_detail(exc):
+    """Traduce un error de Gmail para la interfaz. Por aquí pasan los errores de
+    las peticiones, así que también olvida la sesión si Google la ha revocado."""
     if RefreshError is not None and isinstance(exc, RefreshError):
+        _forget_revoked_session(exc)
         return 'La autorización Gmail expiró o fue revocada. Vuelve a autorizar la cuenta en la próxima búsqueda.'
     if not GMAIL_OK or HttpError is None or not isinstance(exc, HttpError):
         return str(exc)
