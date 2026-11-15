@@ -14,10 +14,10 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
 | 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Hecho el 2026-11-15: grabado con la build 8 y publicado en YouTube |
-| 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Pendiente |
-| 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Pendiente |
-| 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Pendiente |
-| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente |
+| 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Hecho el 2026-11-15 |
+| 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Hecho: marca verificada (Centro de verificación, 2026-11-15) |
+| 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Hecho: enviada el 2026-11-15; el acceso a los datos está en revisión. La consola mostró «No se pudo enviar tu app» (seguimiento `c125087734537070`), pero el envío quedó registrado |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente: a la espera de la respuesta de Google |
 | 12 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
 
 Hasta el paso 12, la app no debe volver a la venta: el público no podría iniciar
@@ -88,6 +88,30 @@ Limited Use: the app uses Google user data only to provide the user-facing featu
 
 Because restricted scope data is not stored on, transmitted to or accessed from or through any server of ours or of a third party, we understand that the security assessment does not apply. Please confirm whether this is correct or tell us what you need in order to assess it. The source code is available at https://github.com/edfrutos/gestor-correos-gmail.
 ```
+
+### Información adicional (versión de 1000 caracteres)
+
+El cuadro «Información adicional» del Centro de verificación admite 1000 caracteres,
+y el texto anterior no cabe. Versión recortada:
+
+```text
+Gestor de Correos is a native macOS app (Mac App Store) with no backend. The developer runs no server that receives, stores or can access Google user data; there are no analytics, ads or tracking.
+
+The app calls the Gmail API directly from the user's Mac over HTTPS. Message content is processed in memory on the device. The OAuth token, settings and exported files stay on the user's Mac, inside the app's sandbox container or a folder the user chooses. The optional AI only accepts a local model on the same Mac; remote providers are refused.
+
+Limited Use: data is used only for the user-facing features, never sold, transferred, used for ads or to train AI models. No human can read it.
+
+Since restricted scope data is not stored on, transmitted to or accessed through any server, we understand the security assessment does not apply. Please confirm or tell us what you need.
+
+Source code: https://github.com/edfrutos/gestor-correos-gmail
+```
+
+### Cuestionario de verificación
+
+Las cuatro preguntas (uso personal, uso interno, solo desarrollo o pruebas, complemento
+SMTP para WordPress) se responden «No». Para enviar hay que marcar dos casillas: que
+se cumplen los requisitos y que se entiende que los permisos restringidos exigen la
+evaluación CASA, renovada cada año. El formulario no distingue las apps sin servidor.
 
 ## Comprobaciones en la v1.4.1 de TestFlight
 
