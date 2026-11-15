@@ -60,7 +60,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `249 tests` · **248 verdes**, 1 omitido sin pywebview.
+- **Suite automatizada:** `321 tests` · **320 verdes**, 1 omitido sin pywebview (2026-11-15).
 - **Testeo humano:** `TESTING_HUMANO.md` 42/42 (2026-10-19: §9 «Manifiesto firmado»
   1.2.4 → 1.2.5 y las pruebas nuevas de §5–§6 del panel Configuración, v1.2.6/v1.2.7).
 
@@ -390,7 +390,8 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): volver a publicar
-`docs/site/` en `https://gcorreos.efjdev.com/` con la Papelera, verificar `efjdev.com` en Search Console,
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): la web de
+`https://gcorreos.efjdev.com/` ya coincide con `docs/site/` (con la Papelera; comprobado el
+2026-11-15). Queda verificar `efjdev.com` en Search Console,
 compilar la v1.4.1 y enviar la solicitud a Google. **La app no debe volver a la venta
 hasta que Google la verifique.**
