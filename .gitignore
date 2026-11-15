@@ -47,3 +47,6 @@ scripts/
 # Capturas de pantalla de macOS guardadas por error en el repositorio
 Captura de pantalla *.png
 Screenshot *.png
+
+# Carpeta local de Memanto
+gestor-de-correos/

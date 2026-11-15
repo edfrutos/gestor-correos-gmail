@@ -60,7 +60,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 - **Scope Gmail:** `gmail.modify` para lectura/archivado/etiquetado;
   borrado permanente aislado en `delete_token.json` (`https://mail.google.com/`),
   desactivado por defecto.
-- **Suite automatizada:** `249 tests` · **248 verdes**, 1 omitido sin pywebview.
+- **Suite automatizada:** `337 tests` · **336 verdes**, 1 omitido sin pywebview (2026-11-15).
 - **Testeo humano:** `TESTING_HUMANO.md` 42/42 (2026-10-19: §9 «Manifiesto firmado»
   1.2.4 → 1.2.5 y las pruebas nuevas de §5–§6 del panel Configuración, v1.2.6/v1.2.7).
 
