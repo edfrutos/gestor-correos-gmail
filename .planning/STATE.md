@@ -122,6 +122,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-15 — **Verificación enviada a Google** (pasos 8 a 10): app en producción,
+  marca verificada y acceso a los datos en revisión. El cuestionario obliga a
+  reconocer la evaluación CASA; si Google la exige, hay que valorar si compensa.
 - 2026-11-15 — **Vídeo de la verificación publicado** en YouTube, grabado con la
   build 8 (paso 7). Siguen «Publicar app» y la verificación de la marca (pasos 8 y 9).
 - 2026-11-15 — **Comprobaciones de la build 8 pasadas:** sugerencias IA con `llama3`,
@@ -419,7 +422,7 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): pulsar «Publicar app»,
-verificar la marca y, con ella verificada, enviar la solicitud a Google con el vídeo
-(ya publicado). **La app no debe volver a la venta
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): esperar la respuesta
+de Google a la verificación del acceso a los datos (enviada el 2026-11-15) y, si
+exige la evaluación CASA, decidir si compensa. **La app no debe volver a la venta
 hasta que Google la verifique.**
