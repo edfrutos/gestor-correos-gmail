@@ -122,6 +122,8 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-15 — **Vídeo de la verificación publicado** en YouTube, grabado con la
+  build 8 (paso 7). Siguen «Publicar app» y la verificación de la marca (pasos 8 y 9).
 - 2026-11-15 — **Comprobaciones de la build 8 pasadas:** sugerencias IA con `llama3`,
   cierre de los modales, reautorización tras revocar el acceso y visor de `.eml`.
   Solo queda la del idioma de la ficha, que no se puede comprobar hasta publicar.
@@ -417,7 +419,7 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): grabar el vídeo
-con la build 8 de TestFlight (comprobaciones pasadas), verificar la marca
-y enviar la solicitud a Google. **La app no debe volver a la venta
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): pulsar «Publicar app»,
+verificar la marca y, con ella verificada, enviar la solicitud a Google con el vídeo
+(ya publicado). **La app no debe volver a la venta
 hasta que Google la verifique.**
