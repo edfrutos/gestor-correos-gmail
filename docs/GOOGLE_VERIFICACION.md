@@ -13,7 +13,7 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Hecho: build 8 subida a TestFlight el 2026-11-15. Añade a la 7 (visor de `.eml` aislado) el cierre de los modales (PR #47) y las sugerencias IA con modelos locales (PR #48). Es la que debe grabarse y enviarse a App Review; las builds 6 y 7 no sirven |
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
-| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: con la build 8, tras pasar las comprobaciones |
+| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Pendiente: con la build 8; las comprobaciones ya están pasadas (2026-11-15) |
 | 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Pendiente |
 | 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Pendiente |
 | 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Pendiente |
@@ -91,7 +91,7 @@ Because restricted scope data is not stored on, transmitted to or accessed from 
 
 ## Comprobaciones en la v1.4.1 de TestFlight
 
-Con la build 8 instalada desde TestFlight, antes de grabar el vídeo. Las casillas marcadas se comprobaron en la build 7:
+Con la build 8 instalada desde TestFlight, antes de grabar el vídeo. Pasadas el 2026-11-15: las cuatro que dependían de la build 8, con ella; las demás, en la build 7:
 
 - [x] La ventana «Ocultos locales» no muestra la sección «Eliminación permanente» y
   su texto inicial no habla de borrar en Gmail.
@@ -103,15 +103,15 @@ Con la build 8 instalada desde TestFlight, antes de grabar el vídeo. Las casill
   disponible», y también `http://localhost:11434/v1` con un modelo `…:cloud`.
 - [x] Un modelo local en `http://localhost:11434/v1` sigue funcionando, si tienes
   Ollama.
-- [ ] Con Ollama y `llama3`, «Sugerir reglas ahora» propone reglas (en la build 7
+- [x] Con Ollama y `llama3`, «Sugerir reglas ahora» propone reglas (en la build 7
   fallaba con «Expecting value»).
-- [ ] En «Ocultos locales», tras desplazar el contenido, la ✕ sigue visible y cierra;
+- [x] En «Ocultos locales», tras desplazar el contenido, la ✕ sigue visible y cierra;
   Escape también cierra el modal.
 - [x] La cuenta de demostración busca, etiqueta, archiva y exporta sin errores.
-- [ ] Con la app abierta, revocar el acceso en `myaccount.google.com/permissions`:
+- [x] Con la app abierta, revocar el acceso en `myaccount.google.com/permissions`:
   la siguiente búsqueda avisa de que la autorización expiró o fue revocada, y la
   posterior abre Google sin reiniciar la app.
-- [ ] Abrir en el visor un `.eml` con imágenes remotas: el texto se lee, las imágenes
+- [x] Abrir en el visor un `.eml` con imágenes remotas: el texto se lee, las imágenes
   remotas no se cargan y un enlace del correo se abre en el navegador.
 - [ ] La ficha de App Store Connect indica el idioma español tras publicarse; hasta
   entonces no se puede comprobar.
