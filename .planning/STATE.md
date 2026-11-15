@@ -122,6 +122,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-15 — **Build 8 de la v1.4.1 subida** a TestFlight (paso 4 de la tabla).
+  Faltan con ella cuatro comprobaciones de `docs/GOOGLE_VERIFICACION.md` antes de
+  grabar el vídeo.
 - 2026-11-08 — **Build 8 de la v1.4.1:** la build 7 no se graba porque le faltan dos
   arreglos encontrados al probarla: la ✕ de los modales que se desplazan quedaba
   fuera de la vista (PR #47) y las sugerencias IA fallaban con `llama3`, que añade
@@ -399,8 +402,8 @@ Mac App Store: v1.4.0 (build 2) publicada el 2026-11-03 y **retirada de la venta
 el 2026-11-04 hasta verificarla con Google**
 ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)).
 Próximas versiones de la tienda: `build_mas.sh` con un
-`MAS_BUILD_NUMBER` mayor que cualquiera ya subido (el último subido es el 7, en la
-1.4.1; el siguiente es el 8) y mantener la justificación de `network.server` en las
+`MAS_BUILD_NUMBER` mayor que cualquiera ya subido (el último subido es el 8, en la
+1.4.1) y mantener la justificación de `network.server` en las
 *Notes* (`docs/APP_STORE_FICHA.md`).
 `v1.2.2`–`v1.4.0` coinciden con lo compilado; `v1.2.0`/`v1.2.1` siguen en
 `fe55367`.
@@ -411,7 +414,7 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): subir la build 8
-a TestFlight, pasar con ella las comprobaciones, grabar el vídeo, verificar la marca
+Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): pasar las comprobaciones
+con la build 8 de TestFlight, grabar el vídeo, verificar la marca
 y enviar la solicitud a Google. **La app no debe volver a la venta
 hasta que Google la verifique.**
