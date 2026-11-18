@@ -10,7 +10,7 @@
 <main>
 <p><a href="index.html">Gestor de Correos</a> · <a href="#en">English</a></p>
 <h1>Política de privacidad</h1>
-<p><em>Última actualización: 4 de noviembre de 2026</em></p>
+<p><em>Última actualización: 18 de noviembre de 2026</em></p>
 <p>Gestor de Correos es una aplicación para macOS que organiza tu propio correo de Gmail desde tu Mac. El desarrollador es EDF Developer (contacto: <a href="https://efjdev.com/soporte/">página de soporte</a>). Esta política se aplica a la versión de la Mac App Store desde la 1.4.1.</p>
 <h2>Resumen</h2>
 <ul>
@@ -20,14 +20,26 @@
 </ul>
 <h2>Datos de Google que usa la app</h2>
 <p>Con tu autorización (permiso <code>gmail.modify</code>), la app accede a tu cuenta de Gmail para buscar y mostrar mensajes (remitente, asunto, fecha, etiquetas, fragmento y, cuando abres un mensaje, su contenido y adjuntos), clasificarlos en tu Mac y aplicar las acciones que eliges: etiquetar, archivar, mover a la Papelera de Gmail los mensajes que hayas ocultado y exportar a <code>.eml</code> o <code>.zip</code>. La Papelera conserva los mensajes 30 días; puedes recuperarlos desde Gmail durante ese plazo. La app no envía correos ni los borra de forma permanente.</p>
-<p>La app no usa tus datos de Gmail para ningún otro fin. No los vende, no los transfiere a terceros, no los usa para publicidad y no los usa para entrenar modelos de IA.</p>
+<p>Con esos datos, la app calcula en tu Mac recuentos y resúmenes (por ejemplo, cuántos avisos hay de cada categoría y su tendencia). Esos datos agregados solo se muestran en la app y no salen de tu equipo.</p>
+<p>La app no usa tus datos de Gmail, ni en bruto ni agregados, para ningún otro fin. No los vende, no los usa para publicidad y no los usa para entrenar modelos de IA.</p>
+<h2>Con quién se comparten</h2>
+<p>Con nadie. Los datos solo circulan entre los servidores de Google y tu Mac. La app no los transfiere al desarrollador ni a ningún tercero (proveedores, anunciantes, intermediarios de datos ni servicios de IA).</p>
 <p>El uso y la transferencia de la información recibida de las API de Google se ajustan a la <a href="https://developers.google.com/terms/api-services-user-data-policy">Política de datos de usuario de los servicios de API de Google</a>, incluidos los requisitos de uso limitado (<em>Limited Use</em>).</p>
 <h2>Qué se guarda en tu Mac</h2>
-<p>Dentro del contenedor de App Sandbox de la app: el token de autorización de Google, tu configuración (fuentes, reglas, correos ocultos, ajustes de IA) y los correos que exportas, además de una copia en la carpeta de respaldo si la eliges.</p>
+<p>Dentro del contenedor de App Sandbox de la app: el token de autorización de Google, tu configuración (fuentes, reglas, identificadores de los correos ocultos, ajustes de IA) y los correos que exportas, además de una copia en la carpeta de respaldo si la eliges. El contenido de los mensajes que buscas o abres se procesa en memoria y no se guarda, salvo en los archivos que exportas.</p>
+<h2>Cómo se protegen tus datos</h2>
+<ul>
+<li>La comunicación con la API de Gmail va cifrada por HTTPS (TLS).</li>
+<li>El inicio de sesión usa el flujo OAuth de Google para apps de escritorio: la app nunca ve tu contraseña.</li>
+<li>El token y la configuración se guardan en el contenedor de App Sandbox de macOS, con permisos solo para tu usuario (lectura y escritura solo para ti).</li>
+<li>La interfaz de la app solo escucha en tu propio Mac (127.0.0.1) y no es accesible desde otros equipos.</li>
+<li>No hay servidores del desarrollador que puedan sufrir una filtración, porque tus datos nunca llegan a ellos.</li>
+</ul>
 <h2>Inteligencia artificial (opcional)</h2>
 <p>La IA está desactivada hasta que la configuras, y solo se admite un modelo local en tu Mac (p. ej. Ollama). La app rechaza los proveedores remotos, de modo que nada sale de tu equipo.</p>
-<h2>Cómo borrar tus datos y revocar el acceso</h2>
-<p>Puedes borrarlo todo desinstalando la app y su carpeta de datos, y revocar el acceso a Gmail en cualquier momento en <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</p>
+<h2>Conservación y eliminación</h2>
+<p>El desarrollador no conserva ningún dato, porque no recibe ninguno. En tu Mac, el token y la configuración se conservan hasta que revocas el acceso o desinstalas la app; los archivos exportados, hasta que los borras tú.</p>
+<p>Puedes borrarlo todo desinstalando la app y su carpeta de datos, y revocar el acceso a Gmail en cualquier momento en <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Tras revocarlo, la app deja de poder leer tu correo.</p>
 <h2>Niños</h2>
 <p>La app no está dirigida a menores de 13 años ni recoge datos de ellos.</p>
 <h2>Cambios</h2>
@@ -35,7 +47,7 @@
 <hr>
 <section id="en" lang="en">
 <h1>Privacy policy</h1>
-<p><em>Last updated: November 4, 2026</em></p>
+<p><em>Last updated: November 18, 2026</em></p>
 <p>Gestor de Correos is a macOS application that organizes your own Gmail account from your Mac. The developer is EDF Developer (contact: <a href="https://efjdev.com/soporte/">support page</a>). This policy applies to the Mac App Store version from 1.4.1 onwards.</p>
 <h2>Summary</h2>
 <ul>
@@ -45,14 +57,26 @@
 </ul>
 <h2>Google data the app uses</h2>
 <p>With your authorization (<code>gmail.modify</code> scope), the app accesses your Gmail account to search and display messages (sender, subject, date, labels, snippet and, when you open a message, its content and attachments), classify them on your Mac, and apply the actions you choose: label, archive, move messages you have hidden to the Gmail Trash, and export to <code>.eml</code> or <code>.zip</code>. Gmail keeps trashed messages for 30 days, and you can recover them from Gmail during that time. The app does not send email or permanently delete it.</p>
-<p>The app does not use your Gmail data for any other purpose. It does not sell it, transfer it to third parties, use it for advertising or use it to train AI models.</p>
+<p>From that data, the app computes counts and summaries on your Mac (for example, how many notices there are in each category and their trend). This aggregated data is only shown in the app and never leaves your device.</p>
+<p>The app does not use your Gmail data, raw or aggregated, for any other purpose. It does not sell it, use it for advertising or use it to train AI models.</p>
+<h2>Who it is shared with</h2>
+<p>No one. The data only travels between Google's servers and your Mac. The app does not transfer it to the developer or to any third party (service providers, advertisers, data brokers or AI services).</p>
 <p>The app's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
 <h2>What is stored on your Mac</h2>
-<p>Inside the app's App Sandbox container: the Google authorization token, your settings (sources, rules, hidden messages, AI settings) and the messages you export, plus a copy in the backup folder if you choose one.</p>
+<p>Inside the app's App Sandbox container: the Google authorization token, your settings (sources, rules, IDs of hidden messages, AI settings) and the messages you export, plus a copy in the backup folder if you choose one. The content of the messages you search for or open is processed in memory and is not stored, except in the files you export.</p>
+<h2>How your data is protected</h2>
+<ul>
+<li>Communication with the Gmail API is encrypted over HTTPS (TLS).</li>
+<li>Sign-in uses Google's OAuth flow for desktop apps: the app never sees your password.</li>
+<li>The token and settings are stored in the macOS App Sandbox container, with permissions restricted to your user (read and write for you only).</li>
+<li>The app's interface only listens on your own Mac (127.0.0.1) and cannot be reached from other machines.</li>
+<li>There are no developer servers that could be breached, because your data never reaches them.</li>
+</ul>
 <h2>Artificial intelligence (optional)</h2>
 <p>AI stays off until you configure it, and only a local model on your Mac (for example, Ollama) is accepted. The app refuses remote providers, so nothing leaves your device.</p>
-<h2>Deleting your data and revoking access</h2>
-<p>You can delete everything by uninstalling the app and its data folder, and revoke access to Gmail at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</p>
+<h2>Retention and deletion</h2>
+<p>The developer retains no data, because it receives none. On your Mac, the token and settings are kept until you revoke access or uninstall the app; exported files, until you delete them.</p>
+<p>You can delete everything by uninstalling the app and its data folder, and revoke access to Gmail at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>. Once access is revoked, the app can no longer read your email.</p>
 <h2>Children</h2>
 <p>The app is not directed at children under 13 and does not collect data from them.</p>
 <h2>Changes</h2>

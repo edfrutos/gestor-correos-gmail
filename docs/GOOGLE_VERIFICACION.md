@@ -17,7 +17,7 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Hecho el 2026-11-15 |
 | 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Hecho: marca verificada (Centro de verificación, 2026-11-15) |
 | 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Hecho: enviada el 2026-11-15; el acceso a los datos está en revisión. La consola mostró «No se pudo enviar tu app» (seguimiento `c125087734537070`), pero el envío quedó registrado |
-| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | Pendiente: a la espera de la respuesta de Google |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…»). La política se amplió con la protección, la conservación y la transferencia de datos; falta publicarla y responder con el texto de «Respuesta a la lista de comprobación» |
 | 12 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
 
 Hasta el paso 12, la app no debe volver a la venta: el público no podría iniciar
@@ -112,6 +112,50 @@ Las cuatro preguntas (uso personal, uso interno, solo desarrollo o pruebas, comp
 SMTP para WordPress) se responden «No». Para enviar hay que marcar dos casillas: que
 se cumplen los requisitos y que se entiende que los permisos restringidos exigen la
 evaluación CASA, renovada cada año. El formulario no distingue las apps sin servidor.
+
+## Respuesta a la lista de comprobación (2026-11-18)
+
+Google respondió al envío con su lista de comprobación genérica, que pide revisar
+cada punto y contestar al mismo correo confirmándolo. Antes de responder:
+
+1. Publicar la `docs/site/privacy.html` actualizada en
+   `https://gcorreos.efjdev.com/privacy.html`. La versión anterior no cubría la
+   protección ni la conservación de los datos, que la lista exige por separado.
+2. Revisar el vídeo: en la pantalla de consentimiento debe leerse el permiso
+   completo (si Google lo agrupa, desplegarlo con «Mostrar todos los servicios»),
+   y en Gmail debe verse el resultado de etiquetar, archivar y mover a la
+   Papelera. Si falta algo, grabarlo de nuevo antes de responder.
+3. Decidir cómo instala la app el revisor (ver `[ACCESO]` en el texto) y
+   sustituir el marcador.
+
+Texto para responder (en inglés):
+
+```text
+Hello,
+
+Thank you for the checklist. We have audited Gestor de Correos (project gestor-de-correo-gmail, 1771725945) against every item. Summary:
+
+1. Scopes. The app requests only https://www.googleapis.com/auth/gmail.modify, the same single scope declared in the Cloud Console. It is used for production, user-facing features only: search and read messages and attachments, label, archive, move to Trash (recoverable for 30 days) and export to .eml/.zip. gmail.readonly and gmail.metadata cannot label, archive or trash; gmail.labels cannot read messages. The app never sends, drafts or permanently deletes email. Note: the public source repository also contains an optional permanent-delete module using https://mail.google.com/; it belongs to a separate self-hosted edition that uses each user's own OAuth client, and it is disabled in code in the Mac App Store build submitted here, which never requests that scope with this project's client.
+
+2. Demo video. The video is unlisted on YouTube. It shows the full OAuth flow with the client ID visible, the consent screen with the requested scope, every feature that uses the scope, and the result of each write action (label, archive, move to Trash) in the user's Gmail account.
+
+3. Live app. The app is currently removed from sale on the Mac App Store and will only be made available again after verification, so no production traffic uses the unverified scope.
+
+4. App access. Sign-in is Google OAuth only: there is no local login, phone verification or payment step. [ACCESO]. Steps: open Gestor de Correos, click "Buscar en Gmail" (Search Gmail), sign in with any Google account and grant access; then search by sender, select messages and use the label, archive and Trash buttons.
+
+5. Privacy policy. https://gcorreos.efjdev.com/privacy.html (updated November 18, 2026) states what data is accessed (raw message data and locally computed aggregate counts), how it is used, that it is shared with no one, how it is protected (TLS, OAuth, macOS App Sandbox, user-only file permissions, loopback-only interface) and how it is retained and deleted.
+
+6. Limited Use and AI. The data is used only to provide the user-facing features. It is never sold, transferred, used for advertising or used to train AI models. The optional AI feature only accepts a local model running on the user's own Mac; remote AI providers are refused by the app. The privacy policy contains the Limited Use statement: "The app's use and transfer of information received from Google APIs adheres to the Google API Services User Data Policy, including the Limited Use requirements."
+
+7. Use case. The app organizes the user's own mailbox. It does not send email, so cold email and email warming do not apply. It does not use Data Portability APIs.
+
+8. Security assessment. The app has no backend: restricted scope data is not stored on, transmitted to or accessed from or through any server of ours or of a third party. Following the restricted scope verification guide, we understand the CASA assessment does not apply. Please confirm, or tell us what you need to assess it.
+
+Source code: https://github.com/edfrutos/gestor-correos-gmail
+
+Best regards,
+EDF Developer
+```
 
 ## Comprobaciones en la v1.4.1 de TestFlight
 
