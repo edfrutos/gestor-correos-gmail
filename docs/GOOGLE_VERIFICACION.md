@@ -17,7 +17,7 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Hecho el 2026-11-15 |
 | 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Hecho: marca verificada (Centro de verificación, 2026-11-15) |
 | 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Hecho: enviada el 2026-11-15; el acceso a los datos está en revisión. La consola mostró «No se pudo enviar tu app» (seguimiento `c125087734537070`), pero el envío quedó registrado |
-| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…»). La política ampliada (protección, conservación y transferencia de datos) está publicada desde el 2026-11-18. La build 8 se envió a la revisión beta de Apple para el enlace público de TestFlight. El vídeo revisado está en YouTube desde el 2026-11-18. Falta que Apple apruebe la build y responder con el texto de «Respuesta a la lista de comprobación» |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…») y ese mismo día se respondió con el texto de «Respuesta a la lista de comprobación», con el enlace del vídeo revisado en el punto 2. Ya estaban publicadas la política ampliada y la build 8 en TestFlight con enlace público. Pendiente: la respuesta de Google y si exige la evaluación CASA |
 | 12 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
 
 Hasta el paso 12, la app no debe volver a la venta: el público no podría iniciar
@@ -132,6 +132,11 @@ cada punto y contestar al mismo correo confirmándolo. Antes de responder:
 3. Esperar a que Apple apruebe la build 8 en la revisión beta y comprobar que el
    enlace público de TestFlight la instala. El revisor de Google la instala con
    ese enlace (ver «Enlace público de TestFlight» más abajo).
+   Hecho el 2026-11-18: Apple aprobó la build y el enlace está activo.
+
+Respuesta enviada el 2026-11-18 con el texto de abajo. El punto 2 incluía el
+enlace del vídeo revisado, porque en la consola no apareció dónde cambiarlo con
+la solicitud en revisión. El correo de Google admite las dos vías.
 
 ### Enlace público de TestFlight
 

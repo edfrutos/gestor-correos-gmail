@@ -122,6 +122,10 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-18 — **Respuesta a la lista de comprobación de Google** (paso 11): política
+  de privacidad ampliada y publicada, vídeo revisado, build 8 con enlace público de
+  TestFlight para el revisor y respuesta enviada. A la espera de Google y de si
+  exige la evaluación CASA.
 - 2026-11-15 — **Verificación enviada a Google** (pasos 8 a 10): app en producción,
   marca verificada y acceso a los datos en revisión. El cuestionario obliga a
   reconocer la evaluación CASA; si Google la exige, hay que valorar si compensa.
