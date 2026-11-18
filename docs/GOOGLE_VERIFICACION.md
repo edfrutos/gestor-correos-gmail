@@ -17,7 +17,7 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios; no importa porque la app no está a la venta | Google Auth Platform → Público | Hecho el 2026-11-15 |
 | 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Hecho: marca verificada (Centro de verificación, 2026-11-15) |
 | 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Hecho: enviada el 2026-11-15; el acceso a los datos está en revisión. La consola mostró «No se pudo enviar tu app» (seguimiento `c125087734537070`), pero el envío quedó registrado |
-| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…»). La política se amplió con la protección, la conservación y la transferencia de datos; falta publicarla y responder con el texto de «Respuesta a la lista de comprobación» |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…»). La política ampliada (protección, conservación y transferencia de datos) está publicada desde el 2026-11-18. La build 8 se envió a la revisión beta de Apple para el enlace público de TestFlight. Falta que Apple la apruebe, revisar el vídeo y responder con el texto de «Respuesta a la lista de comprobación» |
 | 12 | Con la verificación aprobada, enviar la v1.4.1 a App Review, volver a poner la app a la venta y decidir si se activan EE. UU. y Canadá | App Store Connect | Pendiente |
 
 Hasta el paso 12, la app no debe volver a la venta: el público no podría iniciar
@@ -121,12 +121,25 @@ cada punto y contestar al mismo correo confirmándolo. Antes de responder:
 1. Publicar la `docs/site/privacy.html` actualizada en
    `https://gcorreos.efjdev.com/privacy.html`. La versión anterior no cubría la
    protección ni la conservación de los datos, que la lista exige por separado.
+   Hecho el 2026-11-18: la versión publicada coincide con la del repositorio.
 2. Revisar el vídeo: en la pantalla de consentimiento debe leerse el permiso
    completo (si Google lo agrupa, desplegarlo con «Mostrar todos los servicios»),
    y en Gmail debe verse el resultado de etiquetar, archivar y mover a la
    Papelera. Si falta algo, grabarlo de nuevo antes de responder.
-3. Decidir cómo instala la app el revisor (ver `[ACCESO]` en el texto) y
-   sustituir el marcador.
+3. Esperar a que Apple apruebe la build 8 en la revisión beta y comprobar que el
+   enlace público de TestFlight la instala. El revisor de Google la instala con
+   ese enlace (ver «Enlace público de TestFlight» más abajo).
+
+### Enlace público de TestFlight
+
+- Grupo externo «Revisión de Google», con la build 1.4.1 (8) y un límite de 10
+  probadores. Enlace: `https://testflight.apple.com/join/sGAXphFa`. Solo funciona
+  cuando Apple aprueba la build en la revisión beta.
+- *Sign-in information*: la cuenta de Gmail de demostración, la misma de App Review
+  (sin verificación en dos pasos). *What to Test* no lleva datos de la cuenta,
+  porque lo ve cualquier grupo con acceso a la build.
+- La build caduca a los 90 días de subirse (2026-11-15, hacia el 2027-02-13). Si
+  la revisión de Google se alarga, hay que subir otra build y añadirla al grupo.
 
 Texto para responder (en inglés):
 
@@ -141,7 +154,7 @@ Thank you for the checklist. We have audited Gestor de Correos (project gestor-d
 
 3. Live app. The app is currently removed from sale on the Mac App Store and will only be made available again after verification, so no production traffic uses the unverified scope.
 
-4. App access. Sign-in is Google OAuth only: there is no local login, phone verification or payment step. [ACCESO]. Steps: open Gestor de Correos, click "Buscar en Gmail" (Search Gmail), sign in with any Google account and grant access; then search by sender, select messages and use the label, archive and Trash buttons.
+4. App access. Sign-in is Google OAuth only: there is no local login, phone verification or payment step. Gestor de Correos is a native macOS app (macOS 12 or later) and is currently not on sale. You can install the exact build shown in the video through this TestFlight public link: https://testflight.apple.com/join/sGAXphFa. Install the free TestFlight app from the Mac App Store, open the link and click Install. The OAuth project is in production, so any Google account can sign in; until this verification is approved, Google shows the unverified app warning (click Advanced, then "Go to Gestor de Correos"). Steps: open Gestor de Correos, click "Buscar en Gmail" (Search Gmail), sign in with any Google account and grant access; then search by sender, select messages and use the label, archive and Trash buttons.
 
 5. Privacy policy. https://gcorreos.efjdev.com/privacy.html (updated November 18, 2026) states what data is accessed (raw message data and locally computed aggregate counts), how it is used, that it is shared with no one, how it is protected (TLS, OAuth, macOS App Sandbox, user-only file permissions, loopback-only interface) and how it is retained and deleted.
 
