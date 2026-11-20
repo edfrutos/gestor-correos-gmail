@@ -122,6 +122,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-20 — **Progreso de la verificación de Google:** aprobadas la página
+  principal y la marca; la política de privacidad, en revisión; quedan cuatro
+  etapas. Google estima de 4 a 6 semanas desde el 2026-11-15 (hacia el 13–27 de
+  diciembre). Sin correo nuevo de Google.
+
 - 2026-11-19 — **La v1.4.0 vuelve a estar a la venta** en la Mac App Store (ES, GB y
   también US, según la API de iTunes), antes de la verificación de Google. El usuario
   decide mantenerla: el público verá el aviso de app no verificada (máximo 100
