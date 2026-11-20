@@ -473,6 +473,11 @@ Como sustituto del borrado permanente, ambas variantes pueden mover a la Papeler
 de Gmail los mensajes ocultos (`users.messages.trash`). `gmail.modify` lo permite y
 Gmail conserva los mensajes 30 días, de modo que la acción se puede deshacer.
 
+**Addendum 2026-11-19:** la v1.4.0 vuelve a estar a la venta antes de la
+verificación de Google y el usuario decide mantenerla. Hasta que se publique la
+v1.4.1, la tienda ofrece una versión que todavía tiene IA remota y borrado
+permanente; publicar la v1.4.1 pasa a ser lo primero tras la verificación.
+
 **Consecuencias:** la tienda pierde dos funciones respecto a la versión de GitHub.
 Si Google exige la evaluación CASA pese a todo, hay que valorar de nuevo si
 compensa. Detalle en `docs/GOOGLE_VERIFICACION.md`.

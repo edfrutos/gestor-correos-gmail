@@ -75,7 +75,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 34 — App macOS (Developer ID) | `paths.py` + relocalización; `macos/` pywebview/py2app/firma inside-out/notarización/DMG/icono | ✅ Done (2026-09-09), mergeado a `main` (`afad3a9`) |
-| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review y publicada (v1.4.0, build 2); retirada de la venta hasta la Fase 39 |
+| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review y publicada (v1.4.0, build 2); retirada de la venta el 2026-11-04 y de nuevo a la venta desde el 2026-11-19 |
 
 ## Milestone v8 — Fases (cerrado en `main`)
 
@@ -121,6 +121,13 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-11-19 — **La v1.4.0 vuelve a estar a la venta** en la Mac App Store (ES, GB y
+  también US, según la API de iTunes), antes de la verificación de Google. El usuario
+  decide mantenerla: el público verá el aviso de app no verificada (máximo 100
+  usuarios) y la v1.4.0 aún lleva IA remota y borrado permanente. Detalle en
+  `docs/GOOGLE_VERIFICACION.md`. El 2026-11-18 Apple aprobó la build 1.4.1 (8) para la
+  beta externa de TestFlight; Google aún no ha contestado.
 
 - 2026-11-18 — **Respuesta a la lista de comprobación de Google** (paso 11): política
   de privacidad ampliada y publicada, vídeo revisado, build 8 con enlace público de
@@ -410,8 +417,9 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 verificados). Las actualizaciones de la 1.3.0 en adelante las gestiona Sparkle
 (`appcast.xml`); `latest.json` se sigue publicando para que las 1.2.x puedan
 actualizar. La 1.3.2 no se publicó (sus cambios van en la 1.4.0).
-Mac App Store: v1.4.0 (build 2) publicada el 2026-11-03 y **retirada de la venta
-el 2026-11-04 hasta verificarla con Google**
+Mac App Store: v1.4.0 (build 2) publicada el 2026-11-03, retirada de la venta
+el 2026-11-04 y **de nuevo a la venta desde el 2026-11-19**, antes de la
+verificación de Google, por decisión del usuario
 ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)).
 Próximas versiones de la tienda: `build_mas.sh` con un
 `MAS_BUILD_NUMBER` mayor que cualquiera ya subido (el último subido es el 8, en la
@@ -428,5 +436,6 @@ Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 
 Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): esperar la respuesta
 de Google a la verificación del acceso a los datos (enviada el 2026-11-15) y, si
-exige la evaluación CASA, decidir si compensa. **La app no debe volver a la venta
-hasta que Google la verifique.**
+exige la evaluación CASA, decidir si compensa. Con la verificación aprobada,
+enviar cuanto antes la v1.4.1 (build 8) a App Review: la v1.4.0 que está a la venta
+no coincide con lo declarado a Google (ADR-016).
