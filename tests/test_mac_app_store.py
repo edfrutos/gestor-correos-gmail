@@ -553,3 +553,10 @@ def test_build_app_can_bundle_verified_client():
     assert 'Contents/Resources/oauth_client.json' in script
     # Antes de firmar: copiar después invalidaría la firma.
     assert script.index('DIRECT_OAUTH_CLIENT}" "${BUNDLE}') < script.index('==> 4/9')
+
+
+def test_status_refreshes_after_first_authorized_search():
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    search = js.split('async function searchGmail', 1)[1].split('\nasync function ', 1)[0]
+    ok = search.split('const d=await r.json();', 1)[1].split('return d.emails', 1)[0]
+    assert 'checkStatus()' in ok

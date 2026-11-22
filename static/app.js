@@ -498,6 +498,8 @@ async function searchGmail(params={},opts={}){
       throw new Error(err.detail||err.error||('Error HTTP '+r.status));
     }
     const d=await r.json();
+    // La primera búsqueda puede ser la que autoriza: refresca el indicador de estado.
+    if(!document.getElementById('sled').classList.contains('ok'))checkStatus();
     return d.emails||[];
   }catch(e){
     if(showErr)toast('Error buscando en Gmail: '+e.message,'err');
