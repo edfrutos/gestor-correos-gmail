@@ -116,8 +116,8 @@ def save_settings(payload):
             settings['ai_base_url'] = _validate_base_url(payload['ai_base_url'])
         if 'ai_model' in payload:
             settings['ai_model'] = _text(payload['ai_model'], 200, 'Modelo AI')
-        # Los correos no salen del Mac en la tienda: es lo que se declara a Google.
-        if paths.is_app_store() and is_remote(settings['ai_base_url'], settings['ai_model']):
+        # Con el cliente verificado los correos no salen del Mac: es lo que se declara a Google.
+        if paths.verified_scope_only() and is_remote(settings['ai_base_url'], settings['ai_model']):
             raise ApiError(LOCAL_AI_ONLY_ERROR, status=403, detail=LOCAL_AI_ONLY_DETAIL)
         if payload.get('ai_api_key_clear'):
             settings['ai_api_key'] = ''

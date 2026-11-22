@@ -26,7 +26,7 @@ def strip_reasoning(text):
 
 
 def _blocked(base_url, model):
-    return paths.is_app_store() and is_remote(base_url, model)
+    return paths.verified_scope_only() and is_remote(base_url, model)
 
 
 def _ensure_allowed(base_url, model):

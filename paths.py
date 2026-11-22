@@ -79,8 +79,19 @@ def is_app_store() -> bool:
 
 
 def has_bundled_oauth_client() -> bool:
-    """La build lleva cliente OAuth propio (`MAS_OAUTH_CLIENT`)."""
+    """La build lleva el cliente OAuth del proyecto (`MAS_OAUTH_CLIENT` o
+    `DIRECT_OAUTH_CLIENT`)."""
     return (resource_dir() / BUNDLED_OAUTH_CLIENT).is_file()
+
+
+def verified_scope_only() -> bool:
+    """Solo `gmail.modify` y datos que no salen del Mac.
+
+    Es lo declarado a Google para el cliente OAuth del proyecto, así que rige en
+    la Mac App Store y en cualquier build que lleve ese cliente (también la de
+    descarga directa): sin borrado permanente (`mail.google.com`) ni IA remota.
+    """
+    return is_app_store() or has_bundled_oauth_client()
 
 
 def data_path(name: str) -> Path:

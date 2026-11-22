@@ -34,8 +34,8 @@ _delete_lock = threading.Lock()
 
 
 def delete_enabled():
-    # La tienda solo pide gmail.modify: mail.google.com no entra en la verificación de Google.
-    if paths.is_app_store():
+    # Con el cliente verificado solo se pide gmail.modify: mail.google.com no entra en la verificación de Google.
+    if paths.verified_scope_only():
         return False
     return os.getenv('ENABLE_PERMANENT_DELETE', '').strip().lower() in {'1', 'true', 'yes'}
 
