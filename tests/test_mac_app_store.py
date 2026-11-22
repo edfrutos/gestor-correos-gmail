@@ -507,7 +507,7 @@ def test_build_mas_requires_build_number_for_the_store():
 
 def test_store_settings_do_not_suggest_cloud_or_own_google_client():
     js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
-    store = js.split("if(d.distribution==='mas'){", 1)[1].split('if(d.ok){', 1)[0]
+    store = js.split("if(d.distribution==='mas'||d.verified_scope_only){", 1)[1].split('if(d.ok){', 1)[0]
     assert "getElementById('cfg-ai-model').placeholder='llama3'" in store
     assert "aiKeyPlaceholder='ollama'" in store
     hint = store.split("getElementById('cfg-ai-hint').textContent='", 1)[1].split("'", 1)[0]
@@ -515,3 +515,41 @@ def test_store_settings_do_not_suggest_cloud_or_own_google_client():
     assert 'if(d.oauth_bundled){' in store
     # pywebviewready puede llegar después del estado: no debe volver a mostrarla.
     assert 'if(credentialsImportHidden||' in js
+
+
+# --- Descarga directa con el cliente verificado: mismas restricciones que la tienda ---
+
+def test_verified_scope_only_with_bundled_client(monkeypatch, tmp_path):
+    monkeypatch.setenv('RESOURCEPATH', str(tmp_path))
+    monkeypatch.setattr(paths, 'is_app_store', lambda: False)
+    assert paths.verified_scope_only() is False
+    (tmp_path / paths.BUNDLED_OAUTH_CLIENT).write_text('{}', encoding='utf-8')
+    assert paths.verified_scope_only() is True
+
+
+def test_permanent_delete_disabled_with_bundled_client(monkeypatch, tmp_path):
+    import destructive_gmail
+    monkeypatch.setenv('ENABLE_PERMANENT_DELETE', '1')
+    monkeypatch.setenv('RESOURCEPATH', str(tmp_path))
+    monkeypatch.setattr(paths, 'is_app_store', lambda: False)
+    (tmp_path / paths.BUNDLED_OAUTH_CLIENT).write_text('{}', encoding='utf-8')
+    assert destructive_gmail.delete_enabled() is False
+
+
+def test_remote_ai_refused_with_bundled_client(monkeypatch, tmp_path):
+    import settings
+    from validators import ApiError
+    monkeypatch.setattr(settings, 'SETTINGS_FILE', tmp_path / 'settings.json')
+    monkeypatch.setenv('RESOURCEPATH', str(tmp_path))
+    monkeypatch.setattr(paths, 'is_app_store', lambda: False)
+    (tmp_path / paths.BUNDLED_OAUTH_CLIENT).write_text('{}', encoding='utf-8')
+    with pytest.raises(ApiError):
+        settings.save_settings({'ai_base_url': 'https://api.openai.com/v1', 'ai_model': 'gpt-4o'})
+
+
+def test_build_app_can_bundle_verified_client():
+    script = (ROOT / 'macos' / 'build_app.sh').read_text(encoding='utf-8')
+    assert 'DIRECT_OAUTH_CLIENT' in script
+    assert 'Contents/Resources/oauth_client.json' in script
+    # Antes de firmar: copiar después invalidaría la firma.
+    assert script.index('DIRECT_OAUTH_CLIENT}" "${BUNDLE}') < script.index('==> 4/9')

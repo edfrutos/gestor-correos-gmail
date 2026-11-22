@@ -37,6 +37,8 @@ BINARY_DELTA="${SPARKLE_CACHE}/bin/BinaryDelta"   # del mismo tarball (Fase 38)
 #   UPDATE_SIGNING_KEY="$HOME/.config/gestor-correos/update_signing.pem"
 #     (clave Ed25519 que firma latest.json; se crea una vez con
 #      build-venv/bin/python macos/sign_manifest.py keygen <ruta>)
+#   DIRECT_OAUTH_CLIENT="$HOME/.config/gestor-correos/oauth_client.json"
+#     (opcional: el cliente OAuth del proyecto verificado; el mismo que MAS_OAUTH_CLIENT)
 [ -f macos/build.env ] && . macos/build.env
 
 require() { [ -n "${!1:-}" ] || { echo "Falta la variable: $1 (exporta o ponla en macos/build.env)" >&2; exit 1; }; }
@@ -99,6 +101,23 @@ mkdir -p "${BUNDLE}/Contents/Frameworks"
 ditto "${SPARKLE_CACHE}/Sparkle.framework" "${SPARKLE_FW}"
 # Los XPC services solo los usa una app con App Sandbox; esta no lo tiene.
 rm -rf "${SPARKLE_FW}/Versions/B/XPCServices" "${SPARKLE_FW}/XPCServices"
+
+echo "==> 3c/9 Cliente OAuth del proyecto (opcional: DIRECT_OAUTH_CLIENT)"
+# Con el cliente verificado, la app solo pide gmail.modify y no usa IA remota
+# (paths.verified_scope_only): es lo que se ha declarado a Google.
+if [ -n "${DIRECT_OAUTH_CLIENT:-}" ]; then
+  build-venv/bin/python - "${DIRECT_OAUTH_CLIENT}" <<'PY'
+import json, sys
+client = json.load(open(sys.argv[1], encoding="utf-8")).get("installed") or {}
+if not (client.get("client_id") and client.get("client_secret")):
+    sys.exit("DIRECT_OAUTH_CLIENT no es un cliente OAuth de tipo «App de escritorio»")
+PY
+  cp "${DIRECT_OAUTH_CLIENT}" "${BUNDLE}/Contents/Resources/oauth_client.json"
+  xattr -c "${BUNDLE}/Contents/Resources/oauth_client.json"
+  echo "    cliente OAuth incluido: solo gmail.modify, sin borrado permanente ni IA remota"
+else
+  echo "    sin DIRECT_OAUTH_CLIENT: cada usuario importa su credentials.json"
+fi
 
 echo "==> 4/9  Firmar binarios anidados (inside-out, Hardened Runtime + timestamp)"
 sign_one() { codesign --force --options runtime --timestamp --sign "${DEV_ID_APP}" "$1"; }

@@ -98,9 +98,9 @@ async function checkStatus(){
     if(d.app_version){document.getElementById('ver-pill').textContent='v'+d.app_version;}
     appBundled=d.bundled===true;
     // Mac App Store: actualiza la tienda, no hay botón propio.
-    if(d.distribution==='mas'){
-      document.getElementById('upd-check').style.display='none';
-      // Sin borrado permanente ni IA remota: la tienda solo usa gmail.modify y los datos no salen del Mac.
+    if(d.distribution==='mas')document.getElementById('upd-check').style.display='none';
+    // Tienda o build con el cliente verificado: sin borrado permanente ni IA remota (solo gmail.modify y los datos no salen del Mac).
+    if(d.distribution==='mas'||d.verified_scope_only){
       document.getElementById('delete-status').closest('.gmail-section').style.display='none';
       document.getElementById('hidden-intro').textContent='Restaura mensajes, manténlos ocultos, limpia huérfanos locales o muévelos a la Papelera de Gmail. Usa Shift para seleccionar un rango y Cmd/Ctrl para alternar mensajes individuales. Sólo los huérfanos se pueden limpiar localmente.';
       const aiUrl=document.getElementById('cfg-ai-url');
