@@ -13,12 +13,12 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Hecho: build 8 subida a TestFlight el 2026-11-15. Añade a la 7 (visor de `.eml` aislado) el cierre de los modales (PR #47) y las sugerencias IA con modelos locales (PR #48). Es la que debe grabarse y enviarse a App Review; las builds 6 y 7 no sirven |
 | 5 | Completar la marca: nombre «Gestor de Correos», logotipo, correo de asistencia, página principal `https://gcorreos.efjdev.com/`, política `https://gcorreos.efjdev.com/privacy.html` y dominio autorizado `efjdev.com` | Google Auth Platform → Información de la marca | Hecho |
 | 6 | Declarar **solo** `gmail.modify`; quitar `https://mail.google.com/` si estuviera | Google Auth Platform → Acceso a los datos | Hecho |
-| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Hecho el 2026-11-15: grabado con la build 8 y publicado en YouTube |
+| 7 | Grabar el vídeo con la build del paso 4 y subirlo a YouTube como oculto | Guion más abajo | Hecho el 2026-11-15: grabado con la build 8 y publicado en YouTube. Rehecho el 2026-11-22 con la v1.4.2 de descarga directa (ver la nota del 2026-11-22); el enlace no se guarda aquí |
 | 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios. Cuando se hizo no importaba porque la app no estaba a la venta; desde el 2026-11-19 sí lo está | Google Auth Platform → Público | Hecho el 2026-11-15 |
 | 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Hecho: marca verificada (Centro de verificación, 2026-11-15) |
 | 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Hecho: enviada el 2026-11-15; el acceso a los datos está en revisión. La consola mostró «No se pudo enviar tu app» (seguimiento `c125087734537070`), pero el envío quedó registrado |
-| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…») y ese mismo día se respondió con el texto de «Respuesta a la lista de comprobación», con el enlace del vídeo revisado en el punto 2. Ya estaban publicadas la política ampliada y la build 8 en TestFlight con enlace público. El 2026-11-18 (20:15 UTC) Apple aprobó la build 1.4.1 (8) para la beta externa de TestFlight: el enlace público que recibe el revisor ya funciona. El 2026-11-20 el Centro de verificación mostraba 2 de 7 etapas aprobadas (página principal y marca, el 2026-11-15) y la política de privacidad en revisión; faltan funciones de la app, acceso a los datos adecuado, permisos mínimos y requisitos adicionales (donde se decidiría la CASA). Google estima de 4 a 6 semanas desde el envío del 2026-11-15, es decir, hacia el 13–27 de diciembre. Pendiente: la respuesta de Google y si exige la evaluación CASA |
-| 12 | Con la verificación aprobada, enviar la v1.4.1 a App Review y revisar los países (EE. UU. ya está activo; comprobar Canadá) | App Store Connect | Pendiente. La vuelta a la venta ya se produjo el 2026-11-19 con la v1.4.0 |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…») y ese mismo día se respondió con el texto de «Respuesta a la lista de comprobación», con el enlace del vídeo revisado en el punto 2. Ya estaban publicadas la política ampliada y la build 8 en TestFlight con enlace público. El 2026-11-18 (20:15 UTC) Apple aprobó la build 1.4.1 (8) para la beta externa de TestFlight: el enlace público que recibe el revisor ya funciona. El 2026-11-20 el Centro de verificación mostraba 2 de 7 etapas aprobadas (página principal y marca, el 2026-11-15) y la política de privacidad en revisión; faltan funciones de la app, acceso a los datos adecuado, permisos mínimos y requisitos adicionales (donde se decidiría la CASA). Google estima de 4 a 6 semanas desde el envío del 2026-11-15, es decir, hacia el 13–27 de diciembre. Pendiente: la respuesta de Google y si exige la evaluación CASA. 2026-11-22: vídeo nuevo grabado con la v1.4.2 de descarga directa; hay que enviarlo respondiendo al hilo, con el párrafo «Update on distribution» de la nota del 2026-11-22 |
+| 12 | Con la verificación aprobada, publicar la v1.4.2 de descarga directa | GitHub Releases | Pendiente. La v1.4.2 está subida como **borrador** (`gh release edit v1.4.2 --draft=false` al aprobarse). No enviar nada a App Review hasta cerrar la verificación de Google; la tienda queda en pausa |
 
 **2026-11-19 — La v1.4.0 vuelve a estar a la venta.** La API de búsqueda de iTunes
 (`lookup?id=6825322977`) la devuelve en ES, GB y US. No hay correo de Apple sobre
@@ -33,6 +33,33 @@ responde, sabiendo que:
   en Gmail;
 - la app pública no coincide con la build 8 que se ha declarado a Google, así que
   conviene publicar la v1.4.1 en cuanto Google la verifique.
+
+**2026-11-22 — Distribución directa con el cliente verificado.** La app se ha
+retirado de la Mac App Store y se distribuye como descarga directa (Developer ID +
+notarización + Sparkle) desde GitHub Releases. Para que esa descarga use el
+cliente OAuth del proyecto en verificación:
+
+- `macos/build_app.sh` acepta `DIRECT_OAUTH_CLIENT` (en `macos/build.env`, el mismo
+  JSON que `MAS_OAUTH_CLIENT`) y lo copia a `Contents/Resources/oauth_client.json`
+  antes de firmar (PR #62). El paso «3c/9» debe decir «cliente OAuth incluido».
+- Con ese cliente incluido, `paths.verified_scope_only()` desactiva el borrado
+  permanente (`mail.google.com`) y la IA remota, igual que en la tienda (PR #62).
+- La v1.4.2 (PR #63) es la primera build directa con el cliente. La v1.4.1 publicada
+  en GitHub se compiló antes del PR #62 y **no** lo lleva.
+- El indicador de estado pasa a verde tras la primera búsqueda autorizada (PR #64).
+- Quien ya tenga un `credentials.json` propio en
+  `~/Library/Application Support/GestorDeCorreos/` sigue usándolo: la app no lo
+  sustituye por el incluido. Para probar el cliente del proyecto hay que apartarlo
+  (y `token.json`) antes de abrir la app.
+
+Párrafo para Google (respuesta al hilo de verificación):
+
+```text
+Update on distribution: Gestor de Correos is no longer distributed through the Mac App Store. It is now distributed as a Developer ID signed and Apple-notarized download from GitHub (version 1.4.2): https://github.com/edfrutos/gestor-correos-gmail/releases/latest. This build requests only https://www.googleapis.com/auth/gmail.modify with this project's OAuth client, and it does not include permanent deletion or remote AI. To install it: download the .dmg, drag Gestor de Correos to Applications, open it and click "Buscar en Gmail" (Search Gmail).
+```
+
+Mientras la v1.4.2 siga como borrador, `releases/latest` apunta a la v1.4.1: en ese
+caso, quitar el enlace y decir que la build se publicará tras la verificación.
 
 ## Evaluación CASA: qué sabemos
 
