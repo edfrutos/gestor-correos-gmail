@@ -321,6 +321,8 @@ usuario decide no hacerla. Consecuencias y plan:
   caducidad de 7 días y no muestra el aviso, pero solo admite la cuenta que lo crea.
 - Si no se completa la CASA en el plazo, la solicitud de verificación quedará sin
   aprobar; no hace falta responder al hilo.
+- 2026-11-25: se cancela el envío de la v1.4.1 que esperaba revisión desde el
+  2026-11-16; en App Store Connect no queda nada a la venta ni en revisión.
 - La Mac App Store sigue en pausa: sin verificación, una app de la tienda con este
   cliente quedaría igualmente limitada a 100 cuentas.
 

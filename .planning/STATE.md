@@ -122,6 +122,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-25 — **Mac App Store vacía.** El envío de la v1.4.1 (build 8), en
+  «Waiting for Review» desde el 2026-11-16, se cancela; la app sigue retirada de la
+  venta. Release **v1.4.3** publicada en GitHub (`c8961eb`) y ficha de efjdev.com
+  actualizada. Nada pendiente en App Store Connect (ADR-017).
+
 - 2026-11-25 — **Sin evaluación CASA (ADR-017).** Google exige la ADA-CASA AL1
   antes del 2027-02-22 para verificar el cliente del proyecto; el usuario decide no
   hacerla. v1.4.3 (PR #66): la descarga directa ofrece usar un cliente propio en
@@ -450,7 +455,6 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente: publicar la Release **v1.4.3** (el `gh release create v1.4.3 … --target
-<commit>` que imprime `build_app.sh`), borrar el borrador v1.4.2 y actualizar la
-ficha de efjdev.com con la guía del cliente propio. La verificación de Google queda
-abandonada (ADR-017).
+Siguiente: nada pendiente de la verificación ni de la tienda (ADR-017). Mejora menor
+para la próxima versión: separar el botón de la guía del cliente propio del título
+«Inteligencia artificial» en 🛠 Configuración.
