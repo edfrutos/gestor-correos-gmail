@@ -7,7 +7,7 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 
 | # | Paso | Dónde | Estado |
 |---|------|-------|--------|
-| 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04. El 2026-11-19 la v1.4.0 volvió a estar a la venta, también en EE. UU.; el usuario decide mantenerla (ver nota bajo la tabla) |
+| 1 | Retirar la app de la venta | App Store Connect → Precio y disponibilidad | Hecho el 2026-11-04. El 2026-11-19 la v1.4.0 volvió a estar a la venta, también en EE. UU.; el usuario decide mantenerla (ver nota bajo la tabla). El 2026-11-22 se retira otra vez y la app pasa a descarga directa |
 | 2 | Publicar `docs/site/` (`index.html`, `privacy.html` y `site.css`) en `https://gcorreos.efjdev.com/`. Es web estática: no hace falta WordPress | Hosting | Hecho; la web coincide con `docs/site/` |
 | 3 | Verificar `efjdev.com` en Search Console (propiedad de dominio, con un registro TXT en el DNS), con una cuenta propietaria del dominio y del proyecto de Google | Search Console | Hecho |
 | 4 | Compilar la v1.4.1 y subirla a TestFlight (sin IA remota ni borrado permanente, con la Papelera) | `macos/build_mas.sh` con un `MAS_BUILD_NUMBER` mayor que cualquiera ya subido | Hecho: build 8 subida a TestFlight el 2026-11-15. Añade a la 7 (visor de `.eml` aislado) el cierre de los modales (PR #47) y las sugerencias IA con modelos locales (PR #48). Es la que debe grabarse y enviarse a App Review; las builds 6 y 7 no sirven |
@@ -60,6 +60,32 @@ Update on distribution: Gestor de Correos is no longer distributed through the M
 
 Mientras la v1.4.2 siga como borrador, `releases/latest` apunta a la v1.4.1: en ese
 caso, quitar el enlace y decir que la build se publicará tras la verificación.
+
+## Segunda respuesta de Google (2026-11-22)
+
+El equipo *Third-Party Data Safety* rechazó el vídeo del 2026-11-18: *does not
+sufficiently demonstrate why the following scope(s) are necessary or why narrower
+permissions cannot be used* (`gmail.modify`). Pedía un vídeo con todas las funciones
+que usan el permiso, el efecto de cada escritura en Gmail, la pantalla de
+consentimiento desplegada y los mismos permisos que los declarados, sin exponer
+permisos sin verificar al tráfico real.
+
+Se respondió en el mismo hilo el 2026-11-22 (20:59 UTC) con un vídeo nuevo grabado
+con la v1.4.2 de descarga directa y el párrafo «Update on distribution» de la nota
+anterior. El 2026-11-25 Google aceptó el vídeo y pidió la evaluación CASA (ADR-017).
+
+Mínimo privilegio, por si se retoma la verificación:
+
+| Feature | API call | Narrowest scope that allows it |
+|---|---|---|
+| Search and read messages and attachments | `users.messages.list`, `users.messages.get`, `users.messages.attachments.get` | `gmail.readonly` (cannot write) |
+| Create a label | `users.labels.create` | `gmail.labels` (cannot read messages or apply labels) |
+| Apply a label, archive (remove `INBOX`) | `users.messages.batchModify` | `gmail.modify` |
+| Move to Trash (recoverable for 30 days) | `users.messages.trash` | `gmail.modify` |
+
+`gmail.readonly` + `gmail.labels` no basta: ninguno permite cambiar las etiquetas de
+un mensaje ni moverlo a la Papelera. `gmail.modify` es el único permiso que cubre
+leer y esas escrituras, y no permite el borrado permanente.
 
 ## Evaluación CASA: qué sabemos
 

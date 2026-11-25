@@ -75,7 +75,7 @@ v9 (app macOS) mergeada a `main` (`afad3a9`), con icono propio (`1c275b7`).
 | Fase | Descripción | Estado |
 |------|-------------|--------|
 | 34 — App macOS (Developer ID) | `paths.py` + relocalización; `macos/` pywebview/py2app/firma inside-out/notarización/DMG/icono | ✅ Done (2026-09-09), mergeado a `main` (`afad3a9`) |
-| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review y publicada (v1.4.0, build 2); retirada de la venta el 2026-11-04 y de nuevo a la venta desde el 2026-11-19 |
+| 35 — Mac App Store | Variante py2app con App Sandbox (ADR-015), TestFlight, App Review | ✅ Done (2026-11-03): aprobada por App Review y publicada (v1.4.0, build 2); retirada de la venta el 2026-11-04, de nuevo a la venta el 2026-11-19 y retirada otra vez el 2026-11-22; en pausa (ADR-017) |
 
 ## Milestone v8 — Fases (cerrado en `main`)
 
@@ -121,6 +121,17 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
   contrato literal de `test_frontend_contract.py`.
 
 ## Last Activity
+
+- 2026-11-25 — **Sin evaluación CASA (ADR-017).** Google exige la ADA-CASA AL1
+  antes del 2027-02-22 para verificar el cliente del proyecto; el usuario decide no
+  hacerla. v1.4.3 (PR #66): la descarga directa ofrece usar un cliente propio en
+  modo personal (`docs/CLIENTE_PROPIO.md`) y volver al incluido. Comprobada en el
+  Mac. Pendiente: publicar la Release v1.4.3 y borrar el borrador v1.4.2.
+
+- 2026-11-22 — **Google rechaza el vídeo por mínimo privilegio** (07:42 UTC). Se
+  retira otra vez la v1.4.0 de la Mac App Store y la app pasa a descarga directa con
+  el cliente del proyecto (v1.4.2, PR #62–#64). Vídeo nuevo grabado con la v1.4.2 y
+  enviado en el mismo hilo a las 20:59 UTC.
 
 - 2026-11-20 — **Progreso de la verificación de Google:** aprobadas la página
   principal y la marca; la política de privacidad, en revisión; quedan cuatro
@@ -423,8 +434,8 @@ verificados). Las actualizaciones de la 1.3.0 en adelante las gestiona Sparkle
 (`appcast.xml`); `latest.json` se sigue publicando para que las 1.2.x puedan
 actualizar. La 1.3.2 no se publicó (sus cambios van en la 1.4.0).
 Mac App Store: v1.4.0 (build 2) publicada el 2026-11-03, retirada de la venta
-el 2026-11-04 y **de nuevo a la venta desde el 2026-11-19**, antes de la
-verificación de Google, por decisión del usuario
+el 2026-11-04, de nuevo a la venta el 2026-11-19 y **retirada otra vez el
+2026-11-22**; la tienda queda en pausa (ADR-017)
 ([ficha](https://apps.apple.com/es/app/gestor-de-correos-gmail/id6825322977?mt=12)).
 Próximas versiones de la tienda: `build_mas.sh` con un
 `MAS_BUILD_NUMBER` mayor que cualquiera ya subido (el último subido es el 8, en la
@@ -439,8 +450,7 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente (Fase 39, pasos en `docs/GOOGLE_VERIFICACION.md`): esperar la respuesta
-de Google a la verificación del acceso a los datos (enviada el 2026-11-15) y, si
-exige la evaluación CASA, decidir si compensa. Con la verificación aprobada,
-enviar cuanto antes la v1.4.1 (build 8) a App Review: la v1.4.0 que está a la venta
-no coincide con lo declarado a Google (ADR-016).
+Siguiente: publicar la Release **v1.4.3** (el `gh release create v1.4.3 … --target
+<commit>` que imprime `build_app.sh`), borrar el borrador v1.4.2 y actualizar la
+ficha de efjdev.com con la guía del cliente propio. La verificación de Google queda
+abandonada (ADR-017).
