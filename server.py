@@ -36,7 +36,7 @@ from classifier import get_base_config
 from paths import data_dir, data_path, distribution, has_bundled_oauth_client, is_app_store, is_bundled, resource_dir, verified_scope_only
 from settings import load_settings, public_settings, save_settings
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
-from gmail_client import CREDS, GMAIL_OK, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query, trash_messages
+from gmail_client import CREDS, GMAIL_OK, client_source, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query, trash_messages
 from storage import load_state, record_delete_results, remove_hidden_ids, save_user_state
 from validators import ApiError, parse_max, validate_attachment_id, validate_date, validate_delete_request, validate_filename, validate_gmail_id, validate_mime_type, validate_sender, validate_trash_request
 
@@ -151,6 +151,7 @@ class H(BaseHTTPRequestHandler):
             return self.j({'status': 'ok', **gmail_status(), 'ai': ai_status(), 'permanent_delete': delete_status(),
                            'app_version': updater.current_version(), 'bundled': is_bundled(),
                            'distribution': distribution(), 'oauth_bundled': has_bundled_oauth_client(),
+                           'oauth_client': client_source(),
                            'verified_scope_only': verified_scope_only()})
 
         if p.path == '/api/update/check':

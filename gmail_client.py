@@ -105,6 +105,22 @@ def import_client_secrets(source):
     return client['client_id']
 
 
+# Marca que lleva la copia del cliente incluido en la app (macos/app_main.BUNDLED_MARK).
+BUNDLED_MARK = 'gestor_bundled'
+
+
+def client_source():
+    """Qué cliente OAuth hay en la carpeta de datos: 'bundled' (el incluido en
+    la app), 'own' (un credentials.json importado por el usuario) o 'none'."""
+    try:
+        data = json.loads(CREDS.read_text(encoding='utf-8'))
+    except FileNotFoundError:
+        return 'none'
+    except (OSError, ValueError):
+        return 'own'
+    return 'bundled' if isinstance(data, dict) and data.get(BUNDLED_MARK) else 'own'
+
+
 def gmail():
     global _svc
     if _svc:
