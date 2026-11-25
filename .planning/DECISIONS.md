@@ -478,6 +478,40 @@ verificación de Google y el usuario decide mantenerla. Hasta que se publique la
 v1.4.1, la tienda ofrece una versión que todavía tiene IA remota y borrado
 permanente; publicar la v1.4.1 pasa a ser lo primero tras la verificación.
 
+**Addendum 2026-11-22:** Google rechaza el vídeo por mínimo privilegio y recuerda
+que una app publicada no debe usar permisos sin verificar con tráfico real. La
+respuesta del 2026-11-18 le había dicho que la app no estaba a la venta, así que el
+usuario **retira otra vez la v1.4.0 de la venta** y pasa a distribuir por descarga
+directa con el cliente del proyecto (v1.4.2).
+
 **Consecuencias:** la tienda pierde dos funciones respecto a la versión de GitHub.
 Si Google exige la evaluación CASA pese a todo, hay que valorar de nuevo si
-compensa. Detalle en `docs/GOOGLE_VERIFICACION.md`.
+compensa. Detalle en `docs/GOOGLE_VERIFICACION.md`. Superado en parte por el
+ADR-017: Google la exige y no se hace.
+
+## ADR-017 — Sin evaluación CASA: cliente compartido sin verificar + cliente propio en modo personal
+
+**Date:** 2026-11-25
+**Status:** Accepted
+
+Google acepta el vídeo y el alcance (`gmail.modify`), pero para
+verificar el cliente del proyecto exige la evaluación de seguridad ADA-CASA AL1
+antes del 2027-02-22, de pago y con renovación anual.
+
+**Decision:** no se hace la evaluación. La descarga directa (v1.4.3 en adelante):
+
+- sigue llevando el cliente del proyecto, «En producción» sin verificar: quien lo
+  usa ve el aviso de app no verificada, y el proyecto admite como máximo 100
+  cuentas en total, para siempre;
+- ofrece en 🛠 Configuración usar un **cliente propio** y volver al incluido. La guía
+  (`docs/CLIENTE_PROPIO.md`) crea un proyecto de Google Cloud en **modo personal**:
+  sin verificación, sin límite de usuarios ni caducidad de 7 días y sin aviso, pero
+  solo para la cuenta que lo crea.
+
+Se mantienen las restricciones del ADR-016 (solo `gmail.modify`, sin borrado
+permanente ni IA remota) mientras la build lleve el cliente del proyecto.
+
+**Consecuencias:** coste cero; las primeras 100 cuentas entran sin configurar nada y
+el resto, con unos minutos de configuración en Google Cloud. La Mac App Store queda
+en pausa: sin verificación, una app de la tienda con este cliente tendría el mismo
+límite. La solicitud de verificación caducará sin aprobarse; no hace falta responder.
