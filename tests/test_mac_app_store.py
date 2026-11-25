@@ -627,3 +627,21 @@ def test_direct_build_offers_own_client_and_guide():
     assert 'window.pywebview.api.use_bundled_credentials()' in js
     assert 'updateGoogleClientUI(d);' in js
     assert 'docs/CLIENTE_PROPIO.md' in js and (ROOT / 'docs' / 'CLIENTE_PROPIO.md').is_file()
+
+
+# --- Rutas sin el nombre de usuario (capturas de la tienda) ---
+
+def test_display_path_hides_the_user_folder(monkeypatch):
+    import pwd
+    monkeypatch.setattr(pwd, 'getpwuid', lambda uid: type('P', (), {'pw_dir': '/Users/ana'})())
+    box = '/Users/ana/Library/Containers/com.edefrutos.gestorcorreos/Data/Library/Application Support/GestorDeCorreos/exports'
+    assert paths.display_path(box) == '~/Library/Containers/com.edefrutos.gestorcorreos/Data/Library/Application Support/GestorDeCorreos/exports'
+    assert paths.display_path('/Users/ana') == '~'
+    assert paths.display_path('/Users/anabel/x') == '/Users/anabel/x'
+    assert paths.display_path('/Volumes/Disco/exports') == '/Volumes/Disco/exports'
+
+
+def test_exports_hint_uses_display_paths():
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    assert "exportsDir=d.dir_display||d.dir||'';" in js
+    assert 'd.backup_dir_display||d.backup_dir' in js

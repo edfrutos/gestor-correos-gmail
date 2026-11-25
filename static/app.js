@@ -1847,11 +1847,13 @@ async function loadLocalExports(){
     const r=await fetch(`${API}/api/exports`);
     const d=await r.json();
     localExports=d.files||[];
-    exportsDir=d.dir||'';
+    // Rutas con la carpeta del usuario como «~»: no deben verse en las capturas.
+    exportsDir=d.dir_display||d.dir||'';
     const hint=document.getElementById('exp-dir-hint');
     if(exportsDir){
+      const backup=d.backup_dir_display||d.backup_dir;
       hint.innerHTML=`Los archivos se guardan en <code>${esc(exportsDir)}</code>`+
-        (d.backup_dir?` y se copian a <code>${esc(d.backup_dir)}</code>.`:'. Puedes añadir una carpeta de respaldo en <b>Configuración</b>.');
+        (backup?` y se copian a <code>${esc(backup)}</code>.`:'. Puedes añadir una carpeta de respaldo en <b>Configuración</b>.');
     }
     renderLocalExports();
   }catch(e){console.error('Error cargando exportaciones:', e);}
