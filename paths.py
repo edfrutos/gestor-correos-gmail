@@ -97,3 +97,21 @@ def verified_scope_only() -> bool:
 def data_path(name: str) -> Path:
     """Ruta de un archivo de estado dentro de `data_dir()`."""
     return data_dir() / name
+
+
+def display_path(path) -> str:
+    """Ruta para enseñar en la interfaz, con la carpeta del usuario como «~».
+
+    Usa la carpeta real del usuario (pwd), no HOME: en App Sandbox HOME apunta al
+    contenedor y el nombre de usuario seguiría a la vista en las capturas.
+    """
+    import pwd
+    text = str(path)
+    try:
+        home = pwd.getpwuid(os.getuid()).pw_dir.rstrip("/")
+    except (KeyError, OSError):
+        home = os.path.expanduser("~").rstrip("/")
+    if home and (text == home or text.startswith(home + "/")):
+        return "~" + text[len(home):]
+    return text
+

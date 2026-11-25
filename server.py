@@ -33,7 +33,7 @@ from urllib.parse import parse_qs, urlparse
 import updater
 from ai_client import ai_status, suggest_rules, summarize
 from classifier import get_base_config
-from paths import data_dir, data_path, distribution, has_bundled_oauth_client, is_app_store, is_bundled, resource_dir, verified_scope_only
+from paths import data_dir, data_path, display_path, distribution, has_bundled_oauth_client, is_app_store, is_bundled, resource_dir, verified_scope_only
 from settings import load_settings, public_settings, save_settings
 from destructive_gmail import MAX_DELETE_BATCH, delete_status, destructive_gmail, permanently_delete_messages, revoke_destructive_authorization
 from gmail_client import CREDS, GMAIL_OK, client_source, MAX_BATCH_MODIFY, apply_label, archive_messages, create_label, get_attachment, get_labels, get_message, get_message_raw, gmail, gmail_error_detail, gmail_message_lookup_state, gmail_status, search, search_message_ids_by_query, trash_messages
@@ -843,8 +843,11 @@ class H(BaseHTTPRequestHandler):
                     'mtime': f.stat().st_mtime,
                     'type': f.suffix.lstrip('.').lower() or 'unknown'
                 })
+            backup_dir = load_settings().get('backup_dir') or None
             return self.j({'status': 'ok', 'files': files, 'dir': str(EXPORTS_DIR.resolve()),
-                           'backup_dir': load_settings().get('backup_dir') or None})
+                           'dir_display': display_path(EXPORTS_DIR.resolve()),
+                           'backup_dir': backup_dir,
+                           'backup_dir_display': display_path(backup_dir) if backup_dir else None})
         except Exception as e:
             return self.err(500, 'Error listando exportaciones', str(e))
 
