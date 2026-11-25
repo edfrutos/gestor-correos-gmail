@@ -505,16 +505,24 @@ def test_build_mas_requires_build_number_for_the_store():
     assert 'require MAS_BUILD_NUMBER' in store_branch
 
 
-def test_store_settings_do_not_suggest_cloud_or_own_google_client():
+def test_store_settings_do_not_suggest_cloud_ai():
     js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
     store = js.split("if(d.distribution==='mas'||d.verified_scope_only){", 1)[1].split('if(d.ok){', 1)[0]
     assert "getElementById('cfg-ai-model').placeholder='llama3'" in store
     assert "aiKeyPlaceholder='ollama'" in store
     hint = store.split("getElementById('cfg-ai-hint').textContent='", 1)[1].split("'", 1)[0]
     assert '.env' not in hint and 'settings.json' not in hint
-    assert "if(d.oauth_bundled&&d.distribution==='mas'){" in store
-    # pywebviewready puede llegar después del estado: no debe volver a mostrarla.
-    assert 'if(credentialsImportHidden||' in js
+    # ADR-017: la tienda también ofrece el cliente propio (no se oculta «Cuenta de Google»).
+    assert "getElementById('cfg-google').style.display='none'" not in js
+    assert 'credentialsImportHidden' not in js
+
+
+def test_update_button_hidden_until_status_says_direct_download():
+    """La tienda no debe mostrar nunca «Actualizaciones», ni antes de /api/status."""
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    html = (ROOT / 'index.html').read_text(encoding='utf-8')
+    assert 'id="upd-check" title="Buscar actualizaciones" style="display:none;' in html
+    assert "if(d.distribution!=='mas')document.getElementById('upd-check').style.display='';" in js
 
 
 # --- Descarga directa con el cliente verificado: mismas restricciones que la tienda ---

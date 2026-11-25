@@ -45,12 +45,24 @@ QUÉ HACE
 PRIVACIDAD
 • Tus correos van directamente de Google a tu Mac. El desarrollador no recibe ningún dato: sin servidores propios, sin analítica, sin publicidad.
 • La app se conecta a Gmail con la autorización oficial de Google y puedes revocarla cuando quieras.
+• Si lo prefieres, puedes usar tu propio cliente de Google (gratis, en unos minutos): la app lo explica en Configuración → Cuenta de Google.
 • Todo lo que guarda (preferencias, reglas, exportaciones) se queda en tu Mac.
 
 Requiere una cuenta de Gmail o Google Workspace.
 ```
 
 ## Novedades de esta versión (solo a partir de la segunda versión publicada)
+
+v1.4.4:
+
+```
+• Puedes usar tu propio cliente de Google (Configuración → Cuenta de Google), con una guía paso a paso, y volver al incluido cuando quieras.
+• Moverlos a la Papelera de Gmail sustituye al borrado permanente: se pueden recuperar durante 30 días.
+• Los resúmenes y sugerencias con IA usan un modelo local en tu Mac; tus correos no salen del equipo.
+• Mejoras en el visor de .eml y en el cierre de ventanas.
+```
+
+Primera versión publicada (v1.4.0):
 
 ```
 Primera versión en la Mac App Store.
@@ -65,8 +77,10 @@ Primera versión en la Mac App Store.
 
 ## Información para la revisión (App Review Information)
 
-**Sign-in information:** la cuenta de Gmail de demostración (usuario de prueba
-del proyecto OAuth de la tienda) y su contraseña. Marca «Sign-in required».
+**Sign-in information:** la cuenta de Gmail de demostración y su contraseña. Marca
+«Sign-in required». Desde la v1.4.4 (ADR-017) el proyecto de Google está «En
+producción» sin verificar: el revisor verá el aviso de app no verificada y las notas
+le explican cómo seguir.
 
 **Notes:**
 
@@ -75,7 +89,8 @@ Gestor de Correos organizes the user's own Gmail account, focusing on technical 
 
 How to test:
 1. Open the app. Without signing in you can already open .eml files (Exportaciones locales → "Abrir archivo .eml externo…").
-2. Click "Buscar en Gmail" (any sender or text, or just the date range). Google's sign-in page opens in the browser; use the demo account provided.
+2. Click "Buscar en Gmail" (any sender or text, or just the date range). Google's sign-in page opens in the browser; use the demo account provided. Google then shows "Google hasn't verified this app": click "Advanced" and then "Go to Gestor de Correos (unsafe)", and allow access. This screen is Google's standard notice for apps that use Gmail scopes without Google's paid third-party security assessment; the app requests a single scope (gmail.modify) and all data stays on the Mac.
+   Optional: under 🛠 Configuración → Cuenta de Google the user can import their own Google OAuth client (a credentials.json file chosen with the standard file picker) instead of the included one, and switch back. The in-app button opens a public step-by-step guide in the browser. This is optional; the included client works without it.
 3. Results are classified by category and severity; open any message to see its content and attachments.
 4. Hidden messages are listed under "Ocultos locales", where they can be restored or moved to the Gmail Trash after a confirmation. Gmail keeps them for 30 days.
 

@@ -14,7 +14,6 @@
 const API = '';
 App.api = API;
 let aiStatus={configured:false,remote:false,model:null};
-let credentialsImportHidden=false;
 let aiKeyPlaceholder='sk-…';
 let deleteStatus={enabled:false,authorized:false,available:false,max_batch:100,state:'disabled',token_present:false,revoked:false};
 let appBundled=false;
@@ -97,8 +96,9 @@ async function checkStatus(){
     deleteStatus=d.permanent_delete||deleteStatus;
     if(d.app_version){document.getElementById('ver-pill').textContent='v'+d.app_version;}
     appBundled=d.bundled===true;
-    // Mac App Store: actualiza la tienda, no hay botón propio.
-    if(d.distribution==='mas')document.getElementById('upd-check').style.display='none';
+    // El botón empieza oculto: solo la descarga directa se actualiza sola.
+    // En la Mac App Store actualiza la tienda y no debe verse nunca.
+    if(d.distribution!=='mas')document.getElementById('upd-check').style.display='';
     // Tienda o build con el cliente verificado: sin borrado permanente ni IA remota (solo gmail.modify y los datos no salen del Mac).
     if(d.distribution==='mas'||d.verified_scope_only){
       document.getElementById('delete-status').closest('.gmail-section').style.display='none';
@@ -111,11 +111,6 @@ async function checkStatus(){
       if(aiKey.placeholder===aiKeyPlaceholder)aiKey.placeholder='ollama';
       aiKeyPlaceholder='ollama';
       document.getElementById('cfg-ai-hint').textContent='Esta versión usa un modelo instalado en tu Mac, por ejemplo con Ollama: URL http://localhost:11434/v1, modelo llama3, clave ollama. Tus correos no salen del Mac y la clave solo se guarda en este equipo.';
-      // Mac App Store: la app ya incluye su cliente de Google y no se ofrece usar otro.
-      if(d.oauth_bundled&&d.distribution==='mas'){
-        credentialsImportHidden=true;
-        document.getElementById('cfg-google').style.display='none';
-      }
     }
     updateGoogleClientUI(d);
     if(d.ok){
@@ -2000,7 +1995,7 @@ enableBundledCredentials();
 // Importar credentials.json con el selector nativo (app de escritorio): en la
 // Mac App Store, con App Sandbox, no se puede dejar a mano en la carpeta de datos.
 function enableCredentialsImport(){
-  if(credentialsImportHidden||!window.pywebview?.api?.import_credentials)return;
+  if(!window.pywebview?.api?.import_credentials)return;
   document.getElementById('cfg-google').style.display='';
   const btn=document.getElementById('cfg-creds-import');
   btn.onclick=async()=>{
