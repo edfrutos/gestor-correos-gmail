@@ -245,6 +245,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1) 
 .cfg-head{color:var(--txt);font-weight:600;margin-bottom:8px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;}
 .cfg-form{display:grid;grid-template-columns:minmax(220px,2fr) minmax(140px,1fr) minmax(140px,1fr);gap:6px;align-items:end;min-width:0;}
 .cfg-form .addbtn{min-height:36px;}
+#cfg-google{margin-bottom:22px;}
 .cfg-check{display:flex;gap:6px;align-items:center;color:var(--mut);margin-top:8px;cursor:pointer;}
 .cfg-check input{width:auto;margin:0;}
 #rule-add{grid-column:1/-1;justify-self:end;max-width:100%;}

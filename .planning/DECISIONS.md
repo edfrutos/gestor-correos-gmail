@@ -515,3 +515,9 @@ permanente ni IA remota) mientras la build lleve el cliente del proyecto.
 el resto, con unos minutos de configuración en Google Cloud. La Mac App Store queda
 en pausa: sin verificación, una app de la tienda con este cliente tendría el mismo
 límite. La solicitud de verificación caducará sin aprobarse; no hace falta responder.
+
+**Addendum 2026-11-25:** la tienda vuelve con la v1.4.4. La variante de la tienda deja
+de ocultar «Cuenta de Google» (lo hacía el ADR-016) y ofrece el mismo cliente propio
+que la descarga directa; sin él, los usuarios de la tienda no tendrían salida al
+llenarse las 100 cuentas. El botón «Actualizaciones» empieza oculto y solo se muestra
+en la descarga directa, para que la tienda no lo enseñe ni un instante.

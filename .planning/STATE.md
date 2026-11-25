@@ -122,6 +122,11 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-25 — **v1.4.4 para la Mac App Store** (ADR-017, addendum): la tienda
+  ofrece el cliente propio y «Actualizaciones» empieza oculto. Separación del botón
+  de la guía en Configuración. Pendiente: `build_mas.sh` con `MAS_BUILD_NUMBER=9`,
+  TestFlight y envío con las notas de `docs/APP_STORE_FICHA.md`.
+
 - 2026-11-25 — **Mac App Store vacía.** El envío de la v1.4.1 (build 8), en
   «Waiting for Review» desde el 2026-11-16, se cancela; la app sigue retirada de la
   venta. Release **v1.4.3** publicada en GitHub (`c8961eb`) y ficha de efjdev.com
@@ -455,6 +460,6 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente: nada pendiente de la verificación ni de la tienda (ADR-017). Mejora menor
-para la próxima versión: separar el botón de la guía del cliente propio del título
-«Inteligencia artificial» en 🛠 Configuración.
+Siguiente: compilar la v1.4.4 de la tienda (`MAS_BUILD_NUMBER=9`), probarla en
+TestFlight y enviarla con las notas de `docs/APP_STORE_FICHA.md`. La descarga directa
+puede publicar también la v1.4.4 (mismo `build_app.sh`).
