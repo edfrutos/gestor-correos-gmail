@@ -512,7 +512,7 @@ def test_store_settings_do_not_suggest_cloud_or_own_google_client():
     assert "aiKeyPlaceholder='ollama'" in store
     hint = store.split("getElementById('cfg-ai-hint').textContent='", 1)[1].split("'", 1)[0]
     assert '.env' not in hint and 'settings.json' not in hint
-    assert 'if(d.oauth_bundled){' in store
+    assert "if(d.oauth_bundled&&d.distribution==='mas'){" in store
     # pywebviewready puede llegar después del estado: no debe volver a mostrarla.
     assert 'if(credentialsImportHidden||' in js
 
@@ -560,3 +560,62 @@ def test_status_refreshes_after_first_authorized_search():
     search = js.split('async function searchGmail', 1)[1].split('\nasync function ', 1)[0]
     ok = search.split('const d=await r.json();', 1)[1].split('return d.emails', 1)[0]
     assert 'checkStatus()' in ok
+
+
+# --- Descarga directa: cliente propio del usuario y vuelta al cliente incluido ---
+
+def test_client_source_distinguishes_bundled_own_and_none(creds_paths):
+    creds, _ = creds_paths
+    assert gmail_client.client_source() == 'none'
+    creds.write_text(json.dumps({**CLIENT, gmail_client.BUNDLED_MARK: True}), encoding='utf-8')
+    assert gmail_client.client_source() == 'bundled'
+    creds.write_text(json.dumps(CLIENT), encoding='utf-8')
+    assert gmail_client.client_source() == 'own'
+    assert gmail_client.BUNDLED_MARK == app_main.BUNDLED_MARK
+
+
+def test_use_bundled_credentials_replaces_own_client_and_drops_its_token(monkeypatch, tmp_path, creds_paths):
+    creds, token = creds_paths
+    res = tmp_path / 'res'
+    res.mkdir()
+    (res / app_main.BUNDLED_OAUTH_CLIENT).write_text(json.dumps(CLIENT), encoding='utf-8')
+    monkeypatch.setattr(paths, 'resource_dir', lambda: res)
+    creds.write_text(json.dumps({'installed': {'client_id': 'propio', 'client_secret': 'x'}}), encoding='utf-8')
+    token.write_text(json.dumps({'client_id': 'propio'}), encoding='utf-8')
+
+    result = app_main.JsApi().use_bundled_credentials()
+
+    assert result == {'ok': True, 'client_id': 'abc.apps.googleusercontent.com'}
+    data = json.loads(creds.read_text(encoding='utf-8'))
+    assert data['installed'] == CLIENT['installed'] and data[app_main.BUNDLED_MARK] is True
+    assert gmail_client.client_source() == 'bundled'
+    assert not token.exists()
+    assert not list(creds.parent.glob('*.tmp*'))
+
+
+def test_use_bundled_credentials_without_bundled_client(monkeypatch, tmp_path, creds_paths):
+    monkeypatch.setattr(paths, 'resource_dir', lambda: tmp_path)
+    result = app_main.JsApi().use_bundled_credentials()
+    assert result['ok'] is False and 'no incluye' in result['error']
+
+
+def test_status_reports_which_oauth_client_is_in_use(monkeypatch):
+    handler = DummyHandler()
+    handler.path = '/api/status'
+    monkeypatch.setattr(server, 'gmail_status', lambda: {'ok': False})
+    monkeypatch.setattr(server, 'ai_status', lambda: {})
+    monkeypatch.setattr(server, 'delete_status', lambda: {})
+    monkeypatch.setattr(server, 'client_source', lambda: 'own')
+
+    handler.do_GET()
+
+    assert response_json(handler)['oauth_client'] == 'own'
+
+
+def test_direct_build_offers_own_client_and_guide():
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    html = (ROOT / 'index.html').read_text(encoding='utf-8')
+    assert 'id="cfg-creds-bundled"' in html and 'id="cfg-google-guide"' in html
+    assert 'window.pywebview.api.use_bundled_credentials()' in js
+    assert 'updateGoogleClientUI(d);' in js
+    assert 'docs/CLIENTE_PROPIO.md' in js and (ROOT / 'docs' / 'CLIENTE_PROPIO.md').is_file()

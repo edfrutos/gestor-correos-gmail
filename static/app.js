@@ -111,12 +111,13 @@ async function checkStatus(){
       if(aiKey.placeholder===aiKeyPlaceholder)aiKey.placeholder='ollama';
       aiKeyPlaceholder='ollama';
       document.getElementById('cfg-ai-hint').textContent='Esta versión usa un modelo instalado en tu Mac, por ejemplo con Ollama: URL http://localhost:11434/v1, modelo llama3, clave ollama. Tus correos no salen del Mac y la clave solo se guarda en este equipo.';
-      // La app ya incluye su cliente de Google; sin él, importar es la única forma de iniciar sesión.
-      if(d.oauth_bundled){
+      // Mac App Store: la app ya incluye su cliente de Google y no se ofrece usar otro.
+      if(d.oauth_bundled&&d.distribution==='mas'){
         credentialsImportHidden=true;
         document.getElementById('cfg-google').style.display='none';
       }
     }
+    updateGoogleClientUI(d);
     if(d.ok){
       led.className='sled ok';
       msg.textContent='✓ Gmail conectado — búsqueda en tiempo real disponible';
@@ -1958,6 +1959,44 @@ function enableFolderPicker(){
 }
 window.addEventListener('pywebviewready',enableFolderPicker);
 enableFolderPicker();
+// Descarga directa con el cliente incluido: ese acceso compartido está sin
+// verificar por Google (aviso al iniciar sesión y 100 cuentas como máximo en
+// total). Quien no pueda usarlo importa su propio cliente y puede volver al incluido.
+let oauthBundled=false;
+const OWN_CLIENT_GUIDE='https://github.com/edfrutos/gestor-correos-gmail/blob/main/docs/CLIENTE_PROPIO.md';
+document.getElementById('cfg-google-guide').onclick=()=>window.open(OWN_CLIENT_GUIDE,'_blank','noopener');
+let oauthClient='none';
+function updateGoogleClientUI(d){
+  oauthBundled=d.oauth_bundled===true;
+  oauthClient=d.oauth_client||'none';
+  const hint=document.getElementById('cfg-google-hint');
+  const importBtn=document.getElementById('cfg-creds-import');
+  const back=document.getElementById('cfg-creds-bundled');
+  if(!hint||!importBtn||!back)return;
+  if(!oauthBundled){back.style.display='none';return;}
+  importBtn.textContent='📄 Usar mi propio cliente (credentials.json)…';
+  back.style.display=oauthClient==='own'?'':'none';
+  hint.textContent=oauthClient==='own'
+    ?'Estás usando tu propio cliente de Google. Tus correos siguen sin salir del Mac. Para volver al acceso compartido de la app, pulsa «Volver al cliente incluido».'
+    :'La app usa un acceso compartido a Gmail que Google aún no ha verificado. Al iniciar sesión verás el aviso «Google no ha verificado esta aplicación»: pulsa «Configuración avanzada» y luego «Ir a Gestor de Correos». Ese acceso admite como máximo 100 cuentas en total; si Google indica que la app ha alcanzado su límite de usuarios, crea tu propio cliente (gratis) e impórtalo aquí.';
+}
+function enableBundledCredentials(){
+  if(!window.pywebview?.api?.use_bundled_credentials)return;
+  const btn=document.getElementById('cfg-creds-bundled');
+  btn.onclick=async()=>{
+    btn.disabled=true;
+    try{
+      const r=await window.pywebview.api.use_bundled_credentials();
+      if(!r?.ok){toast('Cliente incluido: '+(r?.error||'no se pudo restaurar'),'err');return;}
+      toast('Vuelves a usar el cliente incluido. La próxima búsqueda abrirá el login de Google en el navegador.','ok');
+      checkStatus();
+    }finally{
+      btn.disabled=false;
+    }
+  };
+}
+window.addEventListener('pywebviewready',enableBundledCredentials);
+enableBundledCredentials();
 // Importar credentials.json con el selector nativo (app de escritorio): en la
 // Mac App Store, con App Sandbox, no se puede dejar a mano en la carpeta de datos.
 function enableCredentialsImport(){

@@ -17,8 +17,8 @@ sesión. Ver ADR-016. Los textos para Google están en inglés, listos para pega
 | 8 | Pulsar «Publicar app» (a producción). Hasta la verificación, quien inicie sesión verá el aviso de app no verificada, con un máximo de 100 usuarios. Cuando se hizo no importaba porque la app no estaba a la venta; desde el 2026-11-19 sí lo está | Google Auth Platform → Público | Hecho el 2026-11-15 |
 | 9 | Verificar la marca. Google revisa la página principal, la política y el dominio verificado en Search Console; tarda unos días laborables y no necesita vídeo. Se puede hacer mientras se graba el vídeo | Google Auth Platform → Información de la marca | Hecho: marca verificada (Centro de verificación, 2026-11-15) |
 | 10 | Con la marca verificada se activa «Prepare for verification»: enviar la verificación del acceso a los datos con los textos de abajo y el vídeo | Google Auth Platform → Centro de verificación | Hecho: enviada el 2026-11-15; el acceso a los datos está en revisión. La consola mostró «No se pudo enviar tu app» (seguimiento `c125087734537070`), pero el envío quedó registrado |
-| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…») y ese mismo día se respondió con el texto de «Respuesta a la lista de comprobación», con el enlace del vídeo revisado en el punto 2. Ya estaban publicadas la política ampliada y la build 8 en TestFlight con enlace público. El 2026-11-18 (20:15 UTC) Apple aprobó la build 1.4.1 (8) para la beta externa de TestFlight: el enlace público que recibe el revisor ya funciona. El 2026-11-20 el Centro de verificación mostraba 2 de 7 etapas aprobadas (página principal y marca, el 2026-11-15) y la política de privacidad en revisión; faltan funciones de la app, acceso a los datos adecuado, permisos mínimos y requisitos adicionales (donde se decidiría la CASA). Google estima de 4 a 6 semanas desde el envío del 2026-11-15, es decir, hacia el 13–27 de diciembre. Pendiente: la respuesta de Google y si exige la evaluación CASA. 2026-11-22: vídeo nuevo grabado con la v1.4.2 de descarga directa; hay que enviarlo respondiendo al hilo, con el párrafo «Update on distribution» de la nota del 2026-11-22 |
-| 12 | Con la verificación aprobada, publicar la v1.4.2 de descarga directa | GitHub Releases | Pendiente. La v1.4.2 está subida como **borrador** (`gh release edit v1.4.2 --draft=false` al aprobarse). No enviar nada a App Review hasta cerrar la verificación de Google; la tienda queda en pausa |
+| 11 | Responder a Google y, si la exige, hacer la evaluación CASA | Correo de Google | En curso: el 2026-11-18 llegó la lista de comprobación estándar («You must reply to this email…») y ese mismo día se respondió con el texto de «Respuesta a la lista de comprobación», con el enlace del vídeo revisado en el punto 2. Ya estaban publicadas la política ampliada y la build 8 en TestFlight con enlace público. El 2026-11-18 (20:15 UTC) Apple aprobó la build 1.4.1 (8) para la beta externa de TestFlight: el enlace público que recibe el revisor ya funciona. El 2026-11-20 el Centro de verificación mostraba 2 de 7 etapas aprobadas (página principal y marca, el 2026-11-15) y la política de privacidad en revisión; faltan funciones de la app, acceso a los datos adecuado, permisos mínimos y requisitos adicionales (donde se decidiría la CASA). Google estima de 4 a 6 semanas desde el envío del 2026-11-15, es decir, hacia el 13–27 de diciembre. Pendiente: la respuesta de Google y si exige la evaluación CASA. 2026-11-22: vídeo nuevo grabado con la v1.4.2 de descarga directa; hay que enviarlo respondiendo al hilo, con el párrafo «Update on distribution» de la nota del 2026-11-22. **2026-11-25: Google exige la evaluación ADA-CASA AL1 antes del 22-02-2027. El usuario decide no hacerla (es de pago y anual); ver la nota del 2026-11-25** |
+| 12 | Publicar la descarga directa sin esperar a la verificación | GitHub Releases | Sustituido por la v1.4.3 (nota del 2026-11-25): se publica con el cliente compartido sin verificar y la opción de usar un cliente propio. La v1.4.2 queda como borrador sin publicar |
 
 **2026-11-19 — La v1.4.0 vuelve a estar a la venta.** La API de búsqueda de iTunes
 (`lookup?id=6825322977`) la devuelve en ES, GB y US. No hay correo de Apple sobre
@@ -279,3 +279,22 @@ que se vea el identificador de cliente en la barra de direcciones.
     en ella: es la forma más sencilla de enseñarlo).
 11. **Datos locales y revocación:** explicar que nada llega al desarrollador y
     enseñar cómo revocar el acceso en `myaccount.google.com/permissions`.
+
+**2026-11-25 — Sin evaluación CASA: cliente compartido sin verificar + cliente propio.**
+Google aceptó el vídeo y el alcance (`gmail.modify`), pero exige la evaluación de
+seguridad ADA-CASA AL1 antes del 22-02-2027, con renovación anual y de pago. El
+usuario decide no hacerla. Consecuencias y plan:
+
+- El proyecto sigue «En producción» sin verificar: quien use el cliente incluido
+  ve el aviso «Google no ha verificado esta aplicación» y el proyecto admite como
+  máximo **100 cuentas en total**, para siempre (no se reinicia).
+- A partir de la v1.4.3, la descarga directa ofrece en 🛠 Configuración usar un
+  **cliente propio** y volver al incluido. La guía es
+  [`CLIENTE_PROPIO.md`](CLIENTE_PROPIO.md): proyecto en **modo personal** de
+  Google Cloud, que no necesita verificación, no tiene límite de usuarios ni
+  caducidad de 7 días y no muestra el aviso, pero solo admite la cuenta que lo crea.
+- Si no se completa la CASA en el plazo, la solicitud de verificación quedará sin
+  aprobar; no hace falta responder al hilo.
+- La Mac App Store sigue en pausa: sin verificación, una app de la tienda con este
+  cliente quedaría igualmente limitada a 100 cuentas.
+

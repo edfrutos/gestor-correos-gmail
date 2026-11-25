@@ -97,6 +97,12 @@ Build firmado + notarizado (DMG, distribución Developer ID): ver
 [`macos/README.md`](macos/README.md). En la `.app` instalada, el estado vive en
 `~/Library/Application Support/GestorDeCorreos/` (ahí va `credentials.json`).
 
+La app de descarga directa incluye un cliente de Google compartido, sin
+verificar por Google: muestra un aviso al iniciar sesión y admite como máximo
+100 cuentas en total. Quien no pueda usarlo crea su propio cliente gratis en
+modo personal y lo importa desde 🛠 Configuración: ver
+[`docs/CLIENTE_PROPIO.md`](docs/CLIENTE_PROPIO.md).
+
 ### Flujo habitual
 1. **Buscar** — remitente, texto libre o rango de fechas.
 2. **Revisar** — clasificación automática por categoría y severidad.

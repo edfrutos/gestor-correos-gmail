@@ -345,6 +345,27 @@ class JsApi:
             return {"ok": False, "error": str(exc)}
         return {"ok": True, "client_id": client_id}
 
+    def use_bundled_credentials(self):
+        """Botón «Volver al cliente incluido»: sustituye el credentials.json del
+        usuario por el cliente que lleva la app (con la marca de copia incluida)."""
+        import gmail_client  # noqa: E402
+        import paths  # noqa: E402
+        src = Path(paths.resource_dir()) / BUNDLED_OAUTH_CLIENT
+        if not src.is_file():
+            return {"ok": False, "error": "Esta versión no incluye cliente de Google"}
+        tmp = gmail_client.CREDS.with_name("bundled_client.tmp.json")
+        try:
+            data = json.loads(src.read_text(encoding="utf-8"))
+            data[BUNDLED_MARK] = True
+            tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            tmp.chmod(0o600)
+            client_id = gmail_client.import_client_secrets(tmp)
+        except (OSError, ValueError) as exc:
+            return {"ok": False, "error": str(exc)}
+        finally:
+            tmp.unlink(missing_ok=True)
+        return {"ok": True, "client_id": client_id}
+
 
 def _install_open_files_handler(opener: EmlOpener) -> bool:
     """Añade `application:openFiles:` al AppDelegate de pywebview (Cocoa).
