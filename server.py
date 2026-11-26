@@ -434,7 +434,8 @@ class H(BaseHTTPRequestHandler):
             return str(target), None
         except OSError as exc:
             print(f'[Export] Respaldo fallido en {backup_dir}: {exc}')
-            return None, f'No se pudo copiar a la carpeta de respaldo: {exc}'
+            # Sin la ruta completa: el mensaje se ve en la app (y en las capturas).
+            return None, f'No se pudo copiar a la carpeta de respaldo ({display_path(backup_dir)}): {exc.strerror or exc}'
 
     def handle_ai_summary(self):
         try:

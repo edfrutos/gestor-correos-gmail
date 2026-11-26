@@ -75,13 +75,13 @@ def validate_backup_dir(value):
     value = _text(value, 1000, 'Carpeta de respaldo')
     if not value:
         return ''
-    target = Path(value).expanduser()
+    target = Path(paths.expand_display_path(value))
     if not target.is_absolute():
         raise ApiError('Carpeta de respaldo inválida', detail='Indica una ruta absoluta')
     if not target.is_dir():
-        raise ApiError('Carpeta de respaldo inválida', detail=f'No existe la carpeta {target}')
+        raise ApiError('Carpeta de respaldo inválida', detail=f'No existe la carpeta {paths.display_path(target)}')
     if not os.access(target, os.W_OK):
-        raise ApiError('Carpeta de respaldo inválida', detail=f'Sin permiso de escritura en {target}')
+        raise ApiError('Carpeta de respaldo inválida', detail=f'Sin permiso de escritura en {paths.display_path(target)}')
     return str(target.resolve())
 
 
@@ -161,4 +161,5 @@ def public_settings():
         'ai_env_api_key_set': bool(os.environ.get('AI_API_KEY', '').strip()),
         'ai_source': ai_source(),
         'backup_dir': settings['backup_dir'],
+        'backup_dir_display': paths.display_path(settings['backup_dir']) if settings['backup_dir'] else '',
     }

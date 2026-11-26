@@ -99,19 +99,30 @@ def data_path(name: str) -> Path:
     return data_dir() / name
 
 
-def display_path(path) -> str:
-    """Ruta para enseñar en la interfaz, con la carpeta del usuario como «~».
-
-    Usa la carpeta real del usuario (pwd), no HOME: en App Sandbox HOME apunta al
-    contenedor y el nombre de usuario seguiría a la vista en las capturas.
-    """
+def real_home() -> str:
+    """Carpeta real del usuario (pwd), no HOME: en App Sandbox HOME apunta al
+    contenedor de la app."""
     import pwd
-    text = str(path)
     try:
-        home = pwd.getpwuid(os.getuid()).pw_dir.rstrip("/")
+        return pwd.getpwuid(os.getuid()).pw_dir.rstrip("/")
     except (KeyError, OSError):
-        home = os.path.expanduser("~").rstrip("/")
+        return os.path.expanduser("~").rstrip("/")
+
+
+def display_path(path) -> str:
+    """Ruta para enseñar en la interfaz, con la carpeta del usuario como «~»,
+    para que el nombre de usuario no salga en las capturas."""
+    text = str(path)
+    home = real_home()
     if home and (text == home or text.startswith(home + "/")):
         return "~" + text[len(home):]
     return text
 
+
+def expand_display_path(text: str) -> str:
+    """Inversa de display_path: «~» o «~/…» pasan a la carpeta real del usuario.
+    No usa expanduser, que en App Sandbox expandiría al contenedor."""
+    text = str(text)
+    if text == "~" or text.startswith("~/"):
+        return real_home() + text[1:]
+    return text

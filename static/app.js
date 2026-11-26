@@ -1907,7 +1907,8 @@ function applySettings(d){
   if(d.ai)aiStatus=d.ai;
   document.getElementById('cfg-ai-url').value=s.ai_base_url||'';
   document.getElementById('cfg-ai-model').value=s.ai_model||'';
-  document.getElementById('cfg-backup-dir').value=s.backup_dir||'';
+  // Con «~» en lugar de la carpeta del usuario: no debe verse en las capturas.
+  document.getElementById('cfg-backup-dir').value=s.backup_dir_display||s.backup_dir||'';
   renderAiSettingsState(s);
 }
 async function loadSettings(){
