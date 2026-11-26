@@ -122,6 +122,12 @@ Ninguno abierto. La Fase 31 (2026-09-08) saneó los 3 tests que fallaban por
 
 ## Last Activity
 
+- 2026-11-26 — **v1.4.4 publicada y enviada.** Release v1.4.4 en GitHub
+  (`c988929`, delta desde la 1.4.3) y ficha de efjdev.com actualizada. Mac App
+  Store: v1.4.4 (build 11) enviada a revisión el 2026-11-26 13:08 (ID
+  `6364f80e-94a9-4feb-b67b-92b49a080e1a`), con capturas sin rutas personales
+  (PR #70 y #71: rutas con `~`).
+
 - 2026-11-25 — **v1.4.4 para la Mac App Store** (ADR-017, addendum): la tienda
   ofrece el cliente propio y «Actualizaciones» empieza oculto. Separación del botón
   de la guía en Configuración. Pendiente: `build_mas.sh` con `MAS_BUILD_NUMBER=9`,
@@ -460,6 +466,6 @@ Clave privada en
 Próxima Release: mismo flujo (subir `VERSION`, `build_app.sh`, el
 `gh release create … --target <commit>` que imprime, ya con la `.sig`).
 
-Siguiente: compilar la v1.4.4 de la tienda (`MAS_BUILD_NUMBER=9`), probarla en
-TestFlight y enviarla con las notas de `docs/APP_STORE_FICHA.md`. La descarga directa
-puede publicar también la v1.4.4 (mismo `build_app.sh`).
+Siguiente: esperar la revisión de Apple de la v1.4.4 (build 11). Si la rechaza por
+la pantalla de app no verificada de Google, valorar la respuesta con las notas de
+`docs/APP_STORE_FICHA.md` y el ADR-017.
