@@ -138,3 +138,21 @@ def test_backup_failure_does_not_break_export(monkeypatch, tmp_path):
     assert (exports / 'm1.eml').exists()
     assert body['backup'] is None
     assert 'respaldo' in body['backup_error']
+
+
+def test_backup_dir_accepts_tilde_from_the_real_home_and_shows_it_back(monkeypatch, tmp_path):
+    """La interfaz enseña «~/…» y lo devuelve así al guardar: se expande con la
+    carpeta real del usuario (pwd), no con HOME, que en App Sandbox es el contenedor."""
+    import paths
+    home = tmp_path / 'home'
+    (home / 'Respaldo').mkdir(parents=True)
+    monkeypatch.setattr(paths, 'real_home', lambda: str(home))
+    monkeypatch.setenv('HOME', str(tmp_path / 'contenedor'))
+
+    settings.save_settings({'backup_dir': '~/Respaldo'})
+
+    assert settings.load_settings()['backup_dir'] == str((home / 'Respaldo').resolve())
+    assert settings.public_settings()['backup_dir_display'] == '~/Respaldo'
+    with pytest.raises(ApiError) as exc:
+        settings.save_settings({'backup_dir': '~/No-existe'})
+    assert '~/No-existe' in exc.value.detail and str(home) not in exc.value.detail

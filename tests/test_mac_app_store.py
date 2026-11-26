@@ -645,3 +645,17 @@ def test_exports_hint_uses_display_paths():
     js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
     assert "exportsDir=d.dir_display||d.dir||'';" in js
     assert 'd.backup_dir_display||d.backup_dir' in js
+
+
+def test_expand_display_path_is_the_inverse_of_display_path(monkeypatch):
+    monkeypatch.setattr(paths, 'real_home', lambda: '/Users/ana')
+    for real in ('/Users/ana', '/Users/ana/AppStoreConnect/eml', '/Volumes/Disco/eml'):
+        assert paths.expand_display_path(paths.display_path(real)) == real
+    assert paths.expand_display_path('~otro/x') == '~otro/x'
+
+
+def test_backup_folder_field_shows_tilde_path():
+    js = (ROOT / 'static' / 'app.js').read_text(encoding='utf-8')
+    assert "value=s.backup_dir_display||s.backup_dir||'';" in js
+    main = (MACOS / 'app_main.py').read_text(encoding='utf-8')
+    assert 'return paths.display_path(folder)' in main

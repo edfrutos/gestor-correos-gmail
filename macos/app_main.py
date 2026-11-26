@@ -323,7 +323,12 @@ class JsApi:
         folder = result[0] if result else None
         if folder and self._bookmarks is not None:
             self._bookmarks.remember(folder)
-        return folder
+        if not folder:
+            return folder
+        # Se enseña con «~» (sin el nombre de usuario); al guardar,
+        # settings.validate_backup_dir vuelve a la ruta real.
+        import paths  # noqa: E402
+        return paths.display_path(folder)
 
     def import_credentials(self):
         """Botón «Importar credentials.json…»: selector nativo + validación.
